@@ -1,8 +1,10 @@
 :root {
-  --primary: #1c5c9e;
-  --secondary: #f3b33d;
-  --bg: #f7f9fc;
-  --text: #1f2937;
+  --primary: #2c8d4f;
+  --primary-dark: #1f6b3b;
+  --secondary: #b7df4a;
+  --accent: #f4f8e8;
+  --bg: #f6fbf5;
+  --text: #203126;
   --card: #ffffff;
 }
 
@@ -12,17 +14,21 @@ body {
   margin: 0;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 85% 10%, rgba(183, 223, 74, 0.25), transparent 35%),
+    radial-gradient(circle at 10% 90%, rgba(44, 141, 79, 0.12), transparent 40%),
+    var(--bg);
   line-height: 1.6;
 }
 
-a { color: var(--primary); text-decoration: none; }
+a { color: var(--primary-dark); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 header {
-  background: linear-gradient(120deg, #0f3258, #1c5c9e);
+  background: linear-gradient(120deg, #1e6a3c, #2c8d4f 55%, #4daf62);
   color: white;
-  padding: 1.2rem 1rem 2rem;
+  padding: 1.2rem 1rem 2.2rem;
+  border-bottom: 4px solid var(--secondary);
 }
 
 .nav {
@@ -44,11 +50,13 @@ header {
 }
 
 .brand img {
-  width: 64px;
-  height: auto;
-  background: white;
-  border-radius: 0.5rem;
-  padding: 0.25rem;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 24px rgba(18, 56, 32, 0.28);
+  background: #ffffff;
 }
 
 nav ul {
@@ -62,6 +70,13 @@ nav ul {
 nav a {
   color: white;
   font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.45rem;
+}
+
+nav a:hover {
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .hero {
@@ -89,10 +104,11 @@ main {
   background: var(--card);
   border-radius: 0.9rem;
   padding: 1rem;
-  box-shadow: 0 8px 22px rgba(15, 50, 88, 0.08);
+  border: 1px solid rgba(44, 141, 79, 0.15);
+  box-shadow: 0 10px 24px rgba(24, 62, 37, 0.08);
 }
 
-.card h3 { margin-top: 0; }
+.card h3 { margin-top: 0; color: var(--primary-dark); }
 
 .button {
   display: inline-block;
@@ -100,19 +116,24 @@ main {
   padding: 0.55rem 0.9rem;
   border-radius: 0.5rem;
   background: var(--secondary);
-  color: #1a1a1a;
+  color: #1a2c1f;
   font-weight: 700;
+}
+
+.button:hover {
+  text-decoration: none;
+  background: #cbe96f;
 }
 
 .section-title {
   margin-top: 2rem;
-  color: #0f3258;
+  color: var(--primary-dark);
 }
 
 footer {
   margin-top: 2rem;
-  background: #0f3258;
-  color: #dbe7f3;
+  background: #1f6b3b;
+  color: #deefdf;
   padding: 1.3rem 1rem;
 }
 
