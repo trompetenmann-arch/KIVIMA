@@ -1,0 +1,126 @@
+:root {
+  --primary: #1c5c9e;
+  --secondary: #f3b33d;
+  --bg: #f7f9fc;
+  --text: #1f2937;
+  --card: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+header {
+  background: linear-gradient(120deg, #0f3258, #1c5c9e);
+  color: white;
+  padding: 1.2rem 1rem 2rem;
+}
+
+.nav {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.brand img {
+  width: 64px;
+  height: auto;
+  background: white;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+nav a {
+  color: white;
+  font-weight: 600;
+}
+
+.hero {
+  max-width: 1080px;
+  margin: 1.8rem auto 0;
+}
+
+.hero h1 { margin-bottom: 0.6rem; font-size: clamp(1.8rem, 3vw, 2.8rem); }
+.hero p { max-width: 760px; margin-top: 0; }
+
+main {
+  max-width: 1080px;
+  margin: -1rem auto 0;
+  padding: 0 1rem 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 0.9rem;
+  padding: 1rem;
+  box-shadow: 0 8px 22px rgba(15, 50, 88, 0.08);
+}
+
+.card h3 { margin-top: 0; }
+
+.button {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.5rem;
+  background: var(--secondary);
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.section-title {
+  margin-top: 2rem;
+  color: #0f3258;
+}
+
+footer {
+  margin-top: 2rem;
+  background: #0f3258;
+  color: #dbe7f3;
+  padding: 1.3rem 1rem;
+}
+
+footer .inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.list-clean {
+  padding-left: 1.1rem;
+}
