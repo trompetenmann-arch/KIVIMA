@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Punktmuster Lernumgebung</title>
+<style>
+body{font-family:Arial;margin:20px}
+.topbar{display:flex;gap:10px;margin-bottom:15px}
+.env-btn{padding:6px 12px;border:1px solid #666;border-radius:6px;background:#eee;cursor:pointer}
+.env-btn.active{background:#dfe9ff;font-weight:bold}
+#container{display:flex;gap:30px}
+canvas{border:1px solid #444;background:white;cursor:grab}
+.palette{display:flex;gap:8px;margin:8px 0}
+.color-btn{width:26px;height:26px;border-radius:50%;border:2px solid #666;cursor:pointer}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,140px);gap:10px}
+.thumb{border:1px solid #aaa;border-radius:6px;padding:6px;background:#fafafa}
+.thumb img{width:100%;border:1px solid #bbb;cursor:pointer}
+.thumb-title{font-size:12px;margin-top:4px}
+.small-btn{font-size:11px;padding:3px 6px;margin-top:4px;margin-right:4px}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center}
+.modal-box{background:white;padding:20px;border-radius:10px;width:320px}
+.formula{font-size:20px;margin:10px 0}
+input.small{width:40px;font-size:18px;text-align:center}
+</style>
+</head>
+
+<body>
+
+<h2>Punktmuster erforschen</h2>
+
+<div class="topbar">
+<button class="env-btn active" onclick="switchEnv('env13')" id="b13">13 Punkte</button>
+<button class="env-btn" onclick="switchEnv('env17')" id="b17">17 Punkte</button>
+<button class="env-btn" onclick="switchEnv('env29')" id="b29">29 Punkte</button>
+</div>
+
+<div id="container">
+
+<div>
+<canvas id="grid" width="420" height="420"></canvas>
+<div class="palette" id="palette"></div>
+<button onclick="prepareScreenshot()">Screenshot speichern</button>
+<button onclick="resetEnv()">Startmuster</button>
+</div>
+
+<div>
+<h3>Galerie</h3>
+<div class="gallery" id="gallery"></div>
+</div>
+
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-box">
+<h3>Muster benennen</h3>
+<div class="formula">
+<input class="small" id="f1"> + 4 * ( <input class="small" id="f2"> * <input class="small" id="f3"> )
+</div>
+<button onclick="confirmName()">Speichern</button>
+<button onclick="closeModal()">Abbrechen</button>
+</div>
+</div>
+
+<script>
+
+const canvas=document.getElementById("grid")
+const ctx=canvas.getContext("2d")
+
+const colors=["#000","#ff0000","#1e88e5","#43a047","#fdd835","#8e24aa","#fb8c00"]
+
+const state={
+env:"env13",
+selected:[],
+activeColor:"#ff0000",
+renameIndex:null,
+env13:{points:[],gallery:[]},
+env17:{points:[],gallery:[]},
+env29:{points:[],gallery:[]}
+}
+
+function gridRadius(){
+if(state.env==="env13")return 3
+if(state.env==="env17")return 4
+return 7
+}
+
+function spacing(){
+return canvas.width/(gridRadius()*2+2)
+}
+
+function gridToPixel(v){
+return (v+gridRadius()+1)*spacing()
+}
+
+function pixelToGrid(p){
+return Math.round(p/spacing())-(gridRadius()+1)
+}
+
+function cross(len){
+let pts=[{x:0,y:0,color:"#000"}]
+for(let i=1;i<=len;i++){
+pts.push({x:0,y:i,color:"#ff0000"})
+pts.push({x:0,y:-i,color:"#ff0000"})
+pts.push({x:i,y:0,color:"#ff0000"})
+pts.push({x:-i,y:0,color:"#ff0000"})
+}
+return pts
+}
+
+function init(){
+state.env13.points=cross(3)
+state.env17.points=cross(4)
+state.env29.points=cross(7)
+buildPalette()
+draw()
+}
+
+function points(){return state[state.env].points}
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
+
+let r=gridRadius()
+
+ctx.fillStyle="#bbb"
+for(let x=-r;x<=r;x++){
+for(let y=-r;y<=r;y++){
+ctx.beginPath()
+ctx.arc(gridToPixel(x),gridToPixel(y),3,0,Math.PI*2)
+ctx.fill()
+}
+}
+
+for(let p of points()){
+ctx.beginPath()
+ctx.arc(gridToPixel(p.x),gridToPixel(p.y),10,0,Math.PI*2)
+ctx.fillStyle=p.color
+ctx.fill()
+ctx.stroke()
+
+if(state.selected.includes(p)){
+ctx.beginPath()
+ctx.arc(gridToPixel(p.x),gridToPixel(p.y),14,0,Math.PI*2)
+ctx.strokeStyle="#222"
+ctx.lineWidth=2
+ctx.stroke()
+}
+}
+
+}
+
+function buildPalette(){
+
+let pal=document.getElementById("palette")
+
+colors.forEach(c=>{
+
+let b=document.createElement("button")
+b.className="color-btn"
+b.style.background=c
+
+b.onclick=()=>{
+state.activeColor=c
+state.selected.forEach(p=>p.color=c)
+draw()
+}
+
+pal.appendChild(b)
+
+})
+
+}
+
+function pointAt(x,y){
+
+for(let p of points()){
+let dx=gridToPixel(p.x)-x
+let dy=gridToPixel(p.y)-y
+if(Math.sqrt(dx*dx+dy*dy)<12)return p
+}
+return null
+}
+
+let drag=null
+
+canvas.onmousedown=e=>{
+
+let rect=canvas.getBoundingClientRect()
+let x=e.clientX-rect.left
+let y=e.clientY-rect.top
+
+let p=pointAt(x,y)
+drag=p
+
+if(e.shiftKey){
+if(p){
+if(state.selected.includes(p))
+state.selected=state.selected.filter(q=>q!==p)
+else state.selected.push(p)
+}
+}else{
+state.selected=p?[p]:[]
+}
+
+draw()
+}
+
+canvas.onmousemove=e=>{
+
+if(!drag)return
+if(e.buttons!==1)return
+
+let rect=canvas.getBoundingClientRect()
+let x=e.clientX-rect.left
+let y=e.clientY-rect.top
+
+let gx=pixelToGrid(x)
+let gy=pixelToGrid(y)
+
+if(Math.abs(gx)<=gridRadius() && Math.abs(gy)<=gridRadius()){
+drag.x=gx
+drag.y=gy
+draw()
+}
+
+}
+
+canvas.onmouseup=()=>drag=null
+
+function switchEnv(e){
+
+state.env=e
+state.selected=[]
+
+document.getElementById("b13").classList.toggle("active",e==="env13")
+document.getElementById("b17").classList.toggle("active",e==="env17")
+document.getElementById("b29").classList.toggle("active",e==="env29")
+
+renderGallery()
+draw()
+
+}
+
+function resetEnv(){
+
+if(state.env==="env13")state.env13.points=cross(3)
+if(state.env==="env17")state.env17.points=cross(4)
+if(state.env==="env29")state.env29.points=cross(7)
+
+state.selected=[]
+draw()
+
+}
+
+let pendingImage=null
+
+function prepareScreenshot(){
+
+pendingImage=canvas.toDataURL()
+state.renameIndex=null
+
+openModal()
+
+}
+
+function renameScreenshot(i){
+
+state.renameIndex=i
+openModal()
+
+}
+
+function openModal(){
+
+document.getElementById("f1").value=""
+document.getElementById("f2").value=""
+document.getElementById("f3").value=""
+
+document.getElementById("modal").style.display="flex"
+
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none"
+}
+
+function confirmName(){
+
+let a=document.getElementById("f1").value
+let b=document.getElementById("f2").value
+let c=document.getElementById("f3").value
+
+let title=a+" + 4 * ("+b+" * "+c+")"
+
+if(state.renameIndex!==null){
+state[state.env].gallery[state.renameIndex].title=title
+}else{
+state[state.env].gallery.push({
+title:title,
+image:pendingImage,
+config:JSON.parse(JSON.stringify(points()))
+})
+}
+
+closeModal()
+renderGallery()
+
+}
+
+function renderGallery(){
+
+let g=document.getElementById("gallery")
+g.innerHTML=""
+
+state[state.env].gallery.forEach((item,i)=>{
+
+let card=document.createElement("div")
+card.className="thumb"
+
+let img=document.createElement("img")
+img.src=item.image
+
+img.onclick=()=>{
+state[state.env].points=JSON.parse(JSON.stringify(item.config))
+state.selected=[]
+draw()
+}
+
+let title=document.createElement("div")
+title.className="thumb-title"
+title.textContent=item.title
+
+let rename=document.createElement("button")
+rename.className="small-btn"
+rename.textContent="umbenennen"
+rename.onclick=()=>renameScreenshot(i)
+
+let del=document.createElement("button")
+del.className="small-btn"
+del.textContent="löschen"
+del.onclick=()=>{
+state[state.env].gallery.splice(i,1)
+renderGallery()
+}
+
+card.appendChild(img)
+card.appendChild(title)
+card.appendChild(rename)
+card.appendChild(del)
+
+g.appendChild(card)
+
+})
+
+}
+
+init()
+
+</script>
+</body>
+</html>
