@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KIVIMA – Seminar</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="KIVIMA_ICON.png" />
 </head>
 <body>
   <header>
@@ -13,14 +14,21 @@
         <img src="assets/kivima-kiwi-logo.svg" alt="KIVIMA-Logo mit grüner Kiwi" />
         <span>KIVIMA • teutolab mathematik</span>
       </div>
-      <nav>
-        <ul>
-          <li><a href="index.html">Start</a></li>
-          <li><a href="materialien.html">Materialien</a></li>
-          <li><a href="seminar.html">Seminar</a></li>
-          <li><a href="mitmachen.html">Mitmachen</a></li>
-        </ul>
-      </nav>
+      <div class="nav-right">
+        <div class="language-switch" aria-label="Sprachauswahl">
+          <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" title="Deutsch">🇩🇪</button>
+          <button type="button" class="lang-btn" data-lang="es" aria-label="Español" title="Español">🇪🇸</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-label="English" title="English">🇬🇧</button>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="index.html" data-i18n="navStart">Start</a></li>
+            <li><a href="materialien.html" data-i18n="navMaterialien">Materialien</a></li>
+            <li><a href="seminar.html" aria-current="page" data-i18n="navSeminar">Seminar</a></li>
+            <li><a href="mitmachen.html" data-i18n="navMitmachen">Mitmachen</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
     <div class="hero">
       <h1>Ablauf des Seminars</h1>
@@ -57,5 +65,6 @@
   <footer>
     <div class="inner">KIVIMA – Praxisorientierte Lerngelegenheiten im Lehramtsstudium Mathematik.</div>
   </footer>
+  <script src="script.js"></script>
 </body>
 </html>
