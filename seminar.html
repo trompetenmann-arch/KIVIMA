@@ -5,48 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KIVIMA – Seminar</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="KIVIMA_ICON.png" />
 </head>
 <body>
   <header>
     <div class="nav">
       <div class="brand">
-        <img src="assets/kivima-kiwi-logo.svg" alt="KIVIMA-Logo mit grüner Kiwi" />
+        <img src="KIVIMA_ICON.png" alt="KIVIMA-Logo" />
         <span>KIVIMA • teutolab mathematik</span>
       </div>
-      <nav>
-        <ul>
-          <li><a href="index.html">Start</a></li>
-          <li><a href="materialien.html">Materialien</a></li>
-          <li><a href="seminar.html">Seminar</a></li>
-          <li><a href="mitmachen.html">Mitmachen</a></li>
-        </ul>
-      </nav>
+      <div class="nav-right">
+        <div class="language-switch" aria-label="Sprachauswahl">
+          <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" title="Deutsch">🇩🇪</button>
+          <button type="button" class="lang-btn" data-lang="es" aria-label="Español" title="Español">🇪🇸</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-label="English" title="English">🇬🇧</button>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="index.html" data-i18n="navStart">Start</a></li>
+            <li><a href="materialien.html" data-i18n="navMaterialien">Materialien</a></li>
+            <li><a href="seminar.html" aria-current="page" data-i18n="navSeminar">Seminar</a></li>
+            <li><a href="mitmachen.html" data-i18n="navMitmachen">Mitmachen</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
     <div class="hero">
-      <h1>Ablauf des Seminars</h1>
-      <p>Das Seminar ist in drei aufeinander bezogene Phasen gegliedert.</p>
+      <h1 data-i18n="semHeroTitle">Ablauf des Seminars</h1>
+      <p data-i18n="semHeroText">Das Seminar ist in drei aufeinander bezogene Phasen gegliedert.</p>
     </div>
   </header>
 
   <main>
     <div class="grid">
       <article class="card">
-        <h3>1) Entwicklungsphase</h3>
-        <p>
+        <h3 data-i18n="semPhase1Title">1) Entwicklungsphase</h3>
+        <p data-i18n="semPhase1Text">
           Einführung in KI-Werkzeuge (z. B. BIKI), Entwicklung von Visualisierungsideen und
           technischer Aufbau erster Prototypen.
         </p>
       </article>
       <article class="card">
-        <h3>2) Erprobung im teutolab mathematik</h3>
-        <p>
+        <h3 data-i18n="semPhase2Title">2) Erprobung im teutolab mathematik</h3>
+        <p data-i18n="semPhase2Text">
           Durchführung von Stationen mit Schüler*innen der Klassen 9/10,
           Beobachtung und direkte Reflexion in den Studierendenteams.
         </p>
       </article>
       <article class="card">
-        <h3>3) Nachbereitung & OER</h3>
-        <p>
+        <h3 data-i18n="semPhase3Title">3) Nachbereitung & OER</h3>
+        <p data-i18n="semPhase3Text">
           Überarbeitung der Materialien inklusive didaktischer Kommentare und Veröffentlichung
           ausgewählter Ergebnisse als offen zugängliche Ressourcen.
         </p>
@@ -55,7 +63,8 @@
   </main>
 
   <footer>
-    <div class="inner">KIVIMA – Praxisorientierte Lerngelegenheiten im Lehramtsstudium Mathematik.</div>
+    <div class="inner" data-i18n="semFooter">KIVIMA – Praxisorientierte Lerngelegenheiten im Lehramtsstudium Mathematik.</div>
   </footer>
+  <script src="script.js"></script>
 </body>
 </html>

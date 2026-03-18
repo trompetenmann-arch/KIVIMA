@@ -5,81 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KIVIMA – Mitmachen</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="KIVIMA_ICON.png" />
 </head>
 <body>
   <header>
     <div class="nav">
       <div class="brand">
-        <img src="assets/kivima-kiwi-logo.svg" alt="KIVIMA-Logo mit grüner Kiwi" />
+        <img src="KIVIMA_ICON.png" alt="KIVIMA-Logo" />
         <span>KIVIMA • teutolab mathematik</span>
       </div>
-      <nav>
-        <ul>
-          <li><a href="index.html">Start</a></li>
-          <li><a href="materialien.html">Materialien</a></li>
-          <li><a href="seminar.html">Seminar</a></li>
-          <li><a href="mitmachen.html">Mitmachen</a></li>
-        </ul>
-      </nav>
+      <div class="nav-right">
+        <div class="language-switch" aria-label="Sprachauswahl">
+          <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" title="Deutsch">🇩🇪</button>
+          <button type="button" class="lang-btn" data-lang="es" aria-label="Español" title="Español">🇪🇸</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-label="English" title="English">🇬🇧</button>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="index.html" data-i18n="navStart">Start</a></li>
+            <li><a href="materialien.html" data-i18n="navMaterialien">Materialien</a></li>
+            <li><a href="seminar.html" data-i18n="navSeminar">Seminar</a></li>
+            <li><a href="mitmachen.html" aria-current="page" data-i18n="navMitmachen">Mitmachen</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
     <div class="hero">
-      <h1>Mitmachen im Projekt</h1>
-      <p>Für interessierte Schulen, Lehrkräfte, Studierende und Projektpartner*innen.</p>
+      <h1 data-i18n="mitHeroTitle">Mitmachen im Projekt</h1>
+      <p data-i18n="mitHeroText">Für interessierte Schulen, Lehrkräfte, Studierende und Projektpartner*innen.</p>
     </div>
   </header>
 
   <main>
     <div class="card">
-      <h2>Interesse an einer Teilnahme?</h2>
-      <p>
+      <h2 data-i18n="mitInterestTitle">Interesse an einer Teilnahme?</h2>
+      <p data-i18n="mitInterestText">
         Sie möchten mit Ihrer Klasse am Teutolab-Angebot teilnehmen oder sich über das Seminar informieren?
         Dann melden Sie sich gerne beim Projektteam.
       </p>
-      <p>
+      <p data-i18n="mitContactText">
         Kontakt: <a href="mailto:vkatter@uni-bielefeld.de">vkatter@uni-bielefeld.de</a>
       </p>
     </div>
 
-
-
-    <h2 class="section-title">Wer wir sind</h2>
+    <h2 class="section-title" data-i18n="mitWhoTitle">Wer wir sind</h2>
     <div class="team-grid">
       <article class="card profile-card">
         <img src="Impressum/Valentin_Katter_Kozma.png" alt="Portrait von Valentin Katter" />
         <h3>Valentin Katter</h3>
-        <p>Postdoc am Institut für Didaktik der Mathematik.</p>
-        <p><strong>Schwerpunkte:</strong> KI im Mathematikunterricht, Trigonometrie, Grundvorstellungen, Lehrerbildung</p>
-        <p><strong>E-Mail:</strong> <a href="mailto:vkatter@uni-bielefeld.de">vkatter@uni-bielefeld.de</a></p>
+        <p data-i18n="mitValRole">Postdoc am Institut für Didaktik der Mathematik.</p>
+        <p data-i18n="mitValFocus"><strong>Schwerpunkte:</strong> KI im Mathematikunterricht, Trigonometrie, Grundvorstellungen, Lehrerbildung</p>
+        <p data-i18n="mitValMail"><strong>E-Mail:</strong> <a href="mailto:vkatter@uni-bielefeld.de">vkatter@uni-bielefeld.de</a></p>
         <p>
-          <a href="https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=78762114" target="_blank" rel="noopener noreferrer">Uni-Seite</a>
+          <a href="https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=78762114" target="_blank" rel="noopener noreferrer" data-i18n="mitUniPage">Uni-Seite</a>
           ·
-          <a href="https://trompetenmann-arch.github.io/vkatter/" target="_blank" rel="noopener noreferrer">Homepage</a>
+          <a href="https://trompetenmann-arch.github.io/vkatter/" target="_blank" rel="noopener noreferrer" data-i18n="mitHomePage">Homepage</a>
         </p>
       </article>
       <article class="card profile-card">
         <img src="Impressum/Nicolas Alarcon.png" alt="Portrait von Nicolas Alarcón" />
         <h3>Nicolás Alejandro Alarcón Relmucao</h3>
-        <p>Postdoc am Institut für Didaktik der Mathematik.</p>
-        <p><strong>Schwerpunkt:</strong> Grundvorstellung der Exponentialfunktion</p>
-        <p><strong>E-Mail:</strong> <a href="mailto:nicolas.alarcon@uni-bielefeld.de">nicolas.alarcon@uni-bielefeld.de</a></p>
+        <p data-i18n="mitNicRole">Postdoc am Institut für Didaktik der Mathematik.</p>
+        <p data-i18n="mitNicFocus"><strong>Schwerpunkt:</strong> Grundvorstellung der Exponentialfunktion</p>
+        <p data-i18n="mitNicMail"><strong>E-Mail:</strong> <a href="mailto:nicolas.alarcon@uni-bielefeld.de">nicolas.alarcon@uni-bielefeld.de</a></p>
         <p>
-          <a href="https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=134662610" target="_blank" rel="noopener noreferrer">Uni-Seite</a>
+          <a href="https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=134662610" target="_blank" rel="noopener noreferrer" data-i18n="mitUniPage">Uni-Seite</a>
         </p>
       </article>
     </div>
 
-    <h2 class="section-title">Für wen ist die Seite gedacht?</h2>
+    <h2 class="section-title" data-i18n="mitAudienceTitle">Für wen ist die Seite gedacht?</h2>
     <div class="card">
       <ul class="list-clean">
-        <li>Lehrkräfte und Schulen der Sekundarstufe I</li>
-        <li>Lehramtsstudierende im Fach Mathematik</li>
-        <li>Interessierte an KI-gestützter Materialentwicklung</li>
+        <li data-i18n="mitAudience1">Lehrkräfte und Schulen der Sekundarstufe I</li>
+        <li data-i18n="mitAudience2">Lehramtsstudierende im Fach Mathematik</li>
+        <li data-i18n="mitAudience3">Interessierte an KI-gestützter Materialentwicklung</li>
       </ul>
     </div>
   </main>
 
   <footer>
-    <div class="inner">KIVIMA in Kooperation mit dem teutolab mathematik.</div>
+    <div class="inner" data-i18n="mitFooter">KIVIMA in Kooperation mit dem teutolab mathematik.</div>
   </footer>
+  <script src="script.js"></script>
 </body>
 </html>

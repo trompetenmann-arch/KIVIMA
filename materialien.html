@@ -5,63 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KIVIMA – Materialien</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="KIVIMA_ICON.png" />
 </head>
 <body>
   <header>
     <div class="nav">
       <div class="brand">
-        <img src="assets/kivima-kiwi-logo.svg" alt="KIVIMA-Logo mit grüner Kiwi" />
+        <img src="KIVIMA_ICON.png" alt="KIVIMA-Logo" />
         <span>KIVIMA • teutolab mathematik</span>
       </div>
-      <nav>
-        <ul>
-          <li><a href="index.html">Start</a></li>
-          <li><a href="materialien.html">Materialien</a></li>
-          <li><a href="seminar.html">Seminar</a></li>
-          <li><a href="mitmachen.html">Mitmachen</a></li>
-        </ul>
-      </nav>
+      <div class="nav-right">
+        <div class="language-switch" aria-label="Sprachauswahl">
+          <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" title="Deutsch">🇩🇪</button>
+          <button type="button" class="lang-btn" data-lang="es" aria-label="Español" title="Español">🇪🇸</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-label="English" title="English">🇬🇧</button>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="index.html" data-i18n="navStart">Start</a></li>
+            <li><a href="materialien.html" aria-current="page" data-i18n="navMaterialien">Materialien</a></li>
+            <li><a href="seminar.html" data-i18n="navSeminar">Seminar</a></li>
+            <li><a href="mitmachen.html" data-i18n="navMitmachen">Mitmachen</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
     <div class="hero">
-      <h1>Materialien</h1>
-      <p>Auf dieser Unterseite stellen wir aktuelle Dokumente aus dem KIVIMA-Projekt bereit.</p>
+      <h1 data-i18n="matHeroTitle">Materialien</h1>
+      <p data-i18n="matHeroText">Auf dieser Unterseite stellen wir aktuelle Dokumente aus dem KIVIMA-Projekt bereit.</p>
     </div>
   </header>
 
   <main>
-    <h2 class="section-title">Figurierte Zahlen</h2>
+    <h2 class="section-title" data-i18n="matSectionFig">Figurierte Zahlen</h2>
     <div class="grid">
       <article class="card">
-        <h3>Arbeitsblätter (DOCX)</h3>
+        <h3 data-i18n="matDocTitle">Arbeitsblätter (DOCX)</h3>
         <ul class="list-clean">
-          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_1_figurierte_Zahlen.docx" download>Teil 1: Figurierte Zahlen</a></li>
-          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_2_pythagoräische_Tripel.docx" download>Teil 2: Pythagoräische Tripel</a></li>
-          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_3_Summe_zweier_Quadrate.docx" download>Teil 3: Summe zweier Quadrate</a></li>
-          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_4_Beweis_durch_Windmühlen.docx" download>Teil 4: Beweis durch Windmühlen</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_1_figurierte_Zahlen.docx" download data-i18n="matPart1">Teil 1: Figurierte Zahlen</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_2_pythagoräische_Tripel.docx" download data-i18n="matPart2">Teil 2: Pythagoräische Tripel</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_3_Summe_zweier_Quadrate.docx" download data-i18n="matPart3">Teil 3: Summe zweier Quadrate</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/teutolab_figurierte%20Zahlen_Teil_4_Beweis_durch_Windmühlen.docx" download data-i18n="matPart4">Teil 4: Beweis durch Windmühlen</a></li>
         </ul>
       </article>
       <article class="card">
-        <h3>Digitale Lerneinheiten (HTML)</h3>
+        <h3 data-i18n="matDigitalTitle">Digitale Lerneinheiten (HTML)</h3>
         <ul class="list-clean">
-          <li><a href="stationen/figurierte%20Zahlen/1.0_Codex_Quadratzahlen.html">Lernumgebung: Quadratzahlen</a></li>
-          <li><a href="stationen/figurierte%20Zahlen/punktmuster_lernumgebung_formel_umbenennen.html">Lernumgebung: Punktmuster und Formeln</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/1.0_Codex_Quadratzahlen.html" data-i18n="matLearn1">Lernumgebung: Quadratzahlen</a></li>
+          <li><a href="stationen/figurierte%20Zahlen/punktmuster_lernumgebung_formel_umbenennen.html" data-i18n="matLearn2">Lernumgebung: Punktmuster und Formeln</a></li>
         </ul>
       </article>
     </div>
 
-    <h2 class="section-title">Geplante Erweiterungen</h2>
+    <h2 class="section-title" data-i18n="matPlanTitle">Geplante Erweiterungen</h2>
     <div class="card">
       <ul class="list-clean">
-        <li>Interaktive Visualisierungen aus dem Seminar (HTML/JavaScript)</li>
-        <li>Didaktische Kommentare zu den Materialien</li>
-        <li>Prompt-Dokumentationen zur KI-gestützten Erstellung</li>
-        <li>Verlinkung veröffentlichter OER-Versionen (z. B. ORCA.nrw)</li>
+        <li data-i18n="matPlan1">Interaktive Visualisierungen aus dem Seminar (HTML/JavaScript)</li>
+        <li data-i18n="matPlan2">Didaktische Kommentare zu den Materialien</li>
+        <li data-i18n="matPlan3">Prompt-Dokumentationen zur KI-gestützten Erstellung</li>
+        <li data-i18n="matPlan4">Verlinkung veröffentlichter OER-Versionen (z. B. ORCA.nrw)</li>
       </ul>
     </div>
   </main>
 
   <footer>
-    <div class="inner">KIVIMA – Materialien aus dem Seminar und dem teutolab mathematik.</div>
+    <div class="inner" data-i18n="matFooter">KIVIMA – Materialien aus dem Seminar und dem teutolab mathematik.</div>
   </footer>
+  <script src="script.js"></script>
 </body>
 </html>
