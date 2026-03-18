@@ -59,6 +59,42 @@ header {
   background: #ffffff;
 }
 
+.nav-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+
+.language-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.lang-btn {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 2rem;
+  height: 1.5rem;
+  border-radius: 0.35rem;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lang-btn:hover,
+.lang-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.28);
+  outline: none;
+}
+
+.lang-btn.active {
+  border-color: var(--secondary);
+  background: rgba(183, 223, 74, 0.3);
+}
+
 nav ul {
   display: flex;
   list-style: none;
@@ -197,6 +233,15 @@ footer .inner {
 
 
 @media (max-width: 640px) {
+  .nav-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  nav ul {
+    flex-wrap: wrap;
+  }
+
   .team-grid {
     grid-template-columns: 1fr;
   }
