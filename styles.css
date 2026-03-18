@@ -50,13 +50,14 @@ header {
 }
 
 .brand img {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.85);
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  border-radius: 0.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.78);
   box-shadow: 0 8px 24px rgba(18, 56, 32, 0.28);
   background: #ffffff;
+  padding: 0.2rem;
 }
 
 .nav-right {
