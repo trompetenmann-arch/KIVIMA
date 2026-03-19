@@ -175,6 +175,9 @@ main {
 
 .process-figure img {
   width: 100%;
+  max-width: 900px;
+  display: block;
+  margin: 0 auto;
   border-radius: 0.8rem;
   border: 1px solid rgba(44, 141, 79, 0.25);
   box-shadow: 0 12px 28px rgba(24, 62, 37, 0.14);
