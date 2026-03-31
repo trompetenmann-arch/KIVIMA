@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punktmuster Lernumgebung</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px}
+h2{margin-top:0}
+.topbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.env-btn{padding:7px 12px;border:1px solid #666;border-radius:7px;background:#eee;cursor:pointer}
+.env-btn.active{background:#dfe9ff;font-weight:bold}
+#container{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+canvas{border:1px solid #444;background:#fff;cursor:grab}
+.palette{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.color-btn{width:28px;height:28px;border-radius:50%;border:2px solid #666;cursor:pointer;box-sizing:border-box}
+.color-btn.active{outline:3px solid #222;outline-offset:2px}
+.controls{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
+.info{font-size:14px;color:#444;max-width:520px;margin-top:8px;line-height:1.4}
+.gallery{display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px;width:640px;min-height:120px}
+.thumb{width:140px;border:1px solid #aaa;border-radius:8px;padding:6px;background:#fafafa;box-sizing:border-box;cursor:grab}
+.thumb.dragging{opacity:0.4}
+.thumb.over-left,.thumb.over-right{outline:3px dashed #666;outline-offset:1px}
+.thumb img{width:100%;border:1px solid #bbb;display:block;cursor:pointer;background:#fff}
+.thumb-title{font-size:12px;margin-top:6px;min-height:30px;word-break:break-word}
+.thumb-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.small-btn{font-size:11px;padding:4px 6px;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center}
+.modal-box{background:white;padding:18px;border-radius:12px;width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.25)}
+.formula{font-size:22px;margin:12px 0}
+input.small{width:54px;font-size:18px;text-align:center}
+@media (max-width:1200px){.gallery{width:100%}}
+</style>
+</head>
+<body>
+<h2>Punktmuster erforschen</h2>
+<div class="topbar">
+  <button class="env-btn active" id="btn-env13" onclick="switchEnv('env13')">n = 13</button>
+  <button class="env-btn" id="btn-env17" onclick="switchEnv('env17')">n = 17</button>
+  <button class="env-btn" id="btn-env29" onclick="switchEnv('env29')">n = 29</button>
+  <button class="env-btn" id="btn-env37" onclick="switchEnv('env37')">n = 37</button>
+  <button class="env-btn" id="btn-env41" onclick="switchEnv('env41')">n = 41</button>
+</div>
+<div id="container">
+  <div>
+    <canvas id="grid" width="460" height="460"></canvas>
+    <div class="palette" id="palette"></div>
+    <div class="controls">
+      <button onclick="prepareScreenshot()">Screenshot speichern</button>
+      <button onclick="resetEnv()">Startmuster laden</button>
+    </div>
+    <div class="info" id="infoText"></div>
+  </div>
+  <div>
+    <h3 id="galleryTitle"></h3>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</div>
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Muster benennen</h3>
+    <div class="formula">
+      <input class="small" id="f1" inputmode="numeric"> + 4 * (
+      <input class="small" id="f2" inputmode="numeric"> *
+      <input class="small" id="f3" inputmode="numeric"> )
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button onclick="confirmName()">Speichern</button>
+      <button onclick="closeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById("grid");
+const ctx=canvas.getContext("2d");
+const colors=["#000000","#ff0000","#1e88e5","#43a047","#fdd835","#8e24aa","#fb8c00"];
+const envMeta={env13:{n:13,arm:3,radius:3},env17:{n:17,arm:4,radius:4},env29:{n:29,arm:7,radius:7},env37:{n:37,arm:9,radius:9},env41:{n:41,arm:10,radius:10}};
+const state={env:"env13",selected:[],activeColor:colors[1],renameIndex:null,pendingImage:null,env13:{points:[],gallery:[]},env17:{points:[],gallery:[]},env29:{points:[],gallery:[]},env37:{points:[],gallery:[]},env41:{points:[],gallery:[]}};
+function deepClone(obj){return JSON.parse(JSON.stringify(obj));}
+function cross(armLength){const pts=[{x:0,y:0,color:"#000000"}];for(let i=1;i<=armLength;i++){pts.push({x:0,y:i,color:"#ff0000"});pts.push({x:0,y:-i,color:"#ff0000"});pts.push({x:i,y:0,color:"#ff0000"});pts.push({x:-i,y:0,color:"#ff0000"});}return pts;}
+function currentPoints(){return state[state.env].points;}
+function currentGallery(){return state[state.env].gallery;}
+function gridRadius(){return envMeta[state.env].radius;}
+function spacing(){return canvas.width/(gridRadius()*2+2);}
+function gridToPixel(v){return (v+gridRadius()+1)*spacing();}
+function pixelToGrid(p){return Math.round(p/spacing())-(gridRadius()+1);}
+function isOccupied(x,y,ignoredPoint=null){return currentPoints().some(p=>p!==ignoredPoint&&p.x===x&&p.y===y);}
+function buildPalette(){const pal=document.getElementById("palette");pal.innerHTML="";colors.forEach(c=>{const b=document.createElement("button");b.className="color-btn";b.style.background=c;if(c===state.activeColor)b.classList.add("active");b.onclick=()=>{state.activeColor=c;document.querySelectorAll(".color-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.selected.forEach(p=>p.color=c);draw();};pal.appendChild(b);});}
+function updateTexts(){const n=envMeta[state.env].n;document.getElementById("galleryTitle").textContent="Galerie – n = "+n;document.getElementById("infoText").textContent="Umgebung n = "+n+". Punkte können verschoben werden und rasten auf Rasterpunkten ein. Mit gedrückter Shift-Taste können mehrere Punkte markiert und gemeinsam gefärbt werden. Punkte können nicht auf bereits besetzte Rasterpunkte gelegt werden. Screenshots lassen sich benennen, umbenennen, durch Anklicken wieder laden und per Drag & Drop von links nach rechts sortieren.";document.querySelectorAll(".env-btn").forEach(btn=>btn.classList.remove("active"));document.getElementById("btn-"+state.env).classList.add("active");}
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);const r=gridRadius();ctx.fillStyle="#bdbdbd";for(let x=-r;x<=r;x++){for(let y=-r;y<=r;y++){ctx.beginPath();ctx.arc(gridToPixel(x),gridToPixel(y),3,0,Math.PI*2);ctx.fill();}}for(const p of currentPoints()){ctx.beginPath();ctx.arc(gridToPixel(p.x),gridToPixel(p.y),10,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();ctx.strokeStyle="#000";ctx.lineWidth=1.2;ctx.stroke();if(state.selected.includes(p)){ctx.beginPath();ctx.arc(gridToPixel(p.x),gridToPixel(p.y),14,0,Math.PI*2);ctx.strokeStyle="#222";ctx.lineWidth=2.2;ctx.stroke();}}}
+function pointAt(x,y){for(const p of currentPoints()){const dx=gridToPixel(p.x)-x;const dy=gridToPixel(p.y)-y;if(Math.sqrt(dx*dx+dy*dy)<12)return p;}return null;}
+let dragPoint=null;
+canvas.addEventListener("mousedown",e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const p=pointAt(x,y);dragPoint=p;if(e.shiftKey){if(p){if(state.selected.includes(p)){state.selected=state.selected.filter(q=>q!==p);}else{state.selected.push(p);}}}else{state.selected=p?[p]:[];}draw();});
+canvas.addEventListener("mousemove",e=>{if(!dragPoint||e.buttons!==1)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const gx=pixelToGrid(x);const gy=pixelToGrid(y);if(Math.abs(gx)<=gridRadius()&&Math.abs(gy)<=gridRadius()&&!isOccupied(gx,gy,dragPoint)){dragPoint.x=gx;dragPoint.y=gy;draw();}});
+canvas.addEventListener("mouseup",()=>{dragPoint=null;});
+canvas.addEventListener("mouseleave",()=>{dragPoint=null;});
+function switchEnv(env){state.env=env;state.selected=[];state.renameIndex=null;updateTexts();renderGallery();draw();}
+function resetEnv(){state[state.env].points=cross(envMeta[state.env].arm);state.selected=[];draw();}
+function prepareScreenshot(){state.pendingImage=canvas.toDataURL("image/png");state.renameIndex=null;document.getElementById("modalTitle").textContent="Muster benennen";document.getElementById("f1").value="";document.getElementById("f2").value="";document.getElementById("f3").value="";document.getElementById("modal").style.display="flex";}
+function renameScreenshot(index){state.renameIndex=index;document.getElementById("modalTitle").textContent="Screenshot umbenennen";const title=currentGallery()[index].title||"";const m=title.match(/^\s*(.*?)\s*\+\s*4\s*\*\s*\(\s*(.*?)\s*\*\s*(.*?)\s*\)\s*$/);document.getElementById("f1").value=m?m[1]:"";document.getElementById("f2").value=m?m[2]:"";document.getElementById("f3").value=m?m[3]:"";document.getElementById("modal").style.display="flex";}
+function closeModal(){document.getElementById("modal").style.display="none";}
+function confirmName(){const a=document.getElementById("f1").value.trim();const b=document.getElementById("f2").value.trim();const c=document.getElementById("f3").value.trim();const title=a+" + 4 * ("+b+" * "+c+")";if(state.renameIndex!==null){currentGallery()[state.renameIndex].title=title;}else{currentGallery().push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),title:title,image:state.pendingImage,config:deepClone(currentPoints())});}closeModal();renderGallery();}
+function loadScreenshot(index){state[state.env].points=deepClone(currentGallery()[index].config);state.selected=[];draw();}
+function deleteScreenshot(index){currentGallery().splice(index,1);renderGallery();}
+function moveGalleryItem(fromId,toId,before){const gal=currentGallery();const fromIndex=gal.findIndex(x=>x.id===fromId);const toIndex=gal.findIndex(x=>x.id===toId);if(fromIndex<0||toIndex<0||fromIndex===toIndex)return;const [item]=gal.splice(fromIndex,1);let insertIndex=gal.findIndex(x=>x.id===toId);if(!before)insertIndex+=1;gal.splice(insertIndex,0,item);renderGallery();}
+function clearDragMarkers(){document.querySelectorAll(".thumb").forEach(el=>{el.classList.remove("over-left");el.classList.remove("over-right");});}
+function renderGallery(){const g=document.getElementById("gallery");g.innerHTML="";currentGallery().forEach((item,index)=>{const card=document.createElement("div");card.className="thumb";card.draggable=true;card.dataset.id=item.id;card.addEventListener("dragstart",()=>{card.classList.add("dragging");});card.addEventListener("dragend",()=>{card.classList.remove("dragging");clearDragMarkers();});card.addEventListener("dragover",e=>{e.preventDefault();const dragging=document.querySelector(".thumb.dragging");if(!dragging||dragging===card)return;clearDragMarkers();const rect=card.getBoundingClientRect();const before=(e.clientX-rect.left)<rect.width/2;card.classList.add(before?"over-left":"over-right");});card.addEventListener("dragleave",()=>{card.classList.remove("over-left","over-right");});card.addEventListener("drop",e=>{e.preventDefault();const dragging=document.querySelector(".thumb.dragging");if(!dragging||dragging===card)return;const rect=card.getBoundingClientRect();const before=(e.clientX-rect.left)<rect.width/2;clearDragMarkers();moveGalleryItem(dragging.dataset.id,card.dataset.id,before);});const img=document.createElement("img");img.src=item.image;img.alt=item.title;img.title="Klicken zum Laden";img.onclick=()=>loadScreenshot(index);const title=document.createElement("div");title.className="thumb-title";title.textContent=item.title;const actions=document.createElement("div");actions.className="thumb-actions";const renameBtn=document.createElement("button");renameBtn.className="small-btn";renameBtn.textContent="umbenennen";renameBtn.onclick=()=>renameScreenshot(index);const deleteBtn=document.createElement("button");deleteBtn.className="small-btn";deleteBtn.textContent="löschen";deleteBtn.onclick=()=>deleteScreenshot(index);actions.appendChild(renameBtn);actions.appendChild(deleteBtn);card.appendChild(img);card.appendChild(title);card.appendChild(actions);g.appendChild(card);});}
+function init(){for(const key of Object.keys(envMeta)){state[key].points=cross(envMeta[key].arm);}buildPalette();updateTexts();renderGallery();draw();}
+init();
+</script>
+</body>
+</html>
