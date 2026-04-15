@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brüche-Memory – Zweispieler</title>
+
+<style>
+:root{
+  --bg:#f7f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --accent:#f97316;
+  --line:#e5e7eb;
+  --shadow:0 4px 14px rgba(0,0,0,.08);
+  --radius:14px;
+  --gap:12px;
+  --match:#22c55e;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  padding:16px;
+}
+
+.app{
+  width:min(1100px,100%);
+  display:grid;
+  gap:14px;
+}
+
+header{
+  background:#fff;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:14px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+h1{
+  font-size:20px;
+  margin:0;
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.stats{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  font-size:14px;
+  color:var(--muted);
+}
+
+select, button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:white;
+  cursor:pointer;
+  font-size:14px;
+}
+
+button.primary{
+  background:var(--accent);
+  color:white;
+  border:none;
+}
+
+.board{
+  background:#fff;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px;
+  display:grid;
+  gap:var(--gap);
+  justify-content:center;
+}
+
+/* Karten: exakt 3 cm x 3 cm */
+.card{
+  width:3cm;
+  height:3cm;
+  perspective:800px;
+}
+
+.inner{
+  width:100%;
+  height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform .4s;
+}
+
+.card.flipped .inner,
+.card.matched .inner{
+  transform:rotateY(180deg);
+}
+
+.face{
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  backface-visibility:hidden;
+  border:1px solid var(--line);
+}
+
+.front{
+  background:linear-gradient(135deg,#fde68a,#fed7aa);
+}
+
+.back{
+  transform:rotateY(180deg);
+  background:#fff;
+}
+
+/* Effekt bei gefundenen Paaren */
+.card.matched{
+  animation:matchEffect 0.6s ease;
+}
+
+@keyframes matchEffect{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.1); box-shadow:0 0 15px var(--match);}
+  100%{transform:scale(1); box-shadow:0 0 10px var(--match);}
+}
+
+.card.matched .back{
+  background:#dcfce7;
+  border:2px solid var(--match);
+}
+
+/* Horizontale Bruchdarstellung */
+.fraction{
+  display:inline-block;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  line-height:1.1;
+}
+
+.fraction .top{
+  display:block;
+  border-bottom:2px solid #000;
+  padding:0 4px 2px;
+}
+
+.fraction .bottom{
+  display:block;
+  padding-top:2px;
+}
+
+.piewrap{
+  width:75%;
+  height:75%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* Responsive Anpassung */
+@media(max-width:600px){
+  .card{
+    width:2.4cm;
+    height:2.4cm;
+  }
+  .fraction{
+    font-size:14px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<header>
+  <h1>Brüche-Memory – Zweispieler</h1>
+
+  <div class="controls">
+    <label for="difficulty">Schwierigkeit:</label>
+    <select id="difficulty">
+      <option value="easy">Leicht (5 Paare)</option>
+      <option value="medium" selected>Mittel (8 Paare)</option>
+      <option value="hard">Schwer (12 Paare)</option>
+    </select>
+    <button class="primary" id="newGame">Neues Spiel</button>
+  </div>
+
+  <div class="stats">
+    <div>Spieler: <strong id="currentPlayer">Spieler 1</strong></div>
+    <div>Punkte Spieler 1: <strong id="score1">0</strong></div>
+    <div>Punkte Spieler 2: <strong id="score2">0</strong></div>
+  </div>
+</header>
+
+<main class="board" id="board"></main>
+</div>
+
+<script>
+function gcd(a,b){
+  while(b){[a,b]=[b,a%b];}
+  return a;
+}
+
+const DIFF_CONFIG={
+  easy:{denoms:[2,3,4],pairs:5},
+  medium:{denoms:[2,3,4,5,6],pairs:8},
+  hard:{denoms:[2,3,4,5,6,8],pairs:12}
+};
+
+let first=null, second=null, lock=false;
+let currentPlayer=1;
+let scores=[0,0];
+let foundPairs=0, totalPairs=0;
+
+function buildPool(denoms){
+  const pool=[];
+  for(const d of denoms){
+    for(let n=1;n<d;n++){
+      if(gcd(n,d)===1){
+        pool.push({n,d,key:`${n}/${d}`});
+      }
+    }
+  }
+  return pool;
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function buildDeck(fractions){
+  const deck=[];
+  fractions.forEach(f=>{
+    deck.push({pair:f.key,type:"text",n:f.n,d:f.d});
+    deck.push({pair:f.key,type:"pie",n:f.n,d:f.d});
+  });
+  shuffle(deck);
+  return deck;
+}
+
+function setBoardLayout(cardCount){
+  const board=document.getElementById("board");
+  let columns=Math.ceil(Math.sqrt(cardCount));
+  board.style.gridTemplateColumns=`repeat(${columns}, auto)`;
+}
+
+function makePieSVG(n,d,size=100){
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 100 100");
+  svg.setAttribute("width",size);
+  svg.setAttribute("height",size);
+
+  const cx=50, cy=50, r=45;
+
+  for(let i=0;i<d;i++){
+    const start=2*Math.PI*i/d;
+    const end=2*Math.PI*(i+1)/d;
+
+    const x1=cx+r*Math.cos(start);
+    const y1=cy+r*Math.sin(start);
+    const x2=cx+r*Math.cos(end);
+    const y2=cy+r*Math.sin(end);
+
+    const largeArc=end-start>Math.PI?1:0;
+
+    const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+    const dPath=`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc} 1 ${x2},${y2} Z`;
+
+    path.setAttribute("d",dPath);
+    path.setAttribute("fill",i<n?"#f97316":"#e5e7eb");
+    path.setAttribute("stroke","#ffffff");
+    path.setAttribute("stroke-width","1");
+
+    svg.appendChild(path);
+  }
+  return svg;
+}
+
+function createFraction(n,d){
+  const frac=document.createElement("div");
+  frac.className="fraction";
+
+  const top=document.createElement("span");
+  top.className="top";
+  top.textContent=n;
+
+  const bottom=document.createElement("span");
+  bottom.className="bottom";
+  bottom.textContent=d;
+
+  frac.appendChild(top);
+  frac.appendChild(bottom);
+  return frac;
+}
+
+function renderCard(card){
+  const el=document.createElement("div");
+  el.className="card";
+  el.dataset.pair=card.pair;
+  el.dataset.type=card.type;
+
+  const inner=document.createElement("div");
+  inner.className="inner";
+
+  const front=document.createElement("div");
+  front.className="face front";
+
+  const back=document.createElement("div");
+  back.className="face back";
+
+  if(card.type==="text"){
+    back.appendChild(createFraction(card.n,card.d));
+  }else{
+    const wrap=document.createElement("div");
+    wrap.className="piewrap";
+    wrap.appendChild(makePieSVG(card.n,card.d));
+    back.appendChild(wrap);
+  }
+
+  inner.appendChild(front);
+  inner.appendChild(back);
+  el.appendChild(inner);
+  el.addEventListener("click",onCardClick);
+
+  return el;
+}
+
+function updateScores(){
+  document.getElementById("score1").textContent=scores[0];
+  document.getElementById("score2").textContent=scores[1];
+  document.getElementById("currentPlayer").textContent=
+    "Spieler "+currentPlayer;
+}
+
+function onCardClick(){
+  if(lock || this.classList.contains("flipped") || this.classList.contains("matched"))
+    return;
+
+  this.classList.add("flipped");
+
+  if(!first){
+    first=this;
+    return;
+  }
+
+  second=this;
+  lock=true;
+
+  if(first.dataset.pair===second.dataset.pair &&
+     first.dataset.type!==second.dataset.type){
+
+    scores[currentPlayer-1]++;
+    updateScores();
+
+    first.classList.add("matched");
+    second.classList.add("matched");
+    foundPairs++;
+
+    resetTurn();
+
+    if(foundPairs===totalPairs){
+      setTimeout(()=>{
+        if(scores[0]>scores[1]){
+          alert("Spieler 1 gewinnt!");
+        }else if(scores[1]>scores[0]){
+          alert("Spieler 2 gewinnt!");
+        }else{
+          alert("Unentschieden!");
+        }
+      },300);
+    }
+  }else{
+    setTimeout(()=>{
+      first.classList.remove("flipped");
+      second.classList.remove("flipped");
+      currentPlayer=currentPlayer===1?2:1;
+      updateScores();
+      resetTurn();
+    },800);
+  }
+}
+
+function resetTurn(){
+  first=null;
+  second=null;
+  lock=false;
+}
+
+function setupGame(){
+  const difficulty=document.getElementById("difficulty").value;
+  const cfg=DIFF_CONFIG[difficulty];
+
+  const pool=buildPool(cfg.denoms);
+  shuffle(pool);
+
+  const fractions=pool.slice(0,cfg.pairs);
+  const deck=buildDeck(fractions);
+
+  const board=document.getElementById("board");
+  board.innerHTML="";
+
+  setBoardLayout(deck.length);
+  deck.forEach(card=>board.appendChild(renderCard(card)));
+
+  currentPlayer=1;
+  scores=[0,0];
+  foundPairs=0;
+  totalPairs=cfg.pairs;
+
+  updateScores();
+}
+
+document.getElementById("difficulty").addEventListener("change", setupGame);
+document.getElementById("newGame").addEventListener("click", setupGame);
+
+window.addEventListener("resize", ()=>{
+  const cards=document.querySelectorAll("#board .card").length;
+  if(cards>0){
+    setBoardLayout(cards);
+  }
+});
+
+setupGame();
+</script>
+</body>
+</html>

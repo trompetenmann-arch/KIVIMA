@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brüche-Memory</title>
+
+<style>
+body{
+  font-family: Arial;
+  text-align:center;
+  background:#f5f5f5;
+}
+
+.board{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px,1fr));
+  gap:10px;
+  max-width:600px;
+  margin:20px auto;
+}
+
+.card{
+  height:100px;
+  background:white;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  border:1px solid #ccc;
+}
+
+.hidden{
+  background:#ddd;
+}
+
+.bruch{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-size:22px;
+}
+
+.strich{
+  width:25px;
+  height:2px;
+  background:black;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Brüche Memory</h2>
+<button onclick="startGame()">Neues Spiel</button>
+
+<div class="board" id="board"></div>
+
+<script>
+
+function gcd(a,b){ return b ? gcd(b, a%b) : a; }
+
+function getFractions(){
+  const denoms = [2,3,4,5];
+  let list = [];
+
+  denoms.forEach(d=>{
+    for(let n=1;n<d;n++){
+      if(gcd(n,d)===1){
+        list.push({n,d});
+      }
+    }
+  });
+
+  return list.sort(()=>Math.random()-0.5).slice(0,6);
+}
+
+function createCards(){
+  let fractions = getFractions();
+  let cards = [];
+
+  fractions.forEach(f=>{
+    cards.push({type:"text", n:f.n, d:f.d, id:`${f.n}/${f.d}`});
+    cards.push({type:"pie", n:f.n, d:f.d, id:`${f.n}/${f.d}`});
+  });
+
+  return cards.sort(()=>Math.random()-0.5);
+}
+
+function drawPie(n,d){
+  let size=80;
+  let cx=40, cy=40, r=35;
+
+  let svg = `<svg width="80" height="80">`;
+
+  for(let i=0;i<d;i++){
+    let start = (i/d)*2*Math.PI;
+    let end = ((i+1)/d)*2*Math.PI;
+
+    let x1 = cx + r*Math.cos(start);
+    let y1 = cy + r*Math.sin(start);
+    let x2 = cx + r*Math.cos(end);
+    let y2 = cy + r*Math.sin(end);
+
+    let large = (end-start)>Math.PI ? 1 : 0;
+
+    svg += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z"
+             fill="${i<n ? "#4CAF50" : "#ddd"}" stroke="black"/>`;
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+let first=null;
+let second=null;
+let lock=false;
+
+function startGame(){
+  let board = document.getElementById("board");
+  board.innerHTML="";
+
+  let cards = createCards();
+
+  cards.forEach(card=>{
+    let div = document.createElement("div");
+    div.className="card hidden";
+
+    div.onclick = ()=>clickCard(div, card);
+
+    div.dataset.id = card.id;
+    div.dataset.type = card.type;
+
+    board.appendChild(div);
+  });
+}
+
+function clickCard(div, card){
+  if(lock || !div.classList.contains("hidden")) return;
+
+  div.classList.remove("hidden");
+
+  if(card.type==="text"){
+    div.innerHTML = `
+      <div class="bruch">
+        <div>${card.n}</div>
+        <div class="strich"></div>
+        <div>${card.d}</div>
+      </div>
+    `;
+  } else {
+    div.innerHTML = drawPie(card.n, card.d);
+  }
+
+  if(!first){
+    first={div, card};
+  } else {
+    second={div, card};
+    checkMatch();
+  }
+}
+
+function checkMatch(){
+  lock=true;
+
+  let match = first.card.id === second.card.id &&
+    first.card.type !== second.card.type;
+
+  if(match){
+    first=null;
+    second=null;
+    lock=false;
+  } else {
+    setTimeout(()=>{
+      first.div.classList.add("hidden");
+      second.div.classList.add("hidden");
+      first.div.innerHTML="";
+      second.div.innerHTML="";
+      first=null;
+      second=null;
+      lock=false;
+    },800);
+  }
+}
+
+startGame();
+
+</script>
+
+</body>
+</html>

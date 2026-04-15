@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brüche Memory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #1e40af;
+        }
+        .board {
+            display: grid;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .inner {
+            width: 100%;
+            height: 100%;
+            transition: 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .card.flipped .inner {
+            transform: rotateY(180deg);
+        }
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: white;
+            border: 2px solid #94a3b8;
+            backface-visibility: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .back {
+            transform: rotateY(180deg);
+        }
+        button, select {
+            padding: 10px 16px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Brüche Memory</h1>
+
+    <select id="difficulty">
+        <option value="3">Leicht (6 Felder)</option>
+        <option value="4" selected>Mittel (8 Felder)</option>
+        <option value="6">Schwer (12 Felder)</option>
+    </select>
+
+    <button onclick="startGame()">Neues Spiel</button>
+
+    <div id="board" class="board"></div>
+    <canvas id="confetti"></canvas>
+
+    <script>
+        const allFractions = [
+            {n:1,d:2}, {n:1,d:3}, {n:2,d:3},
+            {n:3,d:4}, {n:1,d:4}, {n:2,d:5},
+            {n:3,d:5}, {n:1,d:6}, {n:5,d:6}
+        ];
+
+        let first = null;
+        let second = null;
+        let lock = false;
+
+        function makePieSVG(n, d) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("width", "80");
+            svg.setAttribute("height", "80");
+
+            let start = 0;
+            for (let k = 0; k < d; k++) {
+                const angle = 360 / d;
+                const x1 = 50 + 40 * Math.cos((start - 90) * Math.PI / 180);
+                const y1 = 50 + 40 * Math.sin((start - 90) * Math.PI / 180);
+                const x2 = 50 + 40 * Math.cos((start + angle - 90) * Math.PI / 180);
+                const y2 = 50 + 40 * Math.sin((start + angle - 90) * Math.PI / 180);
+
+                const path = document.createElementNS(svg.namespaceURI, "path");
+                path.setAttribute("d", `
+                    M50 50
+                    L${x1} ${y1}
+                    A40 40 0 ${angle > 180 ? 1 : 0} 1 ${x2} ${y2}
+                    Z
+                `);
+                path.setAttribute("fill", k < n ? "#f59e0b" : "#e5e7eb");
+                path.setAttribute("stroke", "#111");
+                path.setAttribute("stroke-width", "2");
+                svg.appendChild(path);
+                start += angle;
+            }
+            return svg;
+        }
+
+        function startGame() {
+            const pairs = parseInt(document.getElementById("difficulty").value);
+
+            let fractions = [...allFractions]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, pairs);
+
+            let deck = [];
+            fractions.forEach(f => {
+                let key = `${f.n}/${f.d}`;
+                deck.push({ type: "text", f, key });
+                deck.push({ type: "pie", f, key });
+            });
+
+            deck.sort(() => Math.random() - 0.5);
+
+            const board = document.getElementById("board");
+            board.style.gridTemplateColumns = 
+                pairs <= 3 ? "repeat(3, 100px)" :
+                pairs <= 4 ? "repeat(4, 100px)" : 
+                             "repeat(4, 100px)";
+
+            board.innerHTML = "";
+            first = null;
+            second = null;
+            lock = false;
+
+            deck.forEach(card => {
+                const el = document.createElement("div");
+                el.className = "card";
+
+                const inner = document.createElement("div");
+                inner.className = "inner";
+
+                const front = document.createElement("div");
+                front.className = "face";
+                front.style.background = "#dbeafe";
+
+                const back = document.createElement("div");
+                back.className = "face back";
+
+                if (card.type === "text") {
+                    back.textContent = card.f.n + "/" + card.f.d;
+                    back.style.fontSize = "28px";
+                    back.style.fontWeight = "bold";
+                    back.style.color = "#1e40af";
+                } else {
+                    back.appendChild(makePieSVG(card.f.n, card.f.d));
+                }
+
+                inner.appendChild(front);
+                inner.appendChild(back);
+                el.appendChild(inner);
+
+                el.onclick = () => flip(el, card);
+                board.appendChild(el);
+            });
+        }
+
+        function flip(el, card) {
+            if (lock || el.classList.contains("flipped")) return;
+
+            el.classList.add("flipped");
+
+            if (!first) {
+                first = { el, card };
+            } else {
+                second = { el, card };
+                lock = true;
+
+                if (first.card.key === second.card.key && first.card.type !== second.card.type) {
+                    launchConfetti();
+                    first = null;
+                    second = null;
+                    lock = false;
+                } else {
+                    setTimeout(() => {
+                        first.el.classList.remove("flipped");
+                        second.el.classList.remove("flipped");
+                        first = null;
+                        second = null;
+                        lock = false;
+                    }, 800);
+                }
+            }
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let pieces = [];
+            for (let i = 0; i < 150; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - 100,
+                    size: Math.random() * 8 + 4,
+                    speed: Math.random() * 4 + 2,
+                    color: `hsl(${Math.random()*360}, 100%, 60%)`,
+                    rotation: Math.random() * 360,
+                    rotSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                pieces.forEach(p => {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                    ctx.restore();
+
+                    p.y += p.speed;
+                    p.rotation += p.rotSpeed;
+                    p.speed += 0.05;
+                });
+
+                frame++;
+                if (frame < 90) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            animate();
+        }
+
+        window.onload = startGame;
+    </script>
+</body>
+</html>

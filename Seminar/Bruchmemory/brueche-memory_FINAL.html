@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brüche Memory</title>
+<style>
+body{font-family:Arial;background:#f4f7fb;text-align:center;padding:20px}
+.board{display:grid;grid-template-columns:repeat(4,100px);gap:12px;justify-content:center}
+.memory-card{width:100px;height:100px;perspective:1000px}
+.card-inner{width:100%;height:100%;transition:.5s;transform-style:preserve-3d}
+.memory-card.flipped .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;border-radius:10px}
+.front{background:#5b8def;color:#fff;font-size:30px}
+.back{background:#fff;transform:rotateY(180deg)}
+.frac{text-align:center;font-size:24px}
+.top{border-bottom:2px solid black}
+</style>
+</head>
+<body>
+<h2>Brüche Memory</h2>
+<div class="board" id="board"></div>
+<script>
+const fractions=[{n:1,d:2},{n:1,d:3},{n:2,d:3},{n:3,d:4}];
+let deck=[];
+fractions.forEach(f=>{deck.push({...f,type:"text"});deck.push({...f,type:"pie"})});
+deck.sort(()=>Math.random()-0.5);
+const board=document.getElementById("board");
+function frac(n,d){return `<div class="frac"><div class="top">${n}</div><div>${d}</div></div>`}
+function pie(n,d){
+ let svg='<svg width="80" height="80" viewBox="0 0 100 100">';
+ for(let i=0;i<d;i++){
+  let a=(i/d)*2*Math.PI,b=((i+1)/d)*2*Math.PI;
+  let x1=50+35*Math.cos(a),y1=50+35*Math.sin(a);
+  let x2=50+35*Math.cos(b),y2=50+35*Math.sin(b);
+  let large=b-a>Math.PI?1:0;
+  svg+=`<path d="M50 50 L${x1} ${y1} A35 35 0 ${large} 1 ${x2} ${y2} Z" fill="${i<n?'#5b8def':'#ddd'}"/>`
+ }
+ return svg+"</svg>";
+}
+let first=null,second=null,lock=false,matches=0;
+deck.forEach(card=>{
+ let div=document.createElement("div");
+ div.className="memory-card";
+ div.dataset.val=card.n+"/"+card.d;
+ div.dataset.type=card.type;
+ div.innerHTML=`<div class="card-inner">
+ <div class="card-face front">?</div>
+ <div class="card-face back">${card.type==="text"?frac(card.n,card.d):pie(card.n,card.d)}</div>
+ </div>`;
+ div.onclick=()=>{
+  if(lock||div===first)return;
+  div.classList.add("flipped");
+  if(!first){first=div;return;}
+  second=div;lock=true;
+  if(first.dataset.val===second.dataset.val && first.dataset.type!==second.dataset.type){
+    matches++;first=null;second=null;lock=false;
+    if(matches===fractions.length){confetti();setTimeout(()=>alert("Geschafft 🎉"),300);}
+  }else{
+    setTimeout(()=>{first.classList.remove("flipped");second.classList.remove("flipped");first=null;second=null;lock=false;},800);
+  }
+ };
+ board.appendChild(div);
+});
+function confetti(){
+ for(let i=0;i<80;i++){
+  let c=document.createElement("div");
+  c.style.position="fixed";
+  c.style.width="6px";
+  c.style.height="6px";
+  c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+  c.style.left=Math.random()*window.innerWidth+"px";
+  c.style.top="-10px";
+  document.body.appendChild(c);
+  c.animate([{transform:"translateY(0)"},{transform:`translateY(${window.innerHeight}px)`}],{duration:2000});
+  setTimeout(()=>c.remove(),2000);
+ }
+}
+</script>
+</body>
+</html>

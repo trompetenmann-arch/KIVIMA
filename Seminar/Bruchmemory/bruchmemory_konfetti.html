@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brüche Memory</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f5f5f5;
+  display:flex;
+  justify-content:center;
+  flex-direction:column;
+  align-items:center;
+}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(4,120px);
+  gap:12px;
+  margin-top:40px;
+}
+
+.card{
+  width:120px;
+  height:120px;
+  background:#fff;
+  border:1px solid #ccc;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+}
+
+.hidden{
+  background:#ddd;
+}
+
+.frac{
+  text-align:center;
+  font-size:24px;
+}
+.frac .top{
+  border-bottom:2px solid black;
+}
+.frac .bottom{
+  margin-top:2px;
+}
+
+svg{
+  width:80px;
+  height:80px;
+}
+
+.confetti{
+  position:fixed;
+  width:10px;
+  height:10px;
+  top:-10px;
+  animation:fall linear forwards;
+}
+
+@keyframes fall{
+  to{
+    transform:translateY(100vh) rotate(720deg);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h2>Brüche Memory</h2>
+<div class="board" id="board"></div>
+
+<script>
+const pairs = [
+  {n:1,d:2},
+  {n:3,d:4},
+  {n:2,d:3},
+  {n:1,d:4}
+];
+
+let cards = [];
+pairs.forEach(p=>{
+  cards.push({...p,type:"text"});
+  cards.push({...p,type:"circle"});
+});
+
+cards.sort(()=>Math.random()-0.5);
+
+const board = document.getElementById("board");
+
+let first=null;
+let second=null;
+let lock=false;
+let found=0;
+
+function createFraction(n,d){
+  return `
+    <div class="frac">
+      <div class="top">${n}</div>
+      <div class="bottom">${d}</div>
+    </div>
+  `;
+}
+
+function createCircle(n,d){
+  let svg='<svg viewBox="0 0 100 100">';
+  for(let i=0;i<d;i++){
+    let angle1 = (i/d)*2*Math.PI;
+    let angle2 = ((i+1)/d)*2*Math.PI;
+
+    let x1=50+40*Math.cos(angle1);
+    let y1=50+40*Math.sin(angle1);
+    let x2=50+40*Math.cos(angle2);
+    let y2=50+40*Math.sin(angle2);
+
+    let large = angle2-angle1 > Math.PI ? 1:0;
+
+    let color = i<n ? "#2563eb" : "#e5e7eb";
+
+    svg+=`<path d="M50,50 L${x1},${y1} A40,40 0 ${large} 1 ${x2},${y2} Z" fill="${color}" stroke="#999"/>`;
+  }
+  svg+='</svg>';
+  return svg;
+}
+
+cards.forEach(card=>{
+  const div=document.createElement("div");
+  div.className="card hidden";
+
+  div.dataset.n=card.n;
+  div.dataset.d=card.d;
+  div.dataset.type=card.type;
+
+  div.onclick=()=>{
+    if(lock || !div.classList.contains("hidden")) return;
+
+    reveal(div);
+
+    if(!first){
+      first=div;
+    }else{
+      second=div;
+      lock=true;
+
+      if(match()){
+        found++;
+        first=null;
+        second=null;
+        lock=false;
+
+        if(found === pairs.length){
+          celebrate();
+        }
+
+      }else{
+        setTimeout(()=>{
+          hide(first);
+          hide(second);
+          first=null;
+          second=null;
+          lock=false;
+        },800);
+      }
+    }
+  };
+
+  board.appendChild(div);
+});
+
+function reveal(div){
+  div.classList.remove("hidden");
+
+  if(div.dataset.type==="text"){
+    div.innerHTML=createFraction(div.dataset.n,div.dataset.d);
+  }else{
+    div.innerHTML=createCircle(div.dataset.n,div.dataset.d);
+  }
+}
+
+function hide(div){
+  div.classList.add("hidden");
+  div.innerHTML="";
+}
+
+function match(){
+  return first.dataset.n===second.dataset.n &&
+         first.dataset.d===second.dataset.d &&
+         first.dataset.type!==second.dataset.type;
+}
+
+function celebrate(){
+  for(let i=0;i<120;i++){
+    const conf=document.createElement("div");
+    conf.className="confetti";
+
+    conf.style.left=Math.random()*100+"vw";
+    conf.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    conf.style.animationDuration=(Math.random()*2+2)+"s";
+
+    document.body.appendChild(conf);
+
+    setTimeout(()=>conf.remove(),4000);
+  }
+}
+</script>
+
+</body>
+</html>

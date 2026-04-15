@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bruchmemory – BIKI</title>
+  <style>
+    :root{
+      --bg:#f5efe4;
+      --bg-soft:#fffaf2;
+      --panel:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --accent:#c86b34;
+      --accent-dark:#9f4f23;
+      --accent-soft:#f6d4b5;
+      --accent-cool:#3a6b8c;
+      --line:#e9decf;
+      --good:#177245;
+      --bad:#c2413c;
+      --shadow:0 18px 42px rgba(77, 52, 31, 0.12);
+      --radius:24px;
+      --gap:14px;
+      --card-size:clamp(108px, 11vw, 140px);
+    }
+
+    *{box-sizing:border-box}
+    html{height:100%}
+    body{
+      min-height:100%;
+      margin:0;
+      padding:clamp(16px, 3vw, 32px);
+      color:var(--text);
+      font:16px/1.5 "Avenir Next", "Trebuchet MS", "Gill Sans", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(246, 212, 181, 0.8), transparent 34%),
+        radial-gradient(circle at top right, rgba(58, 107, 140, 0.14), transparent 24%),
+        linear-gradient(180deg, var(--bg-soft), var(--bg));
+    }
+
+    .app{
+      width:min(1280px, 100%);
+      margin:0 auto;
+      display:grid;
+      gap:clamp(16px, 2.2vw, 24px);
+    }
+
+    .hero,
+    .intro,
+    .game-shell{
+      background:rgba(255, 255, 255, 0.88);
+      border:1px solid rgba(233, 222, 207, 0.95);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+    }
+
+    .hero{
+      padding:clamp(20px, 3vw, 30px);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      right:-32px;
+      top:-34px;
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(200, 107, 52, 0.18), rgba(200, 107, 52, 0));
+      pointer-events:none;
+    }
+
+    .hero-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(246, 212, 181, 0.55);
+      color:var(--accent-dark);
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+    }
+
+    .hero-badge::before{
+      content:"";
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--accent);
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      margin-top:16px;
+      flex-wrap:wrap;
+    }
+
+    .title-icon{
+      width:78px;
+      height:78px;
+      border-radius:22px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(145deg, #fff5ea, #f0d5b8);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.85), 0 12px 26px rgba(159, 79, 35, 0.18);
+      flex:0 0 auto;
+    }
+
+    .title-copy h1{
+      margin:0;
+      font-size:clamp(32px, 6vw, 54px);
+      line-height:0.95;
+      letter-spacing:0.02em;
+      color:#7a3f1f;
+    }
+
+    .title-copy p{
+      margin:10px 0 0;
+      max-width:680px;
+      color:#4b5563;
+      font-size:clamp(16px, 2vw, 20px);
+    }
+
+    .intro{
+      padding:18px 22px;
+    }
+
+    .intro h2{
+      margin:0 0 8px;
+      font-size:20px;
+      color:#8b4a28;
+    }
+
+    .intro p{
+      margin:0;
+      color:#4b5563;
+    }
+
+    .game-shell{
+      padding:clamp(16px, 2vw, 24px);
+      display:grid;
+      gap:18px;
+    }
+
+    .mode-panel{
+      display:grid;
+      gap:12px;
+      padding:14px;
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(246, 212, 181, 0.18), rgba(255, 255, 255, 0.92));
+      border:1px solid rgba(233, 222, 207, 0.95);
+    }
+
+    .mode-tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .mode-tab{
+      padding:12px 16px;
+      border-radius:16px;
+      border:1px solid rgba(233, 222, 207, 0.95);
+      background:#fff;
+      color:#5f6672;
+      font-weight:700;
+      box-shadow:none;
+    }
+
+    .mode-tab.active{
+      background:linear-gradient(135deg, #fff7ef, #f6d8bc);
+      color:#7a3f1f;
+      border-color:rgba(200, 107, 52, 0.34);
+      box-shadow:0 10px 22px rgba(200, 107, 52, 0.12);
+    }
+
+    .mode-hint{
+      margin:0;
+      color:#4b5563;
+      font-size:14px;
+    }
+
+    .gamebar{
+      display:grid;
+      gap:16px;
+      grid-template-columns:minmax(0, 1.3fr) minmax(260px, 0.9fr);
+      align-items:end;
+    }
+
+    .controls{
+      display:flex;
+      align-items:end;
+      gap:10px 12px;
+      flex-wrap:wrap;
+    }
+
+    .control-group{
+      display:grid;
+      gap:6px;
+    }
+
+    .control-group label,
+    .stat span,
+    .progress-card span{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:0.01em;
+    }
+
+    select,
+    button{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:14px;
+      font:inherit;
+      cursor:pointer;
+    }
+
+    select{
+      min-width:185px;
+    }
+
+    button{
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 18px rgba(31, 41, 55, 0.08);
+    }
+
+    button.primary{
+      background:linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color:#fff;
+      border-color:transparent;
+    }
+
+    button:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .stats{
+      display:grid;
+      gap:10px;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .stat{
+      padding:14px 16px;
+      border-radius:18px;
+      background:linear-gradient(180deg, #fff7ef, #ffffff);
+      border:1px solid rgba(233, 222, 207, 0.95);
+    }
+
+    .stat strong{
+      display:block;
+      margin-top:2px;
+      font-size:28px;
+      line-height:1;
+      color:#7a3f1f;
+    }
+
+    .board{
+      display:grid;
+      gap:var(--gap);
+      grid-template-columns:repeat(auto-fit, var(--card-size));
+      justify-content:center;
+      align-content:start;
+    }
+
+    .card{
+      perspective:900px;
+      position:relative;
+      width:var(--card-size);
+      height:var(--card-size);
+      min-width:0;
+    }
+
+    .card button{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      padding:0;
+      border:none;
+      background:transparent;
+      box-shadow:none;
+      transform:none;
+    }
+
+    .inner{
+      position:relative;
+      width:100%;
+      height:100%;
+      transition:transform .35s ease;
+      transform-style:preserve-3d;
+      outline:none;
+    }
+
+    .card.flipped .inner,
+    .card.match-flash .inner{
+      transform:rotateY(180deg);
+    }
+
+    .face{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:18px;
+      backface-visibility:hidden;
+      box-shadow:0 12px 22px rgba(31, 41, 55, 0.08);
+    }
+
+    .front{
+      position:relative;
+      border:2px solid rgba(255,255,255,0.7);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.65), transparent 40%),
+        linear-gradient(135deg, #d9ecf4, #f7e1c8 68%, #f3cab0);
+    }
+
+    .front::before{
+      content:"";
+      width:52px;
+      height:52px;
+      border-radius:18px;
+      border:2px solid rgba(122, 63, 31, 0.18);
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.9) 0 30%, transparent 31%),
+        linear-gradient(135deg, rgba(122, 63, 31, 0.06), rgba(122, 63, 31, 0.14));
+      transform:rotate(12deg);
+    }
+
+    .back{
+      padding:10px;
+      transform:rotateY(180deg);
+      background:linear-gradient(180deg, #fffdfa, #fff3e6);
+      border:1px solid rgba(233, 222, 207, 0.98);
+    }
+
+    .card.match-flash .back{
+      background:linear-gradient(180deg, #dff7e7, #b8e9c9);
+      border-color:#66bb84;
+    }
+
+    .card.match-flash .fraction{
+      opacity:0;
+    }
+
+    .card.matched .front{
+      border:2px solid rgba(255,255,255,0.7);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.65), transparent 40%),
+        linear-gradient(135deg, #d9ecf4, #f7e1c8 68%, #f3cab0);
+    }
+
+    .card.matched .front::before{
+      opacity:1;
+      transform:rotate(12deg);
+      border-color:rgba(23, 114, 69, 0.18);
+    }
+
+    .card.matched .inner{
+      transform:rotateY(180deg);
+      cursor:default;
+    }
+
+    .card.matched .back{
+      opacity:1;
+      pointer-events:none;
+      border-color:#9ed9b1;
+      box-shadow:0 12px 22px rgba(23, 114, 69, 0.12);
+    }
+
+    .front-content{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+      opacity:0;
+      transition:opacity .18s ease;
+    }
+
+    .card.matched .front-content{
+      opacity:0;
+    }
+
+    .fraction{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-width:48px;
+      font-weight:800;
+      color:#7a3f1f;
+      line-height:1;
+    }
+
+    .fraction .top,
+    .fraction .bottom{
+      font-size:clamp(28px, 5vw, 36px);
+    }
+
+    .fraction .line{
+      width:56px;
+      height:4px;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--accent), #e7a166);
+      margin:8px 0;
+    }
+
+    .decimaltext{
+      font-size:clamp(28px, 4.5vw, 36px);
+      font-weight:800;
+      color:#7a3f1f;
+      letter-spacing:0.02em;
+    }
+
+    .piewrap{
+      width:clamp(74px, 12vw, 96px);
+      height:clamp(74px, 12vw, 96px);
+    }
+
+    .match-badge{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      opacity:0;
+      pointer-events:none;
+      border-radius:inherit;
+      background:linear-gradient(180deg, rgba(67, 160, 93, 0.18), rgba(67, 160, 93, 0.08));
+      transition:opacity .16s ease;
+    }
+
+    .card.match-flash .match-badge{
+      opacity:1;
+    }
+
+    .match-badge span{
+      width:52px;
+      height:52px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:#177245;
+      color:#fff;
+      font-size:28px;
+      font-weight:900;
+      box-shadow:0 12px 24px rgba(23, 114, 69, 0.28);
+    }
+
+    .footer{
+      display:block;
+    }
+
+    .progress{
+      display:grid;
+      gap:10px;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      align-items:start;
+    }
+
+    .progress-card{
+      padding:14px 16px;
+      border-radius:18px;
+      background:#fff;
+      border:1px solid rgba(233, 222, 207, 0.95);
+      box-shadow:0 8px 18px rgba(31, 41, 55, 0.05);
+    }
+
+    .progress-card strong{
+      display:block;
+      margin-top:2px;
+      font-size:26px;
+      color:#7a3f1f;
+      line-height:1;
+    }
+
+    .performance{
+      grid-column:1 / -1;
+      display:grid;
+      gap:12px;
+      padding:14px 16px;
+      border-radius:18px;
+      background:linear-gradient(180deg, #fffaf3, #ffffff);
+      border:1px solid rgba(233, 222, 207, 0.95);
+      box-shadow:0 8px 18px rgba(31, 41, 55, 0.05);
+    }
+
+    .performance-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .performance-head span{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .performance-head strong{
+      color:#7a3f1f;
+      font-size:18px;
+    }
+
+    .performance-bars{
+      display:grid;
+      gap:10px;
+    }
+
+    .performance-note{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .grade-card{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:linear-gradient(180deg, #fff5ea, #fffdf9);
+      border:1px solid rgba(233, 222, 207, 0.95);
+    }
+
+    .grade-card span{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .grade-value{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .grade-badge{
+      min-width:44px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#efe6da;
+      color:#7a3f1f;
+      font-size:18px;
+      font-weight:800;
+      text-align:center;
+    }
+
+    .grade-badge[data-grade="1"],
+    .grade-badge[data-grade="2"]{
+      background:#dff7e7;
+      color:#177245;
+    }
+
+    .grade-badge[data-grade="3"],
+    .grade-badge[data-grade="4"]{
+      background:#fff2d8;
+      color:#9a6122;
+    }
+
+    .grade-badge[data-grade="5"],
+    .grade-badge[data-grade="6"]{
+      background:#f9dfde;
+      color:#c2413c;
+    }
+
+    .grade-text{
+      color:#7a3f1f;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .performance-row{
+      display:grid;
+      gap:8px;
+    }
+
+    .performance-label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .performance-label .good{
+      color:var(--good);
+    }
+
+    .performance-label .bad{
+      color:var(--bad);
+    }
+
+    .bar{
+      height:10px;
+      overflow:hidden;
+      border-radius:999px;
+      background:#efe6da;
+    }
+
+    .bar-fill{
+      height:100%;
+      width:0%;
+      border-radius:inherit;
+      transition:width .28s ease;
+    }
+
+    .bar-fill.good{
+      background:linear-gradient(90deg, #4db070, #177245);
+    }
+
+    .bar-fill.bad{
+      background:linear-gradient(90deg, #e48d87, #c2413c);
+    }
+
+    .status{
+      grid-column:1 / -1;
+      min-height:24px;
+      padding:0 4px;
+      font-weight:700;
+    }
+
+    .status.good{ color:var(--good); }
+    .status.bad{ color:var(--bad); }
+
+    .win{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(33, 24, 16, 0.36);
+      padding:24px;
+    }
+
+    .win .box{
+      width:min(460px, 100%);
+      background:#fff;
+      border-radius:26px;
+      padding:22px;
+      box-shadow:0 20px 44px rgba(33, 24, 16, 0.3);
+    }
+
+    .confetti-layer{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      pointer-events:none;
+      z-index:30;
+    }
+
+    .confetti{
+      position:absolute;
+      top:-28px;
+      width:12px;
+      height:22px;
+      border-radius:4px;
+      opacity:0;
+      animation:confetti-fall var(--fall-duration, 2200ms) linear forwards;
+      transform:translate3d(0, 0, 0) rotate(0deg);
+    }
+
+    .confetti::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      background:rgba(255,255,255,0.24);
+    }
+
+    @keyframes confetti-fall{
+      0%{
+        opacity:0;
+        transform:translate3d(0, -10vh, 0) rotate(0deg);
+      }
+      10%{
+        opacity:1;
+      }
+      100%{
+        opacity:0.95;
+        transform:translate3d(var(--drift, 0px), 112vh, 0) rotate(var(--spin, 540deg));
+      }
+    }
+
+    .win h2{
+      margin:0 0 8px;
+      color:#7a3f1f;
+    }
+
+    .win p,
+    .win li{
+      color:#4b5563;
+    }
+
+    .win .actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .sr-only{
+      position:absolute !important;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    @media (max-width:900px){
+      .gamebar{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:560px){
+      body{ padding:12px; }
+      .title-row{ align-items:flex-start; }
+      .title-icon{
+        width:64px;
+        height:64px;
+        border-radius:18px;
+      }
+      .controls,
+      .stats,
+      .progress{
+        grid-template-columns:1fr;
+      }
+      .mode-tabs{
+        display:grid;
+        grid-template-columns:1fr;
+      }
+      .mode-tab{
+        width:100%;
+      }
+      .control-group,
+      .controls .primary,
+      select{
+        width:100%;
+      }
+      .controls{
+        align-items:stretch;
+      }
+      .fraction .line{
+        width:46px;
+        margin:6px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <section class="hero" aria-label="Titelbereich">
+      <div class="hero-badge">Mathe-Spiel</div>
+      <div class="title-row">
+        <div class="title-icon" aria-hidden="true">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="21" fill="#FFF8EF" stroke="#C86B34" stroke-width="2.2"/>
+            <path d="M26 5C37.598 5 47 14.402 47 26H26V5Z" fill="#F1B07B"/>
+            <path d="M26 26L8.3 37.1C5.95 33.73 4.7 29.7 4.7 25.58C4.7 14.22 13.97 5 25.4 5H26V26Z" fill="#D6E7EF"/>
+            <path d="M26 26L45.45 33.08C42.64 40.79 35.25 46.3 26.56 46.3C19.26 46.3 12.6 42.36 8.98 36.03L26 26Z" fill="#3A6B8C"/>
+            <circle cx="26" cy="26" r="2.3" fill="#7A3F1F"/>
+          </svg>
+        </div>
+        <div class="title-copy">
+          <h1>Bruchmemory</h1>
+          <p>Finde zusammenpassende Kartenpaare aus Bruchschreibweise und Kreisdiagramm.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro">
+      <h2>So funktioniert das Spiel</h2>
+      <p>Decke immer zwei Karten auf. Ein Paar passt genau dann zusammen, wenn der Bruch und das Kreisdiagramm denselben Anteil zeigen.</p>
+    </section>
+
+    <section class="game-shell" aria-label="Spielbereich">
+      <div class="mode-panel">
+        <div class="mode-tabs" role="tablist" aria-label="Spielmodus auswählen">
+          <button type="button" class="mode-tab active" data-mode="fractionPie" role="tab" aria-selected="true">Bruchzahl - Kreisdiagramm</button>
+          <button type="button" class="mode-tab" data-mode="fractionDecimal" role="tab" aria-selected="false">Bruchzahl - Dezimalzahl</button>
+          <button type="button" class="mode-tab" data-mode="fractionDecimalPie" role="tab" aria-selected="false">Bruchzahl - Dezimalzahl - Kreisdiagramm</button>
+        </div>
+        <p class="mode-hint" id="modeHint">Finde passende Paare aus Bruchzahl und Kreisdiagramm.</p>
+      </div>
+
+      <header class="gamebar">
+        <div class="controls">
+          <div class="control-group">
+            <label for="difficulty">Schwierigkeit</label>
+            <select id="difficulty" aria-label="Schwierigkeit wählen">
+              <option value="easy">Leicht (5 Paare)</option>
+              <option value="medium" selected>Mittel (8 Paare)</option>
+              <option value="hard">Schwer (12 Paare)</option>
+            </select>
+          </div>
+          <button id="newGame" class="primary">Neues Spiel</button>
+        </div>
+
+        <div class="stats" aria-live="polite">
+          <div class="stat">
+            <span>Züge</span>
+            <strong id="moves">0</strong>
+          </div>
+          <div class="stat">
+            <span>Zeit</span>
+            <strong id="time">00:00</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="board" id="board" aria-label="Spielfeld"></main>
+
+      <div class="footer">
+        <div class="progress">
+          <div class="progress-card">
+            <span>Gefundene Karten</span>
+            <strong id="foundCards">0</strong>
+          </div>
+          <div class="progress-card">
+            <span>Noch offen</span>
+            <strong id="remainingCards">0</strong>
+          </div>
+          <div class="progress-card">
+            <span>Versuche</span>
+            <strong id="attempts">0</strong>
+          </div>
+          <div class="performance" aria-live="polite">
+            <div class="performance-head">
+              <span id="ratedAttemptsLabel">Bewertete Versuche: 0</span>
+              <strong id="accuracySummary">Noch keine Merkversuche</strong>
+            </div>
+            <div class="performance-bars">
+              <div class="performance-row">
+                <div class="performance-label">
+                  <span class="good">Merkleistung</span>
+                  <span id="correctRate">0 %</span>
+                </div>
+                <div class="bar">
+                  <div class="bar-fill good" id="correctBar"></div>
+                </div>
+              </div>
+              <div class="grade-card">
+                <span>Notenvorschlag</span>
+                <div class="grade-value">
+                  <div class="grade-badge" id="gradeBadge">-</div>
+                  <div class="grade-text" id="gradeText">Noch nicht bewertbar</div>
+                </div>
+              </div>
+            </div>
+            <div class="performance-note">
+              Gezählt werden nur Versuche, bei denen alle gewählten Karten zuvor schon einmal sichtbar waren. Der Notenvorschlag nutzt einen haeufigen NRW-orientierten Realschul-Schluessel.
+            </div>
+          </div>
+          <div id="feedback" class="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+  <div class="win" id="win">
+    <div class="box">
+      <h2>Geschafft!</h2>
+      <p id="winText">Du hast alle Paare gefunden.</p>
+      <ul>
+        <li>Zeit: <strong id="resTime">–</strong></li>
+        <li>Züge: <strong id="resMoves">–</strong></li>
+      </ul>
+      <div class="actions">
+        <button id="closeWin">Schließen</button>
+        <button id="again" class="primary">Noch einmal spielen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function gcd(a, b){ while(b){ [a, b] = [b, a % b]; } return a; }
+    function fmtFrac(n, d){ return n + "/" + d; }
+    function fmtDecimal(n, d){
+      return (n / d)
+        .toFixed(3)
+        .replace(/0+$/, "")
+        .replace(/\.$/, "")
+        .replace(".", ",");
+    }
+
+    const MODE_CONFIG = {
+      fractionPie: {
+        hint: "Finde passende Paare aus Bruchzahl und Kreisdiagramm.",
+        winText: "Du hast alle Paare gefunden.",
+        cardTypes:["text", "pie"],
+        difficulties: {
+          easy: { label:"Leicht (5 Paare)", denoms:[2,3,4], groups:5 },
+          medium: { label:"Mittel (8 Paare)", denoms:[2,3,4,5,6], groups:8 },
+          hard: { label:"Schwer (12 Paare)", denoms:[2,3,4,5,6,8], groups:12 }
+        }
+      },
+      fractionDecimal: {
+        hint: "Ordne Bruchzahlen einfachen Dezimalzahlen mit endlicher Darstellung zu.",
+        winText: "Du hast alle Paare gefunden.",
+        cardTypes:["text", "decimal"],
+        difficulties: {
+          easy: { label:"Leicht (5 Paare)", denoms:[2,4,5,10], groups:5 },
+          medium: { label:"Mittel (8 Paare)", denoms:[2,4,5,8,10], groups:8 },
+          hard: { label:"Schwer (10 Paare)", denoms:[2,4,5,8,10], groups:10 }
+        }
+      },
+      fractionDecimalPie: {
+        hint: "Finde Dreiergruppen aus Bruchzahl, Dezimalzahl und Kreisdiagramm.",
+        winText: "Du hast alle Dreiergruppen gefunden.",
+        cardTypes:["text", "decimal", "pie"],
+        difficulties: {
+          easy: { label:"Leicht (4 Dreiergruppen)", denoms:[2,4,5,10], groups:4 },
+          medium: { label:"Mittel (6 Dreiergruppen)", denoms:[2,4,5,8,10], groups:6 },
+          hard: { label:"Schwer (8 Dreiergruppen)", denoms:[2,4,5,8,10], groups:8 }
+        }
+      }
+    };
+    const DIFFICULTY_LEVELS = ["easy", "medium", "hard"];
+
+    function buildPool(denoms){
+      const pool = [];
+      for(const d of denoms){
+        for(let n = 1; n < d; n++){
+          if(gcd(n, d) === 1){
+            pool.push({ n, d, key: fmtFrac(n, d) });
+          }
+        }
+      }
+      return pool;
+    }
+
+    function sampleUnique(arr, k){
+      const a = [...arr];
+      for(let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a.slice(0, Math.min(k, a.length));
+    }
+
+    function buildDeck(fractions, cardTypes){
+      const deck = [];
+      fractions.forEach((f) => {
+        const pairId = "pair_" + f.key;
+        cardTypes.forEach((type) => {
+          deck.push({
+            id: `${pairId}_${type}`,
+            pair: pairId,
+            type,
+            n: f.n,
+            d: f.d,
+            label: type === "decimal" ? fmtDecimal(f.n, f.d) : fmtFrac(f.n, f.d)
+          });
+        });
+      });
+
+      for(let i = deck.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      return deck;
+    }
+
+    function polarToCartesian(cx, cy, r, angleDeg){
+      const rad = (angleDeg - 90) * Math.PI / 180;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    function sectorPath(cx, cy, r, startAngle, endAngle){
+      const p1 = polarToCartesian(cx, cy, r, startAngle);
+      const p2 = polarToCartesian(cx, cy, r, endAngle);
+      const largeArc = (endAngle - startAngle) % 360 > 180 ? 1 : 0;
+      return `M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r} ${r} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`;
+    }
+
+    let pieGradientId = 0;
+
+    function makePieSVG(n, d, size = 86){
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", size);
+      svg.setAttribute("height", size);
+      svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `Kreisdiagramm zu ${fmtFrac(n, d)}`);
+
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = size * 0.48;
+      const gradientId = `gradAccent-${pieGradientId++}`;
+
+      ensureDefs(svg, gradientId);
+
+      const bg = document.createElementNS(svg.namespaceURI, "circle");
+      bg.setAttribute("cx", cx);
+      bg.setAttribute("cy", cy);
+      bg.setAttribute("r", r);
+      bg.setAttribute("fill", "white");
+      bg.setAttribute("stroke", "#e7d8c5");
+      bg.setAttribute("stroke-width", "1");
+      svg.appendChild(bg);
+
+      for(let k = 0; k < d; k++){
+        const start = k * 360 / d;
+        const end = (k + 1) * 360 / d;
+        const path = document.createElementNS(svg.namespaceURI, "path");
+        path.setAttribute("d", sectorPath(cx, cy, r, start, end));
+        path.setAttribute("fill", k < n ? `url(#${gradientId})` : "#f2f5f7");
+        path.setAttribute("stroke", "#cfd8de");
+        path.setAttribute("stroke-width", "0.6");
+        svg.appendChild(path);
+      }
+      return svg;
+    }
+
+    function ensureDefs(svg, gradientId){
+      const defs = document.createElementNS(svg.namespaceURI, "defs");
+      const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
+      grad.setAttribute("id", gradientId);
+      grad.setAttribute("x1", "0");
+      grad.setAttribute("y1", "0");
+      grad.setAttribute("x2", "1");
+      grad.setAttribute("y2", "1");
+
+      const s1 = document.createElementNS(svg.namespaceURI, "stop");
+      s1.setAttribute("offset", "0%");
+      s1.setAttribute("stop-color", "#f6cf9f");
+
+      const s2 = document.createElementNS(svg.namespaceURI, "stop");
+      s2.setAttribute("offset", "100%");
+      s2.setAttribute("stop-color", "#c86b34");
+
+      grad.appendChild(s1);
+      grad.appendChild(s2);
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+    }
+
+    function createFractionElement(n, d){
+      const wrapper = document.createElement("div");
+      wrapper.className = "fraction";
+
+      const top = document.createElement("span");
+      top.className = "top";
+      top.textContent = String(n);
+
+      const line = document.createElement("span");
+      line.className = "line";
+      line.setAttribute("aria-hidden", "true");
+
+      const bottom = document.createElement("span");
+      bottom.className = "bottom";
+      bottom.textContent = String(d);
+
+      wrapper.appendChild(top);
+      wrapper.appendChild(line);
+      wrapper.appendChild(bottom);
+      return wrapper;
+    }
+
+    function buildCardContent(card){
+      const fragment = document.createDocumentFragment();
+
+      if(card.type === "text"){
+        fragment.appendChild(createFractionElement(card.n, card.d));
+      }else if(card.type === "decimal"){
+        const decimal = document.createElement("div");
+        decimal.className = "decimaltext";
+        decimal.textContent = card.label;
+        fragment.appendChild(decimal);
+      }else{
+        const w = document.createElement("div");
+        w.className = "piewrap";
+        w.appendChild(makePieSVG(card.n, card.d, 86));
+        fragment.appendChild(w);
+      }
+
+      return fragment;
+    }
+
+    function renderCard(card){
+      const el = document.createElement("div");
+      el.className = "card";
+      el.dataset.id = card.id;
+      el.dataset.pair = card.pair;
+      el.dataset.type = card.type;
+
+      const btn = document.createElement("button");
+      btn.className = "inner";
+      const ariaLabels = {
+        text: `Bruch ${fmtFrac(card.n, card.d)}`,
+        decimal: `Dezimalzahl ${card.label}`,
+        pie: `Kreisdiagramm zu ${fmtFrac(card.n, card.d)}`
+      };
+      btn.setAttribute("aria-label", ariaLabels[card.type]);
+      btn.setAttribute("type", "button");
+
+      const front = document.createElement("div");
+      front.className = "face front";
+      const frontContent = document.createElement("div");
+      frontContent.className = "front-content";
+      frontContent.appendChild(buildCardContent(card));
+      front.appendChild(frontContent);
+
+      const back = document.createElement("div");
+      back.className = "face back";
+      back.appendChild(buildCardContent(card));
+
+      const badge = document.createElement("div");
+      badge.className = "match-badge";
+      badge.setAttribute("aria-hidden", "true");
+      const badgeIcon = document.createElement("span");
+      badgeIcon.textContent = "✓";
+      badge.appendChild(badgeIcon);
+      back.appendChild(badge);
+
+      btn.appendChild(front);
+      btn.appendChild(back);
+      el.appendChild(btn);
+      return el;
+    }
+
+    const boardEl = document.getElementById("board");
+    const feedbackEl = document.getElementById("feedback");
+    const movesEl = document.getElementById("moves");
+    const timeEl = document.getElementById("time");
+    const modeHintEl = document.getElementById("modeHint");
+    const winTextEl = document.getElementById("winText");
+    const modeButtons = [...document.querySelectorAll(".mode-tab")];
+    const foundCardsEl = document.getElementById("foundCards");
+    const remainingCardsEl = document.getElementById("remainingCards");
+    const attemptsEl = document.getElementById("attempts");
+    const ratedAttemptsLabelEl = document.getElementById("ratedAttemptsLabel");
+    const accuracySummaryEl = document.getElementById("accuracySummary");
+    const correctRateEl = document.getElementById("correctRate");
+    const correctBarEl = document.getElementById("correctBar");
+    const gradeBadgeEl = document.getElementById("gradeBadge");
+    const gradeTextEl = document.getElementById("gradeText");
+    const diffSel = document.getElementById("difficulty");
+    const btnNew = document.getElementById("newGame");
+    const confettiLayerEl = document.getElementById("confettiLayer");
+    const winBox = document.getElementById("win");
+    const resTime = document.getElementById("resTime");
+    const resMoves = document.getElementById("resMoves");
+    const againBtn = document.getElementById("again");
+    const closeWin = document.getElementById("closeWin");
+
+    let currentMode = "fractionPie";
+    let activeCardTypes = MODE_CONFIG[currentMode].cardTypes;
+    let deck = [];
+    let picks = [];
+    let lock = false;
+    let moves = 0;
+    let foundGroups = 0;
+    let totalGroups = 0;
+    let totalCards = 0;
+    let seenCards = new Set();
+    let ratedAttempts = 0;
+    let memoryHits = 0;
+    let memoryMisses = 0;
+    let timer = null;
+    let startTs = null;
+    let confettiTimeout = null;
+    const GRADE_KEY = [
+      { min:92, grade:"1", text:"Sehr gut" },
+      { min:81, grade:"2", text:"Gut" },
+      { min:67, grade:"3", text:"Befriedigend" },
+      { min:50, grade:"4", text:"Ausreichend" },
+      { min:30, grade:"5", text:"Mangelhaft" },
+      { min:0, grade:"6", text:"Ungenuegend" }
+    ];
+
+    function getModeConfig(){
+      return MODE_CONFIG[currentMode];
+    }
+
+    function getDifficultyConfig(){
+      return getModeConfig().difficulties[diffSel.value];
+    }
+
+    function renderDifficultyOptions(){
+      const currentValue = diffSel.value;
+      const difficulties = getModeConfig().difficulties;
+      diffSel.innerHTML = "";
+      DIFFICULTY_LEVELS.forEach((level) => {
+        const option = document.createElement("option");
+        option.value = level;
+        option.textContent = difficulties[level].label;
+        diffSel.appendChild(option);
+      });
+      diffSel.value = difficulties[currentValue] ? currentValue : "easy";
+    }
+
+    function updateModeUI(){
+      modeButtons.forEach((btn) => {
+        const isActive = btn.dataset.mode === currentMode;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", String(isActive));
+      });
+      modeHintEl.textContent = getModeConfig().hint;
+      winTextEl.textContent = getModeConfig().winText;
+      renderDifficultyOptions();
+    }
+
+    function updateProgress(){
+      const foundCards = foundGroups * activeCardTypes.length;
+      const remainingCards = Math.max(totalCards - foundCards, 0);
+      const attempts = moves;
+      const memoryRate = ratedAttempts ? Math.round((memoryHits / ratedAttempts) * 100) : 0;
+      const grade = getGradeForRate(memoryRate, ratedAttempts);
+      foundCardsEl.textContent = String(foundCards);
+      remainingCardsEl.textContent = String(remainingCards);
+      attemptsEl.textContent = String(attempts);
+      ratedAttemptsLabelEl.textContent = `Bewertete Versuche: ${ratedAttempts}`;
+      accuracySummaryEl.textContent = ratedAttempts ? `${memoryRate} % Merkleistung` : "Noch keine Merkversuche";
+      correctRateEl.textContent = `${memoryRate} %`;
+      correctBarEl.style.width = `${memoryRate}%`;
+      gradeBadgeEl.textContent = grade.grade;
+      gradeBadgeEl.dataset.grade = grade.grade;
+      gradeTextEl.textContent = grade.text;
+    }
+
+    function resetStats(){
+      moves = 0;
+      foundGroups = 0;
+      totalGroups = 0;
+      totalCards = 0;
+      seenCards = new Set();
+      ratedAttempts = 0;
+      memoryHits = 0;
+      memoryMisses = 0;
+      movesEl.textContent = "0";
+      timeEl.textContent = "00:00";
+      feedbackEl.textContent = "";
+      feedbackEl.className = "status";
+      updateProgress();
+      stopTimer();
+    }
+
+    function startTimer(){
+      startTs = Date.now();
+      timer = setInterval(() => {
+        const t = Math.floor((Date.now() - startTs) / 1000);
+        timeEl.textContent = fmtTime(t);
+      }, 200);
+    }
+
+    function stopTimer(){
+      if(timer){
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function fmtTime(sec){
+      const m = Math.floor(sec / 60).toString().padStart(2, "0");
+      const s = (sec % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function setupGame(){
+      resetStats();
+      const cfg = getDifficultyConfig();
+      activeCardTypes = [...getModeConfig().cardTypes];
+      const pool = buildPool(cfg.denoms);
+      const chosen = sampleUnique(pool, cfg.groups);
+      totalGroups = chosen.length;
+      deck = buildDeck(chosen, activeCardTypes);
+      totalCards = deck.length;
+      updateProgress();
+
+      boardEl.innerHTML = "";
+      deck.forEach((card) => {
+        boardEl.appendChild(renderCard(card));
+      });
+
+      boardEl.querySelectorAll(".card .inner").forEach((btn) => {
+        btn.addEventListener("click", onCardClick);
+      });
+
+      startTs = null;
+      resetPick();
+    }
+
+    function onCardClick(e){
+      if(lock) return;
+      const btn = e.currentTarget;
+      const cardEl = btn.closest(".card");
+      if(cardEl.classList.contains("flipped") || cardEl.classList.contains("matched")) return;
+
+      cardEl.classList.add("flipped");
+      if(!startTs){
+        startTimer();
+      }
+
+      const card = {
+        id: cardEl.dataset.id,
+        el: cardEl,
+        pair: cardEl.dataset.pair,
+        type: cardEl.dataset.type
+      };
+
+      picks.push(card);
+
+      if(picks.length < activeCardTypes.length){
+        feedback("");
+        return;
+      }
+
+      moves += 1;
+      movesEl.textContent = String(moves);
+      checkMatch();
+    }
+
+    function checkMatch(){
+      if(!picks.length) return;
+      lock = true;
+      const isSameGroup = picks.every((card) => card.pair === picks[0].pair);
+      const differentTypes = new Set(picks.map((card) => card.type)).size === picks.length;
+      const isCorrect = isSameGroup && differentTypes;
+
+      rateAttempt(picks, isCorrect);
+      registerSeenCards(picks);
+
+      if(isCorrect){
+        setTimeout(() => {
+          picks.forEach((card) => {
+            card.el.classList.remove("flipped");
+            card.el.classList.add("match-flash");
+          });
+          foundGroups += 1;
+          updateProgress();
+          feedback("");
+
+          setTimeout(() => {
+            picks.forEach((card) => {
+              card.el.classList.remove("match-flash");
+              card.el.classList.add("matched");
+            });
+            resetPick();
+            lock = false;
+
+            if(foundGroups === totalGroups){
+              stopTimer();
+              const elapsed = Math.floor((Date.now() - startTs) / 1000);
+              resTime.textContent = fmtTime(elapsed);
+              resMoves.textContent = String(moves);
+              launchConfetti();
+              winBox.style.display = "flex";
+            }
+          }, 650);
+        }, 250);
+        return;
+      }
+
+      updateProgress();
+      feedback("Leider nicht. Versuche es erneut.", "bad");
+      setTimeout(() => {
+        picks.forEach((card) => {
+          card.el.classList.remove("flipped");
+        });
+        resetPick();
+        lock = false;
+      }, 800);
+    }
+
+    function resetPick(){
+      picks = [];
+    }
+
+    function feedback(msg, cls){
+      feedbackEl.className = "status" + (cls ? " " + cls : "");
+      feedbackEl.textContent = msg || "";
+    }
+
+    function getGradeForRate(rate, ratedCount){
+      if(!ratedCount){
+        return { grade:"-", text:"Noch nicht bewertbar" };
+      }
+      return GRADE_KEY.find((entry) => rate >= entry.min) || GRADE_KEY[GRADE_KEY.length - 1];
+    }
+
+    function registerSeenCards(cards){
+      cards.forEach((card) => {
+        seenCards.add(card.id);
+      });
+    }
+
+    function rateAttempt(cards, isCorrect){
+      const isRatedAttempt = cards.every((card) => seenCards.has(card.id));
+      if(!isRatedAttempt) return;
+
+      ratedAttempts += 1;
+      if(isCorrect){
+        memoryHits += 1;
+      }else{
+        memoryMisses += 1;
+      }
+    }
+
+    function clearConfetti(){
+      if(confettiTimeout){
+        clearTimeout(confettiTimeout);
+        confettiTimeout = null;
+      }
+      confettiLayerEl.innerHTML = "";
+    }
+
+    function launchConfetti(){
+      clearConfetti();
+      const colors = ["#c86b34", "#f3bf88", "#3a6b8c", "#4db070", "#e48d87", "#f0cf56"];
+
+      for(let i = 0; i < 90; i++){
+        const piece = document.createElement("span");
+        piece.className = "confetti";
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.width = `${8 + Math.random() * 8}px`;
+        piece.style.height = `${14 + Math.random() * 16}px`;
+        piece.style.setProperty("--drift", `${-90 + Math.random() * 180}px`);
+        piece.style.setProperty("--spin", `${240 + Math.random() * 720}deg`);
+        piece.style.setProperty("--fall-duration", `${1700 + Math.random() * 1200}ms`);
+        piece.style.animationDelay = `${Math.random() * 240}ms`;
+        confettiLayerEl.appendChild(piece);
+      }
+
+      confettiTimeout = setTimeout(() => {
+        confettiLayerEl.innerHTML = "";
+        confettiTimeout = null;
+      }, 3200);
+    }
+
+    btnNew.addEventListener("click", () => {
+      clearConfetti();
+      winBox.style.display = "none";
+      setupGame();
+    });
+    diffSel.addEventListener("change", setupGame);
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if(btn.dataset.mode === currentMode) return;
+        currentMode = btn.dataset.mode;
+        clearConfetti();
+        winBox.style.display = "none";
+        updateModeUI();
+        setupGame();
+      });
+    });
+    againBtn.addEventListener("click", () => {
+      clearConfetti();
+      winBox.style.display = "none";
+      setupGame();
+    });
+    closeWin.addEventListener("click", () => {
+      clearConfetti();
+      winBox.style.display = "none";
+    });
+
+    updateModeUI();
+    setupGame();
+  </script>
+</body>
+</html>
