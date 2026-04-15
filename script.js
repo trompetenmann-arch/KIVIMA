@@ -235,6 +235,48 @@ const translations = {
   }
 };
 
+
+const BRUCHMEMORY_ALLOWED_FILES = [
+  "brueche-memory_FINAL.html",
+  "brueche-memory-2.html",
+  "brueche-memory.html",
+  "bruche-memory.html",
+  "bruch-memory-verbessert.html",
+  "bruchmemory_konfetti.html",
+  "Bruchmemorie.html",
+  "Bruchmemory_download.html",
+  "Bruchmemory Heuer.html",
+  "Bruchmemory_JannesKröker.html"
+];
+
+const enforceBruchmemoryLinks = () => {
+  const variantGrid = document.querySelector(".variant-grid");
+  if (!variantGrid) {
+    return;
+  }
+
+  const existingLinks = Array.from(variantGrid.querySelectorAll("a.variant-link"));
+  const linkByFile = new Map();
+
+  existingLinks.forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    const fileName = decodeURIComponent(href.split("/").pop() || "");
+
+    if (!BRUCHMEMORY_ALLOWED_FILES.includes(fileName) || linkByFile.has(fileName)) {
+      link.remove();
+      return;
+    }
+
+    linkByFile.set(fileName, link);
+  });
+
+  BRUCHMEMORY_ALLOWED_FILES.forEach((fileName) => {
+    const link = linkByFile.get(fileName);
+    if (link) {
+      variantGrid.appendChild(link);
+    }
+  });
+};
 const setLanguage = (lang) => {
   const selectedLanguage = translations[lang] ? lang : "de";
   document.documentElement.lang = selectedLanguage;
@@ -257,4 +299,5 @@ document.querySelectorAll(".lang-btn").forEach((button) => {
 });
 
 const storedLanguage = localStorage.getItem("kivima-language") || "de";
+enforceBruchmemoryLinks();
 setLanguage(storedLanguage);
