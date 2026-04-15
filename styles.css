@@ -160,6 +160,20 @@ main {
 
 .card h3 { margin-top: 0; color: var(--primary-dark); }
 
+.card-subtitle {
+  margin: 1rem 0 0.45rem;
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
+.link-list {
+  margin: 0;
+}
+
+.link-list li + li {
+  margin-top: 0.2rem;
+}
+
 .process-highlight {
   padding: 1.2rem;
 }
