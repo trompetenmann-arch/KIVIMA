@@ -295,9 +295,10 @@ const enforceBruchmemoryLinks = () => {
     buttonByFile.set(fileName, button);
   });
 
-  BRUCHMEMORY_ALLOWED_FILES.forEach((fileName) => {
+  BRUCHMEMORY_ALLOWED_FILES.forEach((fileName, index) => {
     const button = buttonByFile.get(fileName);
     if (button && button.parentElement) {
+      button.textContent = `Variante ${index + 1}`;
       button.parentElement.appendChild(button);
     }
   });
@@ -330,17 +331,18 @@ const initializeVariantPreview = () => {
     }
 
     const availableWidth = Math.max(frame.clientWidth - 16, 320);
+    const availableHeight = Math.max(frame.clientHeight - 16, 320);
     const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
     const contentHeight = Math.max(html.scrollHeight, body.scrollHeight, body.offsetHeight, 1);
-    const scale = Math.min(1, availableWidth / contentWidth);
+    const scale = Math.min(1, availableWidth / contentWidth, availableHeight / contentHeight);
 
     html.style.overflow = "hidden";
+    html.style.height = "100%";
     body.style.margin = "0";
     body.style.transformOrigin = "top left";
     body.style.transform = `scale(${scale})`;
     body.style.width = `${100 / scale}%`;
-
-    frame.style.height = `${Math.ceil(contentHeight * scale) + 20}px`;
+    body.style.height = `${100 / scale}%`;
   };
 
   frame.addEventListener("load", fitVariantInFrame);
