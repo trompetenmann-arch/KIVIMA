@@ -196,9 +196,12 @@ main {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.65rem;
+  margin-top: 0.8rem;
 }
 
 .variant-link {
+  appearance: none;
+  font-family: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -212,6 +215,7 @@ main {
   font-size: 0.95rem;
   font-weight: 600;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
 }
 
 .variant-link:hover,
@@ -221,6 +225,58 @@ main {
   box-shadow: 0 6px 16px rgba(24, 62, 37, 0.1);
   transform: translateY(-1px);
   outline: none;
+}
+
+.variant-menu {
+  border: 1px solid rgba(44, 141, 79, 0.2);
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem 0.7rem;
+  background: #fcfffa;
+}
+
+.variant-menu summary {
+  font-weight: 700;
+  color: var(--primary-dark);
+  cursor: pointer;
+}
+
+.variant-menu summary:hover,
+.variant-menu summary:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.variant-preview {
+  margin-top: 1rem;
+  border: 1px solid rgba(44, 141, 79, 0.2);
+  border-radius: 0.7rem;
+  padding: 0.8rem;
+  background: #fcfffa;
+}
+
+.variant-preview-hint {
+  margin: 0;
+  color: #365844;
+}
+
+.variant-preview-title {
+  margin: 0.2rem 0 0;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.variant-preview-link {
+  display: inline-block;
+  margin: 0.2rem 0 0.65rem;
+  font-weight: 600;
+}
+
+.variant-preview-frame {
+  width: 100%;
+  min-height: 580px;
+  border: 1px solid rgba(44, 141, 79, 0.25);
+  border-radius: 0.6rem;
+  background: #fff;
 }
 
 .process-highlight {
@@ -364,6 +420,10 @@ footer .inner {
 
   .variant-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .variant-preview-frame {
+    min-height: 460px;
   }
 
   .seminar-layout {

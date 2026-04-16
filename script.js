@@ -53,6 +53,9 @@ const translations = {
     semVariantsIntro: "Ausgehend von einem Initialprompt entstand zunächst ein erstes Bruchmemory. Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.",
     semFirstSessionTitle: "Erste Seminarsitzung",
     semVariantsText: "Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:",
+    semVariantMenuLabel: "Variante auswählen",
+    semVariantPreviewHint: "Wähle oben eine Variante aus, um sie hier direkt zu öffnen.",
+    semVariantOpenNewTab: "In neuem Tab öffnen",
     semPhase2Title: "2) Erprobung im teutolab mathematik",
     semPhase2Text: "Durchführung von Stationen mit Schüler*innen der Klassen 9/10, Beobachtung und direkte Reflexion in den Studierendenteams.",
     semPhase3Title: "3) Nachbereitung & OER",
@@ -133,6 +136,9 @@ const translations = {
     semVariantsIntro: "A partir de un prompt inicial se creó primero un Bruchmemory. En el seminario se recopiló después el potencial de mejora y, sobre esa base, se elaboraron nuevas variantes.",
     semFirstSessionTitle: "Primera sesión del seminario",
     semVariantsText: "Resumen de todas las variantes de Bruchmemory creadas en el seminario:",
+    semVariantMenuLabel: "Elegir variante",
+    semVariantPreviewHint: "Elige arriba una variante para verla aquí integrada.",
+    semVariantOpenNewTab: "Abrir en una pestaña nueva",
     semPhase2Title: "2) Prueba en teutolab mathematik",
     semPhase2Text: "Realización de estaciones con alumnado de 9.º/10.º curso, observación y reflexión directa en los equipos de estudiantes.",
     semPhase3Title: "3) Revisión y OER",
@@ -213,6 +219,9 @@ const translations = {
     semVariantsIntro: "Starting from an initial prompt, a first Bruchmemory was created. In the seminar, improvement potential was then compiled and used as the basis for developing new versions.",
     semFirstSessionTitle: "First seminar session",
     semVariantsText: "Overview of all Bruchmemory variants developed in the seminar:",
+    semVariantMenuLabel: "Choose a variant",
+    semVariantPreviewHint: "Choose a variant above to load it directly below.",
+    semVariantOpenNewTab: "Open in a new tab",
     semPhase2Title: "2) Testing at teutolab mathematik",
     semPhase2Text: "Running stations with students in grades 9/10, observation, and direct reflection in the student teams.",
     semPhase3Title: "3) Revision & OER",
@@ -255,34 +264,83 @@ const BRUCHMEMORY_ALLOWED_FILES = [
   "Bruchmemory_JannesKröker.html"
 ];
 
+const getVariantFileName = (source) => {
+  if (!source) {
+    return "";
+  }
+
+  return decodeURIComponent(source.split("/").pop() || "");
+};
+
+const isAllowedVariantSource = (source) => BRUCHMEMORY_ALLOWED_FILES.includes(getVariantFileName(source));
+
 const enforceBruchmemoryLinks = () => {
-  const variantGrid = document.querySelector(".variant-grid");
-  if (!variantGrid) {
+  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
+  if (variantButtons.length === 0) {
     return;
   }
 
-  const existingLinks = Array.from(variantGrid.querySelectorAll("a.variant-link"));
-  const linkByFile = new Map();
+  const buttonByFile = new Map();
 
-  existingLinks.forEach((link) => {
-    const href = link.getAttribute("href") || "";
-    const fileName = decodeURIComponent(href.split("/").pop() || "");
+  variantButtons.forEach((button) => {
+    const source = button.dataset.variantSrc || "";
+    const fileName = getVariantFileName(source);
 
-    if (!BRUCHMEMORY_ALLOWED_FILES.includes(fileName) || linkByFile.has(fileName)) {
-      link.remove();
+    if (!isAllowedVariantSource(source) || buttonByFile.has(fileName)) {
+      button.remove();
       return;
     }
 
-    linkByFile.set(fileName, link);
+    buttonByFile.set(fileName, button);
   });
 
   BRUCHMEMORY_ALLOWED_FILES.forEach((fileName) => {
-    const link = linkByFile.get(fileName);
-    if (link) {
-      variantGrid.appendChild(link);
+    const button = buttonByFile.get(fileName);
+    if (button && button.parentElement) {
+      button.parentElement.appendChild(button);
     }
   });
 };
+
+const initializeVariantPreview = () => {
+  const variantMenu = document.getElementById("variantMenu");
+  const frame = document.getElementById("variantPreviewFrame");
+  const title = document.getElementById("variantPreviewTitle");
+  const externalLink = document.getElementById("variantPreviewLink");
+  const hint = document.querySelector(".variant-preview-hint");
+  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
+
+  if (!variantMenu || !frame || !title || !externalLink || !hint || variantButtons.length === 0) {
+    return;
+  }
+
+  title.hidden = true;
+  externalLink.hidden = true;
+  frame.hidden = true;
+
+  variantButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const source = button.dataset.variantSrc || "";
+      if (!isAllowedVariantSource(source)) {
+        return;
+      }
+
+      const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
+      frame.src = source;
+      title.textContent = button.textContent || "";
+      externalLink.href = source;
+      externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+
+      hint.hidden = true;
+      title.hidden = false;
+      externalLink.hidden = false;
+      frame.hidden = false;
+      variantMenu.open = false;
+      frame.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+};
+
 const setLanguage = (lang) => {
   const selectedLanguage = translations[lang] ? lang : "de";
   document.documentElement.lang = selectedLanguage;
@@ -298,6 +356,11 @@ const setLanguage = (lang) => {
   document.querySelectorAll(".lang-btn").forEach((button) => {
     button.classList.toggle("active", button.dataset.lang === selectedLanguage);
   });
+
+  const previewLink = document.getElementById("variantPreviewLink");
+  if (previewLink && previewLink.href) {
+    previewLink.textContent = translations[selectedLanguage].semVariantOpenNewTab;
+  }
 };
 
 document.querySelectorAll(".lang-btn").forEach((button) => {
@@ -306,4 +369,5 @@ document.querySelectorAll(".lang-btn").forEach((button) => {
 
 const storedLanguage = localStorage.getItem("kivima-language") || "de";
 enforceBruchmemoryLinks();
+initializeVariantPreview();
 setLanguage(storedLanguage);
