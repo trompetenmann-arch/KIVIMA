@@ -167,6 +167,10 @@ main {
 
 .card h3 { margin-top: 0; color: var(--primary-dark); }
 
+.seminar-grid {
+  grid-template-columns: 1fr;
+}
+
 .variant-section {
   margin-top: 1.2rem;
   padding-top: 1rem;
