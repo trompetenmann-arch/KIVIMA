@@ -269,10 +269,11 @@ const getVariantFileName = (source) => {
     return "";
   }
 
-  return decodeURIComponent(source.split("/").pop() || "");
+  return decodeURIComponent(source.split("/").pop() || "").normalize("NFC");
 };
 
-const isAllowedVariantSource = (source) => BRUCHMEMORY_ALLOWED_FILES.includes(getVariantFileName(source));
+const normalizedAllowedVariantFiles = BRUCHMEMORY_ALLOWED_FILES.map((fileName) => fileName.normalize("NFC"));
+const isAllowedVariantSource = (source) => normalizedAllowedVariantFiles.includes(getVariantFileName(source));
 
 const enforceBruchmemoryLinks = () => {
   const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
@@ -349,15 +350,32 @@ const initializeVariantPreview = () => {
   externalLink.hidden = true;
   frame.hidden = true;
 
+  const loadVariantIntoFrame = async (source) => {
+    try {
+      const response = await fetch(source, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const htmlContent = await response.text();
+      const absoluteUrl = new URL(source, window.location.href).href;
+      frame.srcdoc = `<base href="${absoluteUrl}">${htmlContent}`;
+      frame.removeAttribute("src");
+    } catch (error) {
+      frame.removeAttribute("srcdoc");
+      frame.src = source;
+    }
+  };
+
   variantButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const source = button.dataset.variantSrc || "";
       if (!isAllowedVariantSource(source)) {
         return;
       }
 
       const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
-      frame.src = source;
+      await loadVariantIntoFrame(source);
       title.textContent = button.textContent || "";
       externalLink.href = source;
       externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
