@@ -303,16 +303,47 @@ const enforceBruchmemoryLinks = () => {
 };
 
 const initializeVariantPreview = () => {
-  const variantMenu = document.getElementById("variantMenu");
   const frame = document.getElementById("variantPreviewFrame");
   const title = document.getElementById("variantPreviewTitle");
   const externalLink = document.getElementById("variantPreviewLink");
   const hint = document.querySelector(".variant-preview-hint");
   const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
 
-  if (!variantMenu || !frame || !title || !externalLink || !hint || variantButtons.length === 0) {
+  if (!frame || !title || !externalLink || !hint || variantButtons.length === 0) {
     return;
   }
+
+  const fitVariantInFrame = () => {
+    const frameWindow = frame.contentWindow;
+    const frameDocument = frame.contentDocument;
+
+    if (!frameWindow || !frameDocument) {
+      return;
+    }
+
+    const html = frameDocument.documentElement;
+    const body = frameDocument.body;
+
+    if (!html || !body) {
+      return;
+    }
+
+    const availableWidth = Math.max(frame.clientWidth - 16, 320);
+    const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
+    const contentHeight = Math.max(html.scrollHeight, body.scrollHeight, body.offsetHeight, 1);
+    const scale = Math.min(1, availableWidth / contentWidth);
+
+    html.style.overflow = "hidden";
+    body.style.margin = "0";
+    body.style.transformOrigin = "top left";
+    body.style.transform = `scale(${scale})`;
+    body.style.width = `${100 / scale}%`;
+
+    frame.style.height = `${Math.ceil(contentHeight * scale) + 20}px`;
+  };
+
+  frame.addEventListener("load", fitVariantInFrame);
+  window.addEventListener("resize", fitVariantInFrame);
 
   title.hidden = true;
   externalLink.hidden = true;
@@ -335,7 +366,6 @@ const initializeVariantPreview = () => {
       title.hidden = false;
       externalLink.hidden = false;
       frame.hidden = false;
-      variantMenu.open = false;
       frame.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
