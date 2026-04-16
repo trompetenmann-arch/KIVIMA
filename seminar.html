@@ -55,18 +55,33 @@
           <p data-i18n="semVariantsText">
             Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:
           </p>
-          <div class="variant-grid">
-            <a class="variant-link" href="Seminar/Bruchmemory/brueche-memory_FINAL.html">Variante 1</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/brueche-memory-2.html">Variante 2</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/brueche-memory.html">Variante 3</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/bruche-memory.html">Variante 4</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/bruch-memory-verbessert.html">Variante 5</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/bruchmemory_konfetti.html">Variante 6</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/Bruchmemorie.html">Variante 7</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/Bruchmemory_download.html">Variante 8</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/Bruchmemory Heuer.html">Variante 9</a>
-            <a class="variant-link" href="Seminar/Bruchmemory/Bruchmemory_JannesKröker.html">Variante 10</a>
-          </div>
+          <details class="variant-menu" id="variantMenu">
+            <summary data-i18n="semVariantMenuLabel">Variante auswählen</summary>
+            <div class="variant-grid">
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory_FINAL.html">Variante 1</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory-2.html">Variante 2</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory.html">Variante 3</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruche-memory.html">Variante 4</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruch-memory-verbessert.html">Variante 5</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruchmemory_konfetti.html">Variante 6</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemorie.html">Variante 7</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_download.html">Variante 8</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory Heuer.html">Variante 9</button>
+              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_JannesKröker.html">Variante 10</button>
+            </div>
+          </details>
+          <section class="variant-preview" id="variantPreview">
+            <p class="variant-preview-hint" data-i18n="semVariantPreviewHint">Wähle oben eine Variante aus, um sie hier direkt zu öffnen.</p>
+            <p class="variant-preview-title" id="variantPreviewTitle"></p>
+            <a class="variant-preview-link" id="variantPreviewLink" target="_blank" rel="noopener noreferrer"></a>
+            <iframe
+              id="variantPreviewFrame"
+              class="variant-preview-frame"
+              title="Bruchmemory Variante"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            ></iframe>
+          </section>
         </section>
       </article>
       <article class="card">
