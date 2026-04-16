@@ -160,6 +160,10 @@ main {
 
 .card h3 { margin-top: 0; color: var(--primary-dark); }
 
+.seminar-grid {
+  grid-template-columns: 1fr;
+}
+
 .variant-section {
   margin-top: 1.2rem;
   padding-top: 1rem;
@@ -175,19 +179,30 @@ main {
   margin: 0 0 0.85rem;
 }
 
+.variant-section h5 {
+  margin: 0 0 0.35rem;
+  color: var(--primary-dark);
+  font-size: 1rem;
+}
+
 .variant-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
 .variant-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   background: #fff;
   border: 1px solid rgba(44, 141, 79, 0.18);
   border-radius: 0.65rem;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.65rem;
+  min-height: 3rem;
   color: var(--primary-dark);
+  font-size: 0.95rem;
   font-weight: 600;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -316,6 +331,11 @@ footer .inner {
   padding-top: 0.9rem;
 }
 
+@media (max-width: 1024px) {
+  .variant-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
 @media (max-width: 640px) {
   .nav-right {
@@ -333,5 +353,9 @@ footer .inner {
 
   .profile-card img {
     max-width: 220px;
+  }
+
+  .variant-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
