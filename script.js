@@ -330,23 +330,41 @@ const initializeVariantPreview = () => {
       return;
     }
 
-    const availableWidth = Math.max(frame.clientWidth - 16, 320);
-    const availableHeight = Math.max(frame.clientHeight - 16, 320);
+    const frameRect = frame.getBoundingClientRect();
+    const availableWidth = Math.max(frameRect.width - 16, 320);
+    const availableHeight = Math.max(frameRect.height - 16, 320);
     const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
     const contentHeight = Math.max(html.scrollHeight, body.scrollHeight, body.offsetHeight, 1);
     const scale = Math.min(1, availableWidth / contentWidth, availableHeight / contentHeight);
 
     html.style.overflow = "hidden";
     html.style.height = "100%";
-    body.style.margin = "0";
-    body.style.transformOrigin = "top left";
+    body.style.margin = "0 auto";
+    body.style.transformOrigin = "top center";
     body.style.transform = `scale(${scale})`;
     body.style.width = `${100 / scale}%`;
     body.style.height = `${100 / scale}%`;
   };
 
-  frame.addEventListener("load", fitVariantInFrame);
-  window.addEventListener("resize", fitVariantInFrame);
+  const updatePreviewFrameHeight = () => {
+    const topOffset = frame.getBoundingClientRect().top;
+    const viewportHeight = window.innerHeight || 800;
+    const preferredHeight = viewportHeight - topOffset - 24;
+    const clampedHeight = Math.max(520, Math.min(620, preferredHeight));
+    frame.style.height = `${clampedHeight}px`;
+  };
+
+  frame.addEventListener("load", () => {
+    updatePreviewFrameHeight();
+    fitVariantInFrame();
+    window.setTimeout(fitVariantInFrame, 250);
+    window.setTimeout(fitVariantInFrame, 700);
+  });
+
+  window.addEventListener("resize", () => {
+    updatePreviewFrameHeight();
+    fitVariantInFrame();
+  });
 
   title.hidden = true;
   externalLink.hidden = true;
@@ -386,6 +404,8 @@ const initializeVariantPreview = () => {
       title.hidden = false;
       externalLink.hidden = false;
       frame.hidden = false;
+      updatePreviewFrameHeight();
+      fitVariantInFrame();
       frame.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
