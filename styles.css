@@ -227,23 +227,17 @@ main {
   outline: none;
 }
 
-.variant-menu {
+.variant-picker {
   border: 1px solid rgba(44, 141, 79, 0.2);
   border-radius: 0.7rem;
   padding: 0.55rem 0.7rem 0.7rem;
   background: #fcfffa;
 }
 
-.variant-menu summary {
+.variant-picker-label {
+  margin: 0;
   font-weight: 700;
   color: var(--primary-dark);
-  cursor: pointer;
-}
-
-.variant-menu summary:hover,
-.variant-menu summary:focus-visible {
-  text-decoration: underline;
-  outline: none;
 }
 
 .variant-preview {
