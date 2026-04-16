@@ -267,8 +267,8 @@ main {
 
 .variant-preview-frame {
   width: 100%;
-  height: min(68vh, 620px);
-  min-height: 520px;
+  height: min(78vh, 900px);
+  min-height: 620px;
   border: 1px solid rgba(44, 141, 79, 0.25);
   border-radius: 0.6rem;
   background: #fff;
@@ -418,7 +418,8 @@ footer .inner {
   }
 
   .variant-preview-frame {
-    height: 460px;
+    height: 560px;
+    min-height: 560px;
   }
 
   .seminar-layout {
