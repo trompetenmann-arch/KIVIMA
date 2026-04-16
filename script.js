@@ -316,10 +316,9 @@ const initializeVariantPreview = () => {
   }
 
   const fitVariantInFrame = () => {
-    const frameWindow = frame.contentWindow;
     const frameDocument = frame.contentDocument;
 
-    if (!frameWindow || !frameDocument) {
+    if (!frameDocument) {
       return;
     }
 
@@ -331,26 +330,25 @@ const initializeVariantPreview = () => {
     }
 
     const frameRect = frame.getBoundingClientRect();
-    const availableWidth = Math.max(frameRect.width - 16, 320);
-    const availableHeight = Math.max(frameRect.height - 16, 320);
+    const availableWidth = Math.max(frameRect.width - 20, 320);
     const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
-    const contentHeight = Math.max(html.scrollHeight, body.scrollHeight, body.offsetHeight, 1);
-    const scale = Math.min(1, availableWidth / contentWidth, availableHeight / contentHeight);
+    const scale = Math.min(1, availableWidth / contentWidth);
 
-    html.style.overflow = "hidden";
-    html.style.height = "100%";
+    html.style.overflowX = "auto";
+    html.style.overflowY = "auto";
+    html.style.height = "auto";
     body.style.margin = "0 auto";
     body.style.transformOrigin = "top center";
     body.style.transform = `scale(${scale})`;
     body.style.width = `${100 / scale}%`;
-    body.style.height = `${100 / scale}%`;
+    body.style.minHeight = "100%";
   };
 
   const updatePreviewFrameHeight = () => {
     const topOffset = frame.getBoundingClientRect().top;
     const viewportHeight = window.innerHeight || 800;
     const preferredHeight = viewportHeight - topOffset - 24;
-    const clampedHeight = Math.max(520, Math.min(620, preferredHeight));
+    const clampedHeight = Math.max(620, Math.min(900, preferredHeight));
     frame.style.height = `${clampedHeight}px`;
   };
 
@@ -387,28 +385,39 @@ const initializeVariantPreview = () => {
     }
   };
 
+  const activateVariant = async (button, scrollPreview = true) => {
+    const source = button.dataset.variantSrc || "";
+    if (!isAllowedVariantSource(source)) {
+      return;
+    }
+
+    const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
+    await loadVariantIntoFrame(source);
+    title.textContent = button.textContent || "";
+    externalLink.href = source;
+    externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+
+    hint.hidden = true;
+    title.hidden = false;
+    externalLink.hidden = false;
+    frame.hidden = false;
+    updatePreviewFrameHeight();
+    fitVariantInFrame();
+
+    if (scrollPreview) {
+      frame.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   variantButtons.forEach((button) => {
     button.addEventListener("click", async () => {
-      const source = button.dataset.variantSrc || "";
-      if (!isAllowedVariantSource(source)) {
-        return;
-      }
-
-      const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
-      await loadVariantIntoFrame(source);
-      title.textContent = button.textContent || "";
-      externalLink.href = source;
-      externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
-
-      hint.hidden = true;
-      title.hidden = false;
-      externalLink.hidden = false;
-      frame.hidden = false;
-      updatePreviewFrameHeight();
-      fitVariantInFrame();
-      frame.scrollIntoView({ behavior: "smooth", block: "start" });
+      await activateVariant(button);
     });
   });
+
+  if (variantButtons[0]) {
+    activateVariant(variantButtons[0], false);
+  }
 };
 
 const setLanguage = (lang) => {
