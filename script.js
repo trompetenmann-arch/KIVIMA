@@ -49,9 +49,8 @@ const translations = {
     semHeroText: "Das Seminar ist in drei aufeinander bezogene Phasen gegliedert.",
     semPhase1Title: "1) Entwicklungsphase",
     semPhase1Text: "Einführung in KI-Werkzeuge (z. B. BIKI), Entwicklung von Visualisierungsideen und technischer Aufbau erster Prototypen.",
-    semVariantsTitle: "Varianten des Bruchmemory",
-    semVariantsIntro: "Ausgehend von einem Initialprompt entstand zunächst ein erstes Bruchmemory. Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.",
-    semFirstSessionTitle: "Erste Seminarsitzung",
+    semVariantsTitle: "Erste Seminarsitzung - Bruchmemory",
+    semVariantsIntro: "Ausgehend von einem Initialprompt entstand zunächst eine erste Version eines Bruchmemory. Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.",
     semVariantsText: "Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:",
     semVariantMenuLabel: "Variante auswählen",
     semVariantPreviewHint: "Wähle oben eine Variante aus, um sie hier direkt zu öffnen.",
@@ -281,27 +280,53 @@ const enforceBruchmemoryLinks = () => {
     return;
   }
 
-  const buttonByFile = new Map();
+  const parsedVariants = [];
 
   variantButtons.forEach((button) => {
     const source = button.dataset.variantSrc || "";
-    const fileName = getVariantFileName(source);
-
-    if (!isAllowedVariantSource(source) || buttonByFile.has(fileName)) {
+    if (!isAllowedVariantSource(source)) {
       button.remove();
       return;
     }
 
-    buttonByFile.set(fileName, button);
+    const variantMatch = (button.textContent || "").match(/(\d+)/);
+    const variantNumber = variantMatch ? Number.parseInt(variantMatch[1], 10) : NaN;
+
+    if (!Number.isFinite(variantNumber)) {
+      button.remove();
+      return;
+    }
+
+    parsedVariants.push({ button, variantNumber });
   });
 
-  BRUCHMEMORY_ALLOWED_FILES.forEach((fileName, index) => {
-    const button = buttonByFile.get(fileName);
-    if (button && button.parentElement) {
-      button.textContent = `Variante ${index + 1}`;
-      button.parentElement.appendChild(button);
-    }
-  });
+  parsedVariants
+    .sort((a, b) => a.variantNumber - b.variantNumber)
+    .forEach(({ button, variantNumber }) => {
+      if (button.parentElement) {
+        button.textContent = `Variante ${variantNumber}`;
+        button.parentElement.appendChild(button);
+      }
+    });
+};
+
+const getVariantNumber = (button) => {
+  const variantMatch = (button.textContent || "").match(/(\d+)/);
+  if (!variantMatch) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const variantNumber = Number.parseInt(variantMatch[1], 10);
+  if (!Number.isFinite(variantNumber)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return variantNumber;
+};
+
+const getOrderedVariantButtons = () => {
+  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
+  return variantButtons.sort((a, b) => getVariantNumber(a) - getVariantNumber(b));
 };
 
 const initializeVariantPreview = () => {
@@ -309,7 +334,7 @@ const initializeVariantPreview = () => {
   const title = document.getElementById("variantPreviewTitle");
   const externalLink = document.getElementById("variantPreviewLink");
   const hint = document.querySelector(".variant-preview-hint");
-  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
+  const variantButtons = getOrderedVariantButtons();
 
   if (!frame || !title || !externalLink || !hint || variantButtons.length === 0) {
     return;
