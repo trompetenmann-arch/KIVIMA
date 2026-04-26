@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lernumgebung: Quadratische Ergänzung</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #5b6472;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --orange: #ea580c;
+      --orange-soft: #ffedd5;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --border: #d7deea;
+      --shadow: 0 10px 30px rgba(31, 41, 55, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 220px);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+      margin-bottom: 20px;
+    }
+
+    h1, h2, h3 { margin-top: 0; }
+    h1 { font-size: clamp(1.7rem, 2.6vw, 2.6rem); margin-bottom: 10px; }
+    h2 { font-size: 1.35rem; margin-bottom: 10px; }
+    .subtitle { color: var(--muted); max-width: 80ch; }
+
+    .equation {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: #123b95;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .steps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .step-dot {
+      min-width: 40px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .step-dot.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .step-dot.done {
+      background: #eff6ff;
+      color: var(--accent);
+      border-color: #bfdbfe;
+    }
+
+    .explain {
+      background: #fbfcfe;
+      border: 1px solid #e8edf5;
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 255px;
+    }
+
+    .hint {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #fffbea;
+      border: 1px solid #f7e7a8;
+      color: #7a5d00;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 15px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .secondary {
+      background: #eef2f7;
+      color: #223046;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .mathline {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e5ebf4;
+      overflow-x: auto;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .visual-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .visual-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .canvas-wrap {
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+      border: 1px solid var(--border);
+      padding: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    .caption {
+      background: #f8fafc;
+      border: 1px solid #e7edf5;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #324053;
+    }
+
+    .quiz {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 16px;
+      background: #fafcff;
+      border: 1px solid #e5edf9;
+    }
+
+    .quiz input {
+      width: 110px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      margin-right: 8px;
+    }
+
+    .feedback {
+      margin-top: 10px;
+      font-weight: 700;
+    }
+
+    .ok { color: var(--green); }
+    .nope { color: #b91c1c; }
+
+    .result-box {
+      padding: 14px;
+      border-radius: 16px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .result-box.show { display: block; }
+    .result-good { background: var(--green-soft); border: 1px solid #9fe1b6; }
+    .pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    ul { padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="pill">Interaktive Lernumgebung</div>
+      <h1>Quadratische Ergänzung verstehen</h1>
+      <p class="subtitle">
+        Wir lösen die Gleichung <strong>x² + 10x − 39 = 0</strong> schrittweise. Der Schwerpunkt liegt auf dem
+        <strong>Flächenmodell</strong>: Ein Quadrat steht für <strong>x²</strong>, zwei Rechtecke stehen für <strong>10x</strong>,
+        und die fehlende Ecke macht sichtbar, wie man <strong>zum Quadrat ergänzt</strong>.
+      </p>
+      <div class="equation">x² + 10x − 39 = 0</div>
+    </section>
+
+    <div class="layout">
+      <section class="card">
+        <h2>Schritt für Schritt</h2>
+        <div class="steps" id="steps"></div>
+        <div class="explain">
+          <div id="stepTitle"></div>
+          <div class="mathline" id="mathLine"></div>
+          <div id="stepText"></div>
+          <div class="hint" id="hintBox"></div>
+        </div>
+
+        <div class="controls">
+          <button class="secondary" id="prevBtn">Zurück</button>
+          <button class="primary" id="nextBtn">Weiter</button>
+          <button class="secondary" id="resetBtn">Neu starten</button>
+        </div>
+
+        <div class="quiz">
+          <h3>Kurze Kontrolle</h3>
+          <p>Welche Zahl muss man bei <strong>x² + 10x</strong> ergänzen, damit ein vollständiges Quadrat entsteht?</p>
+          <input id="quizInput" type="number" placeholder="?" />
+          <button class="primary" id="quizBtn">Prüfen</button>
+          <div class="feedback" id="quizFeedback"></div>
+          <p class="small">Tipp: Nimm die Zahl vor dem x, halbiere sie und quadriere dann.</p>
+        </div>
+
+        <div class="result-box result-good" id="resultBox">
+          <h3>Ergebnis</h3>
+          <p><strong>Die Lösungen sind:</strong> x = 3 und x = -13</p>
+          <p class="small">
+            Probe: 3² + 10·3 − 39 = 9 + 30 − 39 = 0 und (-13)² + 10·(-13) − 39 = 169 − 130 − 39 = 0.
+          </p>
+        </div>
+      </section>
+
+      <aside class="card visual-panel">
+        <div class="visual-head">
+          <h2>Flächenmodell</h2>
+          <div class="legend">
+            <span><i class="swatch" style="background:#dbeafe"></i> x²-Quadrat</span>
+            <span><i class="swatch" style="background:#ffedd5"></i> Rechtecke für 10x</span>
+            <span><i class="swatch" style="background:#ede9fe"></i> Ergänzung 25</span>
+          </div>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="modelCanvas" width="560" height="460"></canvas>
+        </div>
+        <div class="caption" id="visualCaption"></div>
+
+        <div class="card" style="padding:16px; box-shadow:none;">
+          <h3 style="margin-bottom:8px;">Merksatz</h3>
+          <p style="margin:0;">
+            Bei <strong>x² + bx</strong> ergänzt man <strong>(b/2)²</strong>.<br>
+            Hier ist <strong>b = 10</strong>, also ergänzt man <strong>(10/2)² = 5² = 25</strong>.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        title: '1. Ausgangsgleichung ansehen',
+        math: 'x² + 10x − 39 = 0',
+        text: `
+          <p>Wir wollen die Gleichung so umformen, dass links ein <strong>binomisches Quadrat</strong> entsteht.</p>
+          <p>Dazu betrachten wir zuerst nur den Teil <strong>x² + 10x</strong>. Genau diesen Teil können wir mit einem Flächenmodell sichtbar machen.</p>
+        `,
+        hint: 'Den konstanten Term −39 lassen wir zunächst noch stehen. Zuerst kümmern wir uns darum, wie aus x² + 10x ein Quadrat wird.',
+        caption: 'Das blaue Quadrat stellt x² dar. Die orangefarbenen Flächen für 10x sind noch nicht ergänzt.'
+      },
+      {
+        title: '2. Den linearen Term aufteilen',
+        math: 'x² + 10x = x² + 5x + 5x',
+        text: `
+          <p>Die <strong>10x</strong> teilen wir in <strong>5x + 5x</strong> auf.</p>
+          <p>Warum? Damit wir die beiden Rechtecke passend an zwei Seiten des x²-Quadrats anlegen können. So entsteht fast ein großes Quadrat.</p>
+        `,
+        hint: 'Aus 10x werden zwei gleich große Rechtecke mit den Seitenlängen x und 5.',
+        caption: 'Die beiden orangefarbenen Rechtecke mit Fläche 5x werden an das x²-Quadrat gelegt: eines rechts, eines unten.'
+      },
+      {
+        title: '3. Fehlende Ecke erkennen',
+        math: 'fehlende Fläche = 5 · 5 = 25',
+        text: `
+          <p>Jetzt sieht man: Es fehlt unten rechts noch eine kleine Ecke, damit die Figur ein vollständiges Quadrat wird.</p>
+          <p>Diese Ecke hat die Seitenlängen <strong>5</strong> und <strong>5</strong>. Ihre Fläche ist also <strong>25</strong>.</p>
+        `,
+        hint: 'Genau diese fehlende Fläche nennt man die Ergänzung zum Quadrat.',
+        caption: 'Das lila Quadrat ist die fehlende Ecke. Erst mit dieser Fläche wird aus der Figur ein großes Quadrat.'
+      },
+      {
+        title: '4. Auf beiden Seiten 25 ergänzen',
+        math: 'x² + 10x − 39 = 0  ⇒  x² + 10x + 25 = 39 + 25',
+        text: `
+          <p>Wenn wir links <strong>25</strong> ergänzen, müssen wir rechts ebenfalls <strong>25</strong> ergänzen, damit die Gleichung korrekt bleibt.</p>
+          <p>Wir bringen also zuerst die 39 auf die andere Seite und ergänzen dann die 25.</p>
+        `,
+        hint: 'Gleichungen bleiben nur dann gleich, wenn man auf beiden Seiten dieselbe Zahl addiert.',
+        caption: 'Im Flächenmodell wird die fehlende Ecke ergänzt. Mathematisch fügen wir deshalb die 25 hinzu.'
+      },
+      {
+        title: '5. Binomisches Quadrat schreiben',
+        math: 'x² + 10x + 25 = 64  ⇒  (x + 5)² = 64',
+        text: `
+          <p>Jetzt ist links ein vollständiges Quadrat entstanden:</p>
+          <p><strong>x² + 10x + 25 = (x + 5)²</strong></p>
+          <p>Rechts steht <strong>64</strong>. Nun können wir die Wurzel ziehen.</p>
+        `,
+        hint: 'Ein großes Quadrat mit Seitenlänge x + 5 hat die Fläche (x + 5)².',
+        caption: 'Die gesamte Figur ist jetzt ein Quadrat mit Seitenlänge x + 5. Deshalb schreiben wir (x + 5)².'
+      },
+      {
+        title: '6. Lösen der Gleichung',
+        math: '(x + 5)² = 64  ⇒  x + 5 = ±8  ⇒  x = 3 oder x = -13',
+        text: `
+          <p>Aus <strong>(x + 5)² = 64</strong> folgt:</p>
+          <ul>
+            <li>x + 5 = 8  →  x = 3</li>
+            <li>x + 5 = -8 →  x = -13</li>
+          </ul>
+          <p>Eine quadratische Gleichung kann also zwei Lösungen haben.</p>
+        `,
+        hint: 'Beim Wurzelziehen aus einer Gleichung muss man immer an beide Möglichkeiten denken: plus und minus.',
+        caption: 'Das Flächenmodell hat uns zum Quadrat geführt. Danach lösen wir durch Wurzelziehen und Umstellen.'
+      }
+    ];
+
+    let current = 0;
+
+    const stepsEl = document.getElementById('steps');
+    const stepTitle = document.getElementById('stepTitle');
+    const mathLine = document.getElementById('mathLine');
+    const stepText = document.getElementById('stepText');
+    const hintBox = document.getElementById('hintBox');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const visualCaption = document.getElementById('visualCaption');
+    const resultBox = document.getElementById('resultBox');
+
+    const canvas = document.getElementById('modelCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function renderStepButtons() {
+      stepsEl.innerHTML = '';
+      steps.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'step-dot';
+        if (i === current) b.classList.add('active');
+        if (i < current) b.classList.add('done');
+        b.textContent = i + 1;
+        b.addEventListener('click', () => {
+          current = i;
+          update();
+        });
+        stepsEl.appendChild(b);
+      });
+    }
+
+    function update() {
+      const s = steps[current];
+      stepTitle.innerHTML = `<h3>${s.title}</h3>`;
+      mathLine.textContent = s.math;
+      stepText.innerHTML = s.text;
+      hintBox.textContent = s.hint;
+      visualCaption.textContent = s.caption;
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === steps.length - 1;
+      resultBox.classList.toggle('show', current === steps.length - 1);
+      renderStepButtons();
+      drawModel(current);
+    }
+
+    function rect(x, y, w, h, fill, stroke = '#9aa7b8', lineWidth = 2) {
+      ctx.fillStyle = fill;
+      ctx.fillRect(x, y, w, h);
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = stroke;
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    function label(text, x, y, color = '#1f2937', size = 20, align = 'center') {
+      ctx.fillStyle = color;
+      ctx.font = `700 ${size}px Inter, Arial, sans-serif`;
+      ctx.textAlign = align;
+      ctx.fillText(text, x, y);
+    }
+
+    function sublabel(text, x, y, color = '#425066', size = 16, align = 'center') {
+      ctx.fillStyle = color;
+      ctx.font = `${size}px Inter, Arial, sans-serif`;
+      ctx.textAlign = align;
+      ctx.fillText(text, x, y);
+    }
+
+    function drawBaseGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fcfdff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#eef2f7';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 28) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawModel(step) {
+      drawBaseGrid();
+
+      const x0 = 110;
+      const y0 = 70;
+      const unit = 44;
+      const xSide = unit * 5;      // symbolisch: Seite x
+      const five = unit;
+
+      // x² square always visible
+      rect(x0, y0, xSide, xSide, '#dbeafe', '#60a5fa', 3);
+      label('x²', x0 + xSide / 2, y0 + xSide / 2 + 8, '#123b95', 34);
+      sublabel('Seite x', x0 + xSide / 2, y0 - 14);
+      ctx.save();
+      ctx.translate(x0 - 18, y0 + xSide / 2);
+      ctx.rotate(-Math.PI / 2);
+      sublabel('Seite x', 0, 0);
+      ctx.restore();
+
+      if (step >= 1) {
+        rect(x0 + xSide, y0, five, xSide, '#ffedd5', '#fb923c', 3);
+        rect(x0, y0 + xSide, xSide, five, '#ffedd5', '#fb923c', 3);
+        label('5x', x0 + xSide + five / 2, y0 + xSide / 2 + 8, '#9a3412', 26);
+        label('5x', x0 + xSide / 2, y0 + xSide + five / 2 + 8, '#9a3412', 26);
+        sublabel('5', x0 + xSide + five / 2, y0 - 14);
+        sublabel('5', x0 - 18, y0 + xSide + five / 2 + 6, '#425066', 16, 'center');
+      }
+
+      if (step >= 2) {
+        rect(x0 + xSide, y0 + xSide, five, five, '#ede9fe', '#8b5cf6', 3);
+        label('25', x0 + xSide + five / 2, y0 + xSide + five / 2 + 8, '#5b21b6', 24);
+      } else if (step === 1) {
+        ctx.setLineDash([8, 6]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.strokeRect(x0 + xSide, y0 + xSide, five, five);
+        ctx.setLineDash([]);
+        label('?', x0 + xSide + five / 2, y0 + xSide + five / 2 + 8, '#7c3aed', 26);
+      }
+
+      if (step >= 4) {
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#2563eb';
+        ctx.strokeRect(x0, y0, xSide + five, xSide + five);
+        label('Seitenlänge: x + 5', x0 + (xSide + five) / 2, y0 + xSide + five + 34, '#123b95', 24);
+      }
+
+      if (step === 0) {
+        sublabel('Noch fehlt die Aufteilung der 10x-Fläche in zwei passende Rechtecke.', canvas.width / 2, 390, '#475569', 18);
+      }
+      if (step === 3) {
+        sublabel('Mathematisch addieren wir dieselbe Zahl auf beiden Seiten: +25', canvas.width / 2, 392, '#475569', 18);
+      }
+      if (step === 5) {
+        sublabel('Aus (x + 5)² = 64 folgt x + 5 = ±8.', canvas.width / 2, 392, '#475569', 18);
+      }
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (current > 0) current--;
+      update();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (current < steps.length - 1) current++;
+      update();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      current = 0;
+      update();
+    });
+
+    document.getElementById('quizBtn').addEventListener('click', () => {
+      const val = Number(document.getElementById('quizInput').value);
+      const fb = document.getElementById('quizFeedback');
+      if (val === 25) {
+        fb.textContent = 'Richtig! 10 halbiert ist 5, und 5² = 25.';
+        fb.className = 'feedback ok';
+      } else {
+        fb.textContent = 'Noch nicht. Halbiere zuerst die 10 und quadriere dann das Ergebnis.';
+        fb.className = 'feedback nope';
+      }
+    });
+
+    update();
+  </script>
+</body>
+</html>
