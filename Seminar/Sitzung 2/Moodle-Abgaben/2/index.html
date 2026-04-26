@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadratische Ergänzung mit Flächenmodell</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #223;
+      --blue: #4a90e2;
+      --green: #7ed321;
+      --orange: #f5a623;
+      --gray: #d9dde5;
+      --line: #444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.8rem;
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--blue);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.95);
+    }
+
+    .equation {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    svg {
+      width: 100%;
+      max-width: 760px;
+      height: auto;
+      border: 1px solid #ccd3dd;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .shape {
+      stroke: #555;
+      stroke-width: 1.5;
+      fill-opacity: 0.72;
+    }
+
+    .x2 {
+      fill: var(--blue);
+    }
+
+    .bx {
+      fill: var(--green);
+    }
+
+    .add {
+      fill: var(--orange);
+    }
+
+    .unit {
+      fill: var(--gray);
+      stroke: #9aa3b1;
+      stroke-width: 0.7;
+    }
+
+    .label {
+      font-size: 14px;
+      font-weight: bold;
+      fill: #222;
+    }
+
+    .measure {
+      stroke: var(--line);
+      stroke-width: 1.2;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .caption {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Quadratische Ergänzung mit Flächenmodell</h1>
+  <p>
+    Die Gleichung lautet:
+    <strong>x2+10x=39x^2 + 10x = 39x2+10x=39</strong>.
+    Die rechte Seite wird als Fläche aus <strong>39 Einheitsquadraten</strong> dargestellt.
+  </p>
+
+  <div class="layout">
+    <div class="card">
+      <div id="step1" class="step active">
+        <h2>1. Ausgangssituation</h2>
+        <p class="equation">x2+10x=39x^2 + 10x = 39x2+10x=39</p>
+        <p>
+          Rechts sehen wir <strong>39 Einheitsquadrate</strong>.
+          Links wird die Fläche aus x2x^2x2 und 10x10x10x aufgebaut.
+        </p>
+        <button onclick="nextStep(1)">Weiter</button>
+      </div>
+
+      <div id="step2" class="step">
+        <h2>2. Zerlegen von 10x10x10x</h2>
+        <p>
+          Die Fläche 10x10x10x wird in zwei gleich große Rechtecke zerlegt:
+          5x5x5x und 5x5x5x.
+        </p>
+        <p class="equation">x2+5x+5x=39x^2 + 5x + 5x = 39x2+5x+5x=39</p>
+        <button onclick="nextStep(2)">Weiter</button>
+      </div>
+
+      <div id="step3" class="step">
+        <h2>3. Zum Quadrat ergänzen</h2>
+        <p>
+          Es fehlt noch ein kleines Quadrat mit Seitenlänge 555, damit links
+          ein großes Quadrat entsteht.
+        </p>
+        <p class="equation">x2+10x+25=39+25x^2 + 10x + 25 = 39 + 25x2+10x+25=39+25</p>
+        <button onclick="nextStep(3)">Weiter</button>
+      </div>
+
+      <div id="step4" class="step">
+        <h2>4. Neues Quadrat</h2>
+        <p>
+          Nun ist links ein Quadrat mit Seitenlänge x+5x+5x+5 entstanden.
+        </p>
+        <p class="equation">(x+5)2=64(x+5)^2 = 64(x+5)2=64</p>
+        <button onclick="nextStep(4)">Weiter</button>
+      </div>
+
+      <div id="step5" class="step">
+        <h2>5. Seitenlänge bestimmen</h2>
+        <p>
+          Da hier eine Seitenlänge betrachtet wird, nehmen wir die positive Wurzel:
+        </p>
+        <p class="equation">x+5=64=8x + 5 = \sqrt{64} = 8x+5=64​=8</p>
+        <p class="equation">x=3x = 3x=3</p>
+        <ul>
+          <li>64=8\sqrt{64} = 864​=8</li>
+          <li>x+5=8x + 5 = 8x+5=8</li>
+          <li>x=3x = 3x=3</li>
+        </ul>
+        <button onclick="resetSteps()">Nochmal starten</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <svg id="svg" viewBox="-60 -40 760 340" aria-label="Flächenmodell zur quadratischen Ergänzung">
+        <!-- Linke Seite: Flächenmodell -->
+        <g id="leftModel">
+          <!-- x² -->
+          <rect id="squareX2" class="shape x2" x="40" y="40" width="120" height="120"></rect>
+
+          <!-- rechtes Rechteck 5x -->
+          <rect id="rectRight" class="shape bx" x="160" y="40" width="60" height="120"></rect>
+
+          <!-- unteres Rechteck 5x -->
+          <rect id="rectBottom" class="shape bx" x="40" y="160" width="120" height="60"></rect>
+
+          <!-- ergänzendes Quadrat 5x5 -->
+          <rect id="smallSquare" class="shape add hidden" x="160" y="160" width="60" height="60"></rect>
+
+          <!-- Beschriftungen aller Seitenlängen -->
+          <!-- x²-Quadrat -->
+          <line class="measure" x1="40" y1="24" x2="160" y2="24"></line>
+          <text class="label" x="100" y="18" text-anchor="middle">x</text>
+
+          <line class="measure" x1="24" y1="40" x2="24" y2="160"></line>
+          <text class="label" x="18" y="103" text-anchor="end">x</text>
+
+          <!-- rechtes Rechteck -->
+          <line class="measure" x1="160" y1="24" x2="220" y2="24"></line>
+          <text class="label" x="190" y="18" text-anchor="middle">5</text>
+
+          <line class="measure" x1="236" y1="40" x2="236" y2="160"></line>
+          <text class="label" x="242" y="103">x</text>
+
+          <!-- unteres Rechteck -->
+          <line class="measure" x1="40" y1="236" x2="160" y2="236"></line>
+          <text class="label" x="100" y="252" text-anchor="middle">x</text>
+
+          <line class="measure" x1="24" y1="160" x2="24" y2="220"></line>
+          <text class="label" x="18" y="194" text-anchor="end">5</text>
+
+          <!-- kleines Ergänzungsquadrat -->
+          <line id="smallTopLine" class="measure hidden" x1="160" y1="236" x2="220" y2="236"></line>
+          <text id="smallTopLabel" class="label hidden" x="190" y="252" text-anchor="middle">5</text>
+
+          <line id="smallRightLine" class="measure hidden" x1="236" y1="160" x2="236" y2="220"></line>
+          <text id="smallRightLabel" class="label hidden" x="242" y="194">5</text>
+
+          <!-- Gesamtquadrat (x+5) Beschriftung -->
+          <line id="wholeTopLine" class="measure hidden" x1="40" y1="4" x2="220" y2="4"></line>
+          <text id="wholeTopLabel" class="label hidden" x="130" y="-2" text-anchor="middle">x + 5</text>
+
+          <line id="wholeRightLine" class="measure hidden" x1="256" y1="40" x2="256" y2="220"></line>
+          <text id="wholeRightLabel" class="label hidden" x="262" y="134">x + 5</text>
+        </g>
+
+        <!-- Gleichheitszeichen -->
+        <text x="300" y="140" style="font-size: 44px; font-weight: bold;">=</text>
+
+        <!-- Rechte Seite: 39 Einheitsquadrate -->
+        <g id="unitSquares"></g>
+
+        <!-- +25 auf rechter Seite in späterem Schritt -->
+        <g id="plus25Group" class="hidden">
+          <text x="560" y="140" style="font-size: 32px; font-weight: bold;">+</text>
+          <g id="extra25"></g>
+        </g>
+      </svg>
+
+      <p id="caption" class="caption">
+        Links: x2+10xx^2 + 10xx2+10x als Flächenmodell. Rechts: 393939 Einheitsquadrate.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function nextStep(step) {
+      document.getElementById(`step${step}`).classList.remove("active");
+      document.getElementById(`step${step + 1}`).classList.add("active");
+      updateVisual(step + 1);
+    }
+
+    function resetSteps() {
+      document.querySelectorAll(".step").forEach(step => step.classList.remove("active"));
+      document.getElementById("step1").classList.add("active");
+      updateVisual(1);
+    }
+
+    function create39UnitSquares() {
+      const group = document.getElementById("unitSquares");
+      group.innerHTML = "";
+
+      const size = 18;
+      const cols = 13;
+      const startX = 360;
+      const startY = 40;
+
+      for (let i = 0; i < 39; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", startX + col * size);
+        rect.setAttribute("y", startY + row * size);
+        rect.setAttribute("width", size);
+        rect.setAttribute("height", size);
+        rect.setAttribute("class", "unit");
+        group.appendChild(rect);
+      }
+
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", 477);
+      label.setAttribute("y", 112);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "label");
+      label.textContent = "39 Einheitsquadrate";
+      group.appendChild(label);
+    }
+
+    function create25UnitSquares() {
+      const group = document.getElementById("extra25");
+      group.innerHTML = "";
+
+      const size = 18;
+      const cols = 5;
+      const startX = 590;
+      const startY = 95;
+
+      for (let i = 0; i < 25; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", startX + col * size);
+        rect.setAttribute("y", startY + row * size);
+        rect.setAttribute("width", size);
+        rect.setAttribute("height", size);
+        rect.setAttribute("class", "shape add");
+        rect.style.fillOpacity = "0.55";
+        group.appendChild(rect);
+      }
+
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", 635);
+      label.setAttribute("y", 88);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "label");
+      label.textContent = "25";
+      group.appendChild(label);
+    }
+
+    function show(id, visible) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle("hidden", !visible);
+    }
+
+    function updateVisual(step) {
+      const caption = document.getElementById("caption");
+
+      show("smallSquare", step >= 3);
+      show("smallTopLine", step >= 3);
+      show("smallTopLabel", step >= 3);
+      show("smallRightLine", step >= 3);
+      show("smallRightLabel", step >= 3);
+
+      show("wholeTopLine", step >= 4);
+      show("wholeTopLabel", step >= 4);
+      show("wholeRightLine", step >= 4);
+      show("wholeRightLabel", step >= 4);
+
+      show("plus25Group", step >= 3);
+
+      if (step === 1) {
+        caption.textContent = "Links: x² und 10x als Flächenmodell. Rechts: 39 Einheitsquadrate.";
+      } else if (step === 2) {
+        caption.textContent = "Die 10x-Fläche wird in zwei Rechtecke der Größe 5x zerlegt.";
+      } else if (step === 3) {
+        caption.textContent = "Das fehlende Quadrat mit Seitenlänge 5 ergänzt links zum vollständigen Quadrat.";
+      } else if (step === 4) {
+        caption.textContent = "Jetzt ist links ein Quadrat mit Seitenlänge x + 5 entstanden: (x + 5)² = 64.";
+      } else if (step === 5) {
+        caption.textContent = "Aus der Seitenlänge x + 5 = 8 folgt x = 3.";
+      }
+    }
+
+    create39UnitSquares();
+    create25UnitSquares();
+    updateVisual(1);
+  </script>
+</body>
+</html>
