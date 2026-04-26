@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Quadratische Ergänzung – Lernumgebung</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+
+  canvas {
+    border: 1px solid #ccc;
+    margin-top: 20px;
+  }
+
+  button {
+    margin: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .info {
+    margin-top: 10px;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .nav {
+    margin-top: 10px;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Quadratische Ergänzung – Geometrische Lernumgebung</h2>
+
+<div class="nav">
+  <button onclick="setStep(1)">Schritt 1</button>
+  <button onclick="setStep(2)">Schritt 2</button>
+  <button onclick="setStep(3)">Schritt 3</button>
+  <button onclick="setStep(4)">Schritt 4</button>
+</div>
+
+<div class="info" id="info"></div>
+
+<canvas id="canvas" width="700" height="450"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const scale = 20;
+let step = 1;
+
+function clear() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ----------------------
+// GEOMETRIE BASIS
+// ----------------------
+function drawBase(x) {
+  const size = x * scale;
+
+  // x²
+  ctx.fillStyle = "#4CAF50";
+  ctx.fillRect(250, 150, size, size);
+  ctx.strokeRect(250, 150, size, size);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("x²", 250 + size/2, 150 + size/2);
+
+  // 5x oben
+  ctx.fillStyle = "#2196F3";
+  ctx.fillRect(250, 150 - 5*scale, size, 5*scale);
+  ctx.strokeRect(250, 150 - 5*scale, size, 5*scale);
+
+  // 5x rechts
+  ctx.fillStyle = "#2196F3";
+  ctx.fillRect(250 + size, 150, 5*scale, size);
+  ctx.strokeRect(250 + size, 150, 5*scale, size);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("5x", 260, 140);
+  ctx.fillText("5x", 250 + size + 10, 150 + size/2);
+}
+
+// ----------------------
+// SCHRITT 1
+// ----------------------
+function step1() {
+  clear();
+
+  drawBase(6);
+
+  info.innerHTML = `
+    🔵 Ausgangssituation:<br>
+    x² + 10x = 39<br><br>
+    ➜ Fläche wird als Quadrat + Rechteck dargestellt
+  `;
+}
+
+// ----------------------
+// SCHRITT 2
+// ----------------------
+function step2() {
+  clear();
+
+  drawBase(6);
+
+  info.innerHTML = `
+    🟢 Umordnung:<br><br>
+    10x = 5x + 5x<br>
+    ➜ Rechteck wird in zwei Teile geteilt<br><br>
+    ➜ Vorbereitung für quadratische Form
+  `;
+}
+
+// ----------------------
+// SCHRITT 3
+// ----------------------
+function step3() {
+  clear();
+
+  drawBase(6);
+
+  const size = 6 * scale;
+
+  // fehlendes Quadrat 5x5
+  ctx.fillStyle = "#FF9800";
+  ctx.fillRect(250 + size, 150 - 5*scale, 5*scale, 5*scale);
+  ctx.strokeRect(250 + size, 150 - 5*scale, 5*scale, 5*scale);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("5×5 = 25", 250 + size + 5, 140);
+
+  info.innerHTML = `
+    🟠 Ergänzung erkannt:<br><br>
+    Es fehlt ein Quadrat 5 × 5 = 25<br><br>
+
+    ➜ Jetzt entsteht ein vollständiges Quadrat
+  `;
+}
+
+// ----------------------
+// SCHRITT 4
+// ----------------------
+function step4() {
+  clear();
+
+  const size = 6 * scale;
+
+  // vollständiges Quadrat
+  ctx.fillStyle = "#4CAF50";
+  ctx.fillRect(250, 100, size + 5*scale, size + 5*scale);
+  ctx.strokeRect(250, 100, size + 5*scale, size + 5*scale);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("(x+5)²", 250 + size/2, 100 + size/2);
+
+  const result = 39 + 25;
+
+  info.innerHTML = `
+    🟣 Zurück zur Rechnung:<br><br>
+
+    (x + 5)² = 39 + 25<br>
+    (x + 5)² = 64<br><br>
+
+    √64 = 8<br>
+    x + 5 = 8<br>
+    x = 3<br><br>
+
+    ✔ Lösung gefunden
+  `;
+}
+
+// ----------------------
+// NAVIGATION
+// ----------------------
+function setStep(n) {
+  step = n;
+
+  if (n === 1) step1();
+  if (n === 2) step2();
+  if (n === 3) step3();
+  if (n === 4) step4();
+}
+
+// initial
+step1();
+</script>
+
+</body>
+</html>
