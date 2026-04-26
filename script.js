@@ -373,7 +373,7 @@ const initializeVariantPreview = () => {
     const topOffset = frame.getBoundingClientRect().top;
     const viewportHeight = window.innerHeight || 800;
     const preferredHeight = viewportHeight - topOffset - 24;
-    const clampedHeight = Math.max(620, Math.min(900, preferredHeight));
+    const clampedHeight = Math.max(360, Math.min(900, preferredHeight));
     frame.style.height = `${clampedHeight}px`;
   };
 
@@ -421,6 +421,12 @@ const initializeVariantPreview = () => {
     title.textContent = button.textContent || "";
     externalLink.href = source;
     externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+
+    variantButtons.forEach((variantButton) => {
+      const isActive = variantButton === button;
+      variantButton.classList.toggle("is-active", isActive);
+      variantButton.setAttribute("aria-current", isActive ? "true" : "false");
+    });
 
     hint.hidden = true;
     title.hidden = false;
