@@ -205,7 +205,7 @@ main {
 }
 
 .seminar-sitzung summary {
-  font-size: 1.4rem;
+  font-size: 1.24rem;
   font-weight: 800;
   cursor: pointer;
   color: var(--primary-dark);
@@ -259,6 +259,13 @@ main {
   box-shadow: 0 6px 16px rgba(24, 62, 37, 0.1);
   transform: translateY(-1px);
   outline: none;
+}
+
+
+.variant-link.is-active {
+  border-color: rgba(44, 141, 79, 0.56);
+  box-shadow: 0 6px 16px rgba(24, 62, 37, 0.14);
+  background: #f2fbf4;
 }
 
 .variant-tile {
@@ -336,11 +343,19 @@ main {
 
 .variant-preview-frame {
   width: 100%;
-  height: min(78vh, 900px);
-  min-height: 620px;
+  height: clamp(460px, 74vh, 900px);
+  min-height: 460px;
   border: 1px solid rgba(44, 141, 79, 0.25);
   border-radius: 0.6rem;
   background: #fff;
+}
+
+.source-preview {
+  margin-bottom: 1.1rem;
+}
+
+.source-preview-frame {
+  margin-top: 0.2rem;
 }
 
 .process-highlight {
@@ -487,8 +502,8 @@ footer .inner {
   }
 
   .variant-preview-frame {
-    height: 560px;
-    min-height: 560px;
+    min-height: 360px;
+    height: clamp(360px, 64vh, 700px);
   }
 
   .seminar-layout {
