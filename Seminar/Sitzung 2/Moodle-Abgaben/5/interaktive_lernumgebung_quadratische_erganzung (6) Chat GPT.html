@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Quadratische Ergänzung – Interaktiv</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center p-6">
+
+<h1 class="text-2xl font-bold mb-2">x² + 10x = 39</h1>
+<div id="info" class="mb-2 text-center max-w-xl"></div>
+<div id="algebra" class="mb-4 text-lg font-semibold text-blue-700"></div>
+
+<canvas id="canvas" width="750" height="460" class="bg-white shadow rounded"></canvas>
+
+<div class="mt-4 flex gap-2">
+  <button onclick="prevStep()" class="px-4 py-2 bg-gray-400 text-white rounded">Zurück</button>
+  <button onclick="nextStep()" class="px-4 py-2 bg-blue-500 text-white rounded">Weiter</button>
+</div>
+
+<div id="inputArea" class="mt-4 hidden">
+  <input id="answer" type="number" placeholder="Seitenlänge eingeben" class="border p-2 rounded">
+  <button onclick="checkAnswer()" class="ml-2 px-3 py-2 bg-green-500 text-white rounded">OK</button>
+  <div id="feedback" class="mt-2 text-red-500"></div>
+</div>
+
+<script>
+let step = 0;
+let answeredCorrectly = false;
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const xSize = 150; // entspricht x
+const tenSize = 100; // entspricht 10
+const fiveSize = tenSize/2; // entspricht 5
+
+function clear() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawGrid(x, y, w, h, size=10) {
+  ctx.strokeStyle = "#ddd";
+  for(let i = x; i <= x + w; i += size) {
+    ctx.beginPath(); ctx.moveTo(i, y); ctx.lineTo(i, y + h); ctx.stroke();
+  }
+  for(let j = y; j <= y + h; j += size) {
+    ctx.beginPath(); ctx.moveTo(x, j); ctx.lineTo(x + w, j); ctx.stroke();
+  }
+}
+
+function drawRect(x, y, w, h, color, label) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.fillStyle = "black";
+  ctx.font = "14px Arial";
+  ctx.fillText(label, x + w/2 - 12, y + h/2);
+}
+
+function label(text, x, y, size=14) {
+  ctx.fillStyle = "black";
+  ctx.font = size + "px Arial";
+  ctx.fillText(text, x, y);
+}
+
+function drawSides(x,y,w,h,labelX,labelY){
+  label(labelX, x + w/2 - 5, y - 5);
+  label(labelY, x - 20, y + h/2);
+}
+
+function draw39Grid() {
+  let count = 0;
+  for(let i=0;i<6;i++){
+    for(let j=0;j<7;j++){
+      if(count>=39) return;
+      ctx.strokeStyle = "black";
+      ctx.strokeRect(520 + j*18, 80 + i*18, 18, 18);
+      count++;
+    }
+  }
+  label("39", 580, 210, 18);
+}
+
+function update() {
+  clear();
+  document.getElementById("inputArea").classList.add("hidden");
+  const alg = document.getElementById("algebra");
+
+  if(step === 0) {
+    document.getElementById("info").innerText = "Grafische Darstellung der Gleichung";
+    alg.innerText = "x² + 10x = 39";
+
+    drawGrid(50,120,xSize,xSize);
+    drawRect(50,120,xSize,xSize,"#93c5fd","x²");
+    drawSides(50,120,xSize,xSize,"x","x");
+
+    label("+", 230, 200, 28);
+
+    drawGrid(280,120,tenSize,xSize);
+    drawRect(280,120,tenSize,xSize,"#fcd34d","10x");
+    drawSides(280,120,tenSize,xSize,"10","x");
+
+    label("=", 470, 200, 28);
+    draw39Grid();
+  }
+
+  if(step === 1) {
+    document.getElementById("info").innerText = "Halbieren des Rechtecks";
+    alg.innerText = "x² + 5x + 5x = 39";
+
+    drawGrid(50,120,xSize,xSize);
+    drawRect(50,120,xSize,xSize,"#93c5fd","x²");
+    drawSides(50,120,xSize,xSize,"x","x");
+
+    label("+", 230, 200, 28);
+
+    drawGrid(280,120,fiveSize,xSize);
+    drawRect(280,120,fiveSize,xSize,"#fcd34d","5x");
+    drawSides(280,120,fiveSize,xSize,"5","x");
+
+    drawGrid(280+fiveSize,120,fiveSize,xSize);
+    drawRect(280+fiveSize,120,fiveSize,xSize,"#fcd34d","5x");
+    drawSides(280+fiveSize,120,fiveSize,xSize,"5","x");
+
+    label("=", 470, 200, 28);
+    draw39Grid();
+  }
+
+  if(step === 2) {
+    document.getElementById("info").innerText = "Anlegen der Rechtecke";
+    alg.innerText = "x² + 5x + 5x = 39";
+
+    drawGrid(50,120,xSize,xSize);
+    drawRect(50,120,xSize,xSize,"#93c5fd","x²");
+
+    drawGrid(50+xSize,120,fiveSize,xSize);
+    drawRect(50+xSize,120,fiveSize,xSize,"#fcd34d","5x");
+
+    drawGrid(50,120+xSize,xSize,fiveSize);
+    drawRect(50,120+xSize,xSize,fiveSize,"#fcd34d","5x");
+
+    label("=", 470, 200, 28);
+    draw39Grid();
+  }
+
+  if(step === 3) {
+    document.getElementById("info").innerText = "Welche Seitenlänge fehlt?";
+    alg.innerText = "x² + 10x = 39";
+
+    drawGrid(50,120,xSize,xSize);
+    drawRect(50,120,xSize,xSize,"#93c5fd","x²");
+
+    drawGrid(50+xSize,120,fiveSize,xSize);
+    drawRect(50+xSize,120,fiveSize,xSize,"#fcd34d","5x");
+
+    drawGrid(50,120+xSize,xSize,fiveSize);
+    drawRect(50,120+xSize,xSize,fiveSize,"#fcd34d","5x");
+
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(50+xSize,120+xSize,fiveSize,fiveSize);
+
+    label("=", 470, 200, 28);
+    draw39Grid();
+
+    document.getElementById("inputArea").classList.remove("hidden");
+  }
+
+  if(step === 4) {
+    document.getElementById("info").innerText = "Quadratische Ergänzung";
+    alg.innerText = "x² + 10x + 25 = 39 + 25";
+
+    drawGrid(50,120,xSize,xSize);
+    drawRect(50,120,xSize,xSize,"#93c5fd","x²");
+
+    drawGrid(50+xSize,120,fiveSize,xSize);
+    drawRect(50+xSize,120,fiveSize,xSize,"#fcd34d","5x");
+
+    drawGrid(50,120+xSize,xSize,fiveSize);
+    drawRect(50,120+xSize,xSize,fiveSize,"#fcd34d","5x");
+
+    drawGrid(50+xSize,120+xSize,fiveSize,fiveSize);
+    drawRect(50+xSize,120+xSize,fiveSize,fiveSize,"#6ee7b7","25");
+
+    label("=", 470, 200, 28);
+    draw39Grid();
+  }
+
+  if(step === 5) {
+    document.getElementById("info").innerText = "Rückübersetzung";
+    alg.innerText = "(x + 5)² = 64";
+  }
+
+  if(step === 6) {
+    document.getElementById("info").innerText = "Wurzel ziehen";
+    alg.innerText = "x + 5 = ±8";
+  }
+
+  if(step === 7) {
+    document.getElementById("info").innerText = "Lösung";
+    alg.innerText = "x = 3 oder x = -13";
+  }
+}
+
+function nextStep() {
+  if(step === 3 && !answeredCorrectly) {
+    document.getElementById("feedback").innerText = "Gib zuerst die Seitenlänge an!";
+    return;
+  }
+  if(step < 7) step++;
+  update();
+}
+
+function prevStep() {
+  if(step > 0) step--;
+  update();
+}
+
+function checkAnswer() {
+  const val = document.getElementById("answer").value;
+  const feedback = document.getElementById("feedback");
+
+  if(val === "") {
+    feedback.innerText = "Bitte gib eine Zahl ein.";
+    return;
+  }
+
+  if(Number(val) === 5) {
+    feedback.innerText = "";
+    answeredCorrectly = true;
+    step = 4;
+    update();
+  } else {
+    feedback.innerText = "Das ist leider falsch, probiere es noch einmal.";
+  }
+}
+
+update();
+</script>
+
+</body>
+</html>
