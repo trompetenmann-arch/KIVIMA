@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flächenmodell für quadratische Gleichungen</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 252, 247, 0.88);
+      --panel-strong: #fffaf2;
+      --line: rgba(53, 44, 33, 0.14);
+      --text: #2d261f;
+      --muted: #6f6253;
+      --x2: #c76443;
+      --rect: #e7a847;
+      --rect-soft: #f2c66d;
+      --missing: #f8df9c;
+      --rhs: #5e8c7a;
+      --rhs-added: #8dc5b0;
+      --accent: #184f68;
+      --accent-soft: #d9eaf1;
+      --shadow: 0 18px 50px rgba(59, 41, 22, 0.13);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 38%),
+        radial-gradient(circle at 85% 15%, rgba(231, 168, 71, 0.18), transparent 20%),
+        linear-gradient(180deg, #f7f2ea 0%, #efe4d5 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.26;
+      background-image:
+        linear-gradient(rgba(24, 79, 104, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24, 79, 104, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: radial-gradient(circle at center, black 52%, transparent 92%);
+    }
+
+    main {
+      width: min(1280px, calc(100vw - 32px));
+      margin: 24px auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .hero {
+      padding: 28px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      top: -50px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(231, 168, 71, 0.28), transparent 65%);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      max-width: none;
+      white-space: nowrap;
+    }
+
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 74ch;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 1.02rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+      color: var(--accent);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .label {
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .equation-box {
+      display: grid;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+      font-size: 1.08rem;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text);
+      outline: none;
+      transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: rgba(24, 79, 104, 0.45);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(24, 79, 104, 0.12);
+    }
+
+    .button-row,
+    .stepper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      transform: none;
+      opacity: 0.48;
+      box-shadow: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(24, 79, 104, 0.22);
+    }
+
+    .secondary {
+      background: rgba(24, 79, 104, 0.08);
+      color: var(--accent);
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .step-chip {
+      border-radius: 18px;
+      padding: 12px 14px;
+      min-width: 128px;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid transparent;
+      color: var(--muted);
+    }
+
+    .step-chip strong {
+      display: block;
+      color: var(--text);
+      font-size: 0.97rem;
+    }
+
+    .step-chip.active {
+      background: linear-gradient(180deg, #fff, #f2ebe2);
+      border-color: rgba(24, 79, 104, 0.25);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 14px 24px rgba(59, 41, 22, 0.08);
+    }
+
+    .equation-display {
+      font-size: clamp(1.35rem, 2.8vw, 2rem);
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid var(--line);
+    }
+
+    .mini-card strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.15rem;
+    }
+
+    .status {
+      min-height: 48px;
+      line-height: 1.45;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .visual-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(180deg, #fff, #f2ebe2);
+      color: var(--accent);
+      border-color: rgba(24, 79, 104, 0.25);
+      box-shadow: 0 12px 20px rgba(59, 41, 22, 0.08);
+    }
+
+    .tab-panel {
+      display: none;
+      gap: 16px;
+    }
+
+    .tab-panel.active {
+      display: grid;
+    }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .step-header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 68ch;
+    }
+
+    .formula-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px 20px;
+    }
+
+    .formula-card .math {
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+      margin: 6px 0 0;
+    }
+
+    .canvas-wrap {
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,246,240,0.92));
+      border: 1px solid var(--line);
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+    }
+
+    .info-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .notes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .notes .mini-card p,
+    .sources p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(45, 38, 31, 0.15);
+    }
+
+    .sources a {
+      color: var(--accent);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 980px) {
+      .workspace,
+      .notes {
+      grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      .tab-panel.active {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      main {
+        width: min(100vw - 18px, 100%);
+        margin: 10px auto 18px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+        border-radius: 20px;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .step-chip {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1>Quadratische Gleichungen im Flächenmodell</h1>
+      <p>
+        Interaktive Schritt-für-Schritt-Visualisierung der quadratischen Ergänzung für Gleichungen der Form
+        <strong>x² + b·x = c</strong>.
+      </p>
+      <div class="hero-tags">
+        <span class="tag">Interaktive 4-Schritt-Führung</span>
+        <span class="tag">Farbcodierte Flächen</span>
+        <span class="tag">Klare Lernansicht</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="controls">
+        <div class="panel equation-box">
+          <div>
+            <div class="label">Eingabe</div>
+            <h2>Gleichung eingeben</h2>
+          </div>
+          <label for="equationInput" class="sr-only">Gleichung</label>
+          <input id="equationInput" type="text" value="x^2 + 10x = 39" spellcheck="false">
+          <div class="button-row">
+            <button class="primary" id="applyBtn">Visualisieren</button>
+            <button class="ghost preset-btn" data-equation="x^2 + 10x = 39">Beispiel 1</button>
+            <button class="ghost preset-btn" data-equation="x^2 + 6x = 7">Beispiel 2</button>
+            <button class="ghost preset-btn" data-equation="x^2 + 8x = 20">Beispiel 3</button>
+          </div>
+          <div class="status" id="statusBox" aria-live="polite"></div>
+        </div>
+
+        <div class="panel">
+          <div class="label">Navigation</div>
+          <div class="stepper" id="stepper"></div>
+          <div class="button-row" style="margin-top: 14px;">
+            <button class="secondary" id="prevBtn">Zurück</button>
+            <button class="primary" id="nextBtn">Weiter</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="visual-panel">
+        <div class="panel" style="padding-bottom: 14px;">
+          <div class="view-tabs" id="viewTabs">
+            <button class="tab-btn active" data-tab="learn">Lernansicht</button>
+            <button class="tab-btn" data-tab="info">Info</button>
+          </div>
+        </div>
+
+        <div class="tab-panel active" id="learnPanel">
+          <div class="panel">
+            <div class="step-header">
+              <div>
+                <div class="label">Lernschritt</div>
+                <h2 id="stepTitle">1. Geometrische Deutung</h2>
+                <p id="stepText"></p>
+              </div>
+              <div class="legend">
+                <span class="legend-item"><span class="swatch" style="background: var(--x2);"></span>x²</span>
+                <span class="legend-item"><span class="swatch" style="background: var(--rect);"></span>b·x bzw. b/2·x</span>
+                <span class="legend-item"><span class="swatch" style="background: var(--missing);"></span>Ergänzungsquadrat</span>
+                <span class="legend-item"><span class="swatch" style="background: var(--rhs);"></span>rechte Seite</span>
+              </div>
+            </div>
+            <div class="formula-card" style="margin-top: 16px;">
+              <div class="label">Algebraische Deutung</div>
+              <div class="math" id="mathLine"></div>
+            </div>
+            <div class="canvas-wrap" style="margin-top: 16px;">
+              <svg id="modelSvg" viewBox="0 0 1100 700" role="img" aria-labelledby="svgTitle svgDesc">
+                <title id="svgTitle">Flächenmodell zur quadratischen Ergänzung</title>
+                <desc id="svgDesc">Visualisierung der Terme als Flächen mit schrittweiser Ergänzung zum Quadrat.</desc>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="infoPanel">
+          <div class="notes">
+            <div class="panel mini-card info-stack">
+              <div>
+                <div class="label">Schritt im Detail</div>
+                <strong id="detailTitle">Was passiert in diesem Schritt?</strong>
+                <p id="detailText"></p>
+              </div>
+            </div>
+            <div class="panel mini-card info-stack">
+              <div>
+                <div class="label">Didaktischer Fokus</div>
+                <strong id="didacticTitle">Warum diese Darstellung?</strong>
+                <p id="didacticText"></p>
+              </div>
+              <div>
+                <div class="label">Fachlicher Hinweis</div>
+                <strong id="mathInsightTitle">Geometrische und algebraische Lösung</strong>
+                <p id="mathInsightText"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel sources">
+            <div class="label">Quellenabgleich</div>
+            <h3>Fachliche Orientierung</h3>
+            <p>
+              Die Darstellung folgt der geometrischen Idee der quadratischen Ergänzung: Ein Rechteckterm wird in zwei
+              gleiche Teile zerlegt und zum Quadrat ergänzt.
+            </p>
+            <p>
+              Quellen:
+              <a href="https://www.monash.edu/student-academic-success/mathematics/polynomials-and-power-functions/quadratics" target="_blank" rel="noreferrer">Monash University</a>
+              und
+              <a href="https://academics.uccs.edu/kcliff/collegealgebra/seccompletingthesquare.html" target="_blank" rel="noreferrer">University of Colorado Colorado Springs</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const PALETTE = {
+      x2: "#c76443",
+      rect: "#e7a847",
+      rectSoft: "#f2c66d",
+      missing: "#f8df9c",
+      rhs: "#5e8c7a",
+      rhsAdded: "#8dc5b0",
+      accent: "#184f68",
+      text: "#2d261f"
+    };
+
+    const state = {
+      step: 0,
+      b: 10,
+      c: 39,
+      activeTab: "learn"
+    };
+
+    const stepDefinitions = [
+      {
+        title: "1. Geometrische Deutung",
+        text: "Aus der Gleichung werden links Flächen und rechts Einheitsquadrate.",
+        detailText: "Die Gleichung wird als Flächenvergleich gelesen: x² ist ein Quadrat mit Seitenlänge x, b·x ist ein Rechteck mit Seitenlängen x und b, rechts stehen c Einheitsquadrate.",
+        didacticTitle: "Vom Term zur Fläche",
+        didacticText: "Die Variable x erscheint nicht als Zahl, sondern als Seitenlänge. Dadurch wird sichtbar, warum x² und b·x unterschiedliche geometrische Bedeutungen haben.",
+        mathInsightTitle: "Ausdruck als Flächenbilanz",
+        mathInsightText: "Links stehen zwei Flächenstücke mit gemeinsamem Inhalt x² + b·x, rechts eine gleich große Anzahl an Einheitsquadraten."
+      },
+      {
+        title: "2. Umordnung",
+        text: "Das Rechteck wird halbiert und an zwei Seiten des Quadrats angelegt.",
+        detailText: "Das Rechteck b·x wird in zwei gleich große Rechtecke zerlegt. Beide Stücke werden an das x²-Quadrat gelegt, sodass fast ein großes Quadrat entsteht.",
+        didacticTitle: "Quadratstruktur sichtbar machen",
+        didacticText: "Die Halbierung des linearen Terms erklärt, warum später b/2 auftaucht. Das fehlende Eckstück macht die Logik der Ergänzung anschaulich.",
+        mathInsightTitle: "Halbieren des linearen Koeffizienten",
+        mathInsightText: "Aus b·x werden zwei Rechtecke der Größe (b/2)·x. Zusammen mit x² entsteht beinahe ein Quadrat der Seitenlänge x + b/2."
+      },
+      {
+        title: "3. Ergänzen",
+        text: "Das fehlende Eckquadrat wird auf beiden Seiten ergänzt.",
+        detailText: "Das fehlende Eckquadrat mit Seitenlänge b/2 wird ergänzt. Weil dabei Fläche hinzukommt, muss dieselbe Fläche auch rechts ergänzt werden.",
+        didacticTitle: "Gleichgewicht erhalten",
+        didacticText: "Die Ergänzung ist keine bloße Zeichnung, sondern eine Äquivalenzumformung: Auf beiden Seiten wird dieselbe Fläche hinzugefügt.",
+        mathInsightTitle: "Quadratische Ergänzung",
+        mathInsightText: "Es wird die Fläche (b/2)² ergänzt. Dadurch wird aus x² + b·x ein vollständiges Quadrat: (x + b/2)²."
+      },
+      {
+        title: "4. Zurückübersetzen",
+        text: "Das vollständige Quadrat wird wieder als Gleichung gelesen und gelöst.",
+        detailText: "Das neue Flächenmodell wird algebraisch gelesen: Ein Quadrat der Seitenlänge x + b/2 hat den Flächeninhalt c + (b/2)². Danach wird nach x aufgelöst.",
+        didacticTitle: "Vom Bild zurück zur Gleichung",
+        didacticText: "Die Visualisierung endet nicht im Bild. Sie führt zu einer Gleichung, die nun mit bekannten algebraischen Methoden weitergelöst wird.",
+        mathInsightTitle: "Positive Flächenlösung und algebraische Lösung",
+        mathInsightText: "Als Seitenlänge ist geometrisch nur x > 0 sinnvoll. Algebraisch liefert die Gleichung meist zwei Lösungen; im Flächenkontext ist die positive besonders relevant."
+      }
+    ];
+
+    const elements = {
+      equationInput: document.getElementById("equationInput"),
+      applyBtn: document.getElementById("applyBtn"),
+      presetButtons: Array.from(document.querySelectorAll(".preset-btn")),
+      statusBox: document.getElementById("statusBox"),
+      stepper: document.getElementById("stepper"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      stepTitle: document.getElementById("stepTitle"),
+      stepText: document.getElementById("stepText"),
+      detailText: document.getElementById("detailText"),
+      mathLine: document.getElementById("mathLine"),
+      didacticTitle: document.getElementById("didacticTitle"),
+      didacticText: document.getElementById("didacticText"),
+      mathInsightTitle: document.getElementById("mathInsightTitle"),
+      mathInsightText: document.getElementById("mathInsightText"),
+      modelSvg: document.getElementById("modelSvg"),
+      tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
+      learnPanel: document.getElementById("learnPanel"),
+      infoPanel: document.getElementById("infoPanel")
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function gcd(a, b) {
+      let x = Math.abs(a);
+      let y = Math.abs(b);
+      while (y) {
+        const temp = y;
+        y = x % y;
+        x = temp;
+      }
+      return x || 1;
+    }
+
+    function formatNumber(value) {
+      if (Math.abs(value - Math.round(value)) < 1e-9) {
+        return String(Math.round(value));
+      }
+      return value.toLocaleString("de-DE", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatFraction(value) {
+      if (Math.abs(value - Math.round(value)) < 1e-9) {
+        return formatNumber(value);
+      }
+      const scaled = Math.round(value * 2);
+      const divisor = gcd(scaled, 2);
+      const numerator = scaled / divisor;
+      const denominator = 2 / divisor;
+      return denominator === 1 ? String(numerator) : `${numerator}/${denominator}`;
+    }
+
+    function isPerfectSquare(value) {
+      if (value < 0) {
+        return false;
+      }
+      const root = Math.sqrt(value);
+      return Math.abs(root - Math.round(root)) < 1e-9;
+    }
+
+    function parseEquation(rawInput) {
+      const normalized = rawInput
+        .replace(/\s+/g, "")
+        .replace(/,/g, ".")
+        .replace(/·/g, "*")
+        .replace(/−/g, "-")
+        .replace(/²/g, "^2");
+
+      const match = normalized.match(/^x\^2([+-]\d+)\*?x=([+-]?\d+)$/i);
+      if (!match) {
+        return {
+          error: "Bitte nutze die Form x^2 + bx = c, zum Beispiel x^2 + 10x = 39."
+        };
+      }
+
+      const b = Number(match[1]);
+      const c = Number(match[2]);
+
+      if (!Number.isInteger(b) || !Number.isInteger(c)) {
+        return {
+          error: "Diese Lernumgebung arbeitet mit ganzzahligen Werten für b und c."
+        };
+      }
+
+      if (b <= 0) {
+        return {
+          error: "Für das Flächenmodell wird hier b > 0 vorausgesetzt."
+        };
+      }
+
+      if (b % 2 !== 0) {
+        return {
+          error: "Für die Zerlegung in zwei gleich große Rechtecke nutzt diese Version ein gerades b."
+        };
+      }
+
+      if (c <= 0) {
+        return {
+          error: "Für die rechte Seite werden positive Einheitsquadrate benötigt, also c > 0."
+        };
+      }
+
+      return { b, c };
+    }
+
+    function buildMathLine(step, b, c) {
+      const half = b / 2;
+      const addArea = half * half;
+      const rhs = c + addArea;
+      const root = Math.sqrt(rhs);
+      const exactRoot = isPerfectSquare(rhs) ? formatNumber(root) : `√${formatNumber(rhs)}`;
+      const positive = isPerfectSquare(rhs) ? formatNumber(-half + root) : `${formatFraction(-half)} + ${exactRoot}`;
+      const negative = isPerfectSquare(rhs) ? formatNumber(-half - root) : `${formatFraction(-half)} - ${exactRoot}`;
+
+      switch (step) {
+        case 0:
+          return `x² + ${b}x = ${c}`;
+        case 1:
+          return `x² + ${b}x = x² + ${half}x + ${half}x`;
+        case 2:
+          return `x² + ${b}x + ${addArea} = ${c} + ${addArea}  ⇒  (x + ${half})² = ${rhs}`;
+        case 3:
+        default:
+          return `(x + ${half})² = ${rhs}  ⇒  x = -${half} ± ${exactRoot}  ⇒  x = ${positive} oder x = ${negative}`;
+      }
+    }
+
+    function createStepButtons() {
+      elements.stepper.innerHTML = "";
+      stepDefinitions.forEach((step, index) => {
+        const button = document.createElement("button");
+        button.className = `step-chip${index === state.step ? " active" : ""}`;
+        button.innerHTML = `<strong>${step.title}</strong><span>${index === 3 ? "Deutung und Lösen" : "Interaktive Ansicht"}</span>`;
+        button.addEventListener("click", () => {
+          state.step = index;
+          render();
+        });
+        elements.stepper.appendChild(button);
+      });
+    }
+
+    function equationString() {
+      return `x² + ${state.b}x = ${state.c}`;
+    }
+
+    function squareGridSquares(total, added, startX, startY) {
+      const squares = [];
+      const columns = Math.max(5, Math.ceil(Math.sqrt(total)));
+      const size = Math.max(14, Math.min(22, Math.floor(190 / columns)));
+      const gap = 4;
+
+      for (let index = 0; index < total; index += 1) {
+        const col = index % columns;
+        const row = Math.floor(index / columns);
+        const x = startX + col * (size + gap);
+        const y = startY + row * (size + gap);
+        const isAdded = index >= total - added;
+        squares.push({
+          x,
+          y,
+          size,
+          fill: isAdded ? PALETTE.rhsAdded : PALETTE.rhs,
+          stroke: "rgba(45, 38, 31, 0.12)"
+        });
+      }
+
+      return {
+        squares,
+        width: columns * (size + gap) - gap,
+        height: (Math.ceil(total / columns) * (size + gap)) - gap
+      };
+    }
+
+    function label(x, y, text, fill = "rgba(255,255,255,0.9)", color = PALETTE.text) {
+      const width = Math.max(64, text.length * 9);
+      return `
+        <g transform="translate(${x}, ${y})">
+          <rect x="0" y="-24" width="${width}" height="30" rx="15" fill="${fill}" stroke="rgba(45,38,31,0.12)" />
+          <text x="${width / 2}" y="-5" text-anchor="middle" font-size="16" fill="${color}" font-family="Avenir Next, Segoe UI, sans-serif">${escapeHtml(text)}</text>
+        </g>
+      `;
+    }
+
+    function line(x1, y1, x2, y2, textValue, offsetX, offsetY) {
+      return `
+        <g>
+          <line
+            x1="${x1}"
+            y1="${y1}"
+            x2="${x2}"
+            y2="${y2}"
+            stroke="${PALETTE.accent}"
+            stroke-width="1.8"
+            marker-start="url(#dimArrow)"
+            marker-end="url(#dimArrow)"
+          />
+          <text x="${(x1 + x2) / 2 + offsetX}" y="${(y1 + y2) / 2 + offsetY}" font-size="18" fill="${PALETTE.accent}" font-family="Iowan Old Style, Georgia, serif">${escapeHtml(textValue)}</text>
+        </g>
+      `;
+    }
+
+    function renderSvg() {
+      const b = state.b;
+      const c = state.c;
+      const half = b / 2;
+      const addArea = half * half;
+      const rhs = c + (state.step >= 2 ? addArea : 0);
+      const step = state.step;
+      const unit = Math.max(16, Math.min(28, Math.floor(280 / Math.max(b, 10))));
+      const xUnits = 7;
+      const xLen = xUnits * unit;
+      const halfLen = half * unit;
+      const rectLen = b * unit;
+      const lhsWidth = step === 0 ? xLen + rectLen : xLen + halfLen;
+      const lhsHeight = step === 0 ? xLen : xLen + halfLen;
+      const lhsLaneX = 72;
+      const lhsLaneWidth = 520;
+      const centerY = 350;
+      const lhsTop = centerY - (lhsHeight / 2);
+      const baseX = lhsLaneX + Math.max(0, (lhsLaneWidth - lhsWidth) / 2);
+      const baseY = lhsTop + lhsHeight;
+      const squareY = baseY - xLen;
+
+      const rhsColumns = Math.max(5, Math.ceil(Math.sqrt(rhs)));
+      const rhsCell = Math.max(14, Math.min(22, Math.floor(190 / rhsColumns)));
+      const rhsGap = 4;
+      const rhsGridWidth = rhsColumns * (rhsCell + rhsGap) - rhsGap;
+      const rhsGridHeight = Math.ceil(rhs / rhsColumns) * (rhsCell + rhsGap) - rhsGap;
+      const rhsCardWidth = rhsGridWidth + 56;
+      const rhsCardHeight = Math.max(rhsGridHeight + 110, 214);
+      const rhsCardX = 736;
+      const rhsCardY = centerY - (rhsCardHeight / 2);
+      const rhsGridStartX = rhsCardX + 28;
+      const rhsGridStartY = rhsCardY + 78;
+      const rhsGrid = squareGridSquares(rhs, step >= 2 ? addArea : 0, rhsGridStartX, rhsGridStartY);
+
+      const fragments = [];
+
+      fragments.push(`
+        <title id="svgTitle">Flächenmodell zur quadratischen Ergänzung</title>
+        <desc id="svgDesc">Visualisierung der Terme als Flächen mit schrittweiser Ergänzung zum Quadrat.</desc>
+        <defs>
+          <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="rgba(58,39,20,0.18)" />
+          </filter>
+          <marker id="dimArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 5 L 10 1.5 L 10 8.5 Z" fill="${PALETTE.accent}" />
+          </marker>
+        </defs>
+      `);
+
+      fragments.push(`<rect x="0" y="0" width="1100" height="700" fill="transparent" />`);
+
+      fragments.push(`
+        <g filter="url(#softShadow)">
+          <rect x="${baseX}" y="${squareY}" width="${xLen}" height="${xLen}" rx="12" fill="${PALETTE.x2}" opacity="0.94" />
+          ${label(baseX + 18, squareY + xLen / 2, "x²", "rgba(255,255,255,0.9)", "#6e1b0b")}
+        </g>
+      `);
+
+      if (step === 0) {
+        fragments.push(`
+          <g filter="url(#softShadow)">
+            <rect x="${baseX + xLen}" y="${squareY}" width="${rectLen}" height="${xLen}" rx="12" fill="${PALETTE.rect}" opacity="0.94" />
+            ${label(baseX + xLen + 24, squareY + xLen / 2, `${b}x`, "rgba(255,252,244,0.92)", "#764200")}
+          </g>
+        `);
+        fragments.push(line(baseX, baseY + 26, baseX + xLen, baseY + 26, "x", -2, -8));
+        fragments.push(line(baseX - 28, squareY, baseX - 28, baseY, "x", -14, 0));
+        fragments.push(line(baseX + xLen, squareY - 30, baseX + xLen + rectLen, squareY - 30, `${b}`, 0, -8));
+      } else {
+        fragments.push(`
+          <g filter="url(#softShadow)">
+            <rect x="${baseX}" y="${squareY - halfLen}" width="${xLen}" height="${halfLen}" rx="12" fill="${PALETTE.rectSoft}" opacity="0.98" />
+            <rect x="${baseX + xLen}" y="${squareY}" width="${halfLen}" height="${xLen}" rx="12" fill="${PALETTE.rect}" opacity="0.94" />
+            ${label(baseX + 22, squareY - halfLen / 2 + 8, `${half}x`, "rgba(255,252,244,0.92)", "#764200")}
+            ${label(baseX + xLen + 14, squareY + xLen / 2, `${half}x`, "rgba(255,252,244,0.92)", "#764200")}
+          </g>
+        `);
+
+        const missingFill = step >= 2 ? PALETTE.missing : "rgba(248,223,156,0.24)";
+        const missingDash = step >= 2 ? "" : 'stroke-dasharray="9 8"';
+        const missingOpacity = step >= 2 ? "0.98" : "1";
+
+        fragments.push(`
+          <g filter="url(#softShadow)">
+            <rect x="${baseX + xLen}" y="${squareY - halfLen}" width="${halfLen}" height="${halfLen}" rx="12"
+              fill="${missingFill}" stroke="rgba(118,66,0,0.55)" stroke-width="2.2" ${missingDash} opacity="${missingOpacity}" />
+            ${label(baseX + xLen + 12, squareY - halfLen / 2 + 8, `${half}²`, "rgba(255,250,235,0.92)", "#764200")}
+          </g>
+        `);
+
+        fragments.push(line(baseX, baseY + 28, baseX + xLen, baseY + 28, "x", -2, -8));
+        fragments.push(line(baseX - 28, squareY, baseX - 28, baseY, "x", -14, 0));
+        fragments.push(line(baseX + xLen, squareY - halfLen - 28, baseX + xLen + halfLen, squareY - halfLen - 28, `${half}`, 0, -8));
+        fragments.push(line(baseX + xLen + halfLen + 28, squareY, baseX + xLen + halfLen + 28, baseY, `${half}`, 12, 0));
+
+        if (step === 1) {
+          fragments.push(line(baseX, squareY - halfLen - 28, baseX + xLen, squareY - halfLen - 28, "x", -2, -8));
+          fragments.push(line(baseX - 28, squareY - halfLen, baseX - 28, squareY, `${half}`, -14, 0));
+          fragments.push(line(baseX + xLen, baseY + 28, baseX + xLen + halfLen, baseY + 28, `${half}`, 0, -8));
+          fragments.push(line(baseX + xLen + halfLen + 28, squareY, baseX + xLen + halfLen + 28, baseY, "x", 12, 0));
+        }
+
+        if (step >= 2) {
+          fragments.push(line(baseX, squareY - halfLen - 64, baseX + xLen + halfLen, squareY - halfLen - 64, `x + ${half}`, 0, -8));
+          fragments.push(line(baseX + xLen + halfLen + 64, squareY - halfLen, baseX + xLen + halfLen + 64, baseY, `x + ${half}`, 12, 0));
+        }
+      }
+
+      fragments.push(`
+        <g>
+          <text x="650" y="${centerY + 18}" font-size="58" text-anchor="middle" font-family="Iowan Old Style, Georgia, serif" fill="${PALETTE.accent}">=</text>
+        </g>
+      `);
+
+      fragments.push(`
+        <g>
+          <rect x="${rhsCardX}" y="${rhsCardY}" width="${rhsCardWidth}" height="${rhsCardHeight}" rx="24"
+            fill="rgba(250, 247, 242, 0.9)" stroke="rgba(45, 38, 31, 0.12)" />
+          ${label(rhsCardX + 28, rhsCardY + 28, step >= 2 ? `c + (${half})²` : "c", "rgba(217,234,241,0.9)", PALETTE.accent)}
+        </g>
+      `);
+
+      rhsGrid.squares.forEach((square, index) => {
+        fragments.push(`
+          <rect x="${square.x}" y="${square.y}" width="${square.size}" height="${square.size}" rx="3"
+            fill="${square.fill}" stroke="${square.stroke}" opacity="0"
+            style="animation: fadeIn 280ms ease ${Math.min(index * 18, 360)}ms forwards;" />
+        `);
+      });
+
+      fragments.push(`
+        <style>
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        </style>
+      `);
+
+      elements.modelSvg.innerHTML = fragments.join("");
+    }
+
+    function render() {
+      const stepInfo = stepDefinitions[state.step];
+      elements.equationInput.value = `x^2 + ${state.b}x = ${state.c}`;
+      elements.stepTitle.textContent = stepInfo.title;
+      elements.stepText.textContent = stepInfo.text;
+      elements.detailText.textContent = stepInfo.detailText;
+      elements.mathLine.textContent = buildMathLine(state.step, state.b, state.c);
+      elements.didacticTitle.textContent = stepInfo.didacticTitle;
+      elements.didacticText.textContent = stepInfo.didacticText;
+
+      const half = state.b / 2;
+      const rhs = state.c + half * half;
+      const positiveSolution = -half + Math.sqrt(rhs);
+      const insight = state.step === 3
+        ? `Algebraisch entstehen aus (x + ${half})² = ${rhs} die Lösungen x = ${formatNumber(positiveSolution)} und x = ${formatNumber(-half - Math.sqrt(rhs))}. Als Seitenlänge ist im Flächenmodell vor allem die positive Lösung sinnvoll.`
+        : stepInfo.mathInsightText;
+      elements.mathInsightTitle.textContent = stepInfo.mathInsightTitle;
+      elements.mathInsightText.textContent = insight;
+      elements.prevBtn.disabled = state.step === 0;
+      elements.nextBtn.disabled = state.step === stepDefinitions.length - 1;
+      elements.tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === state.activeTab);
+      });
+      elements.learnPanel.classList.toggle("active", state.activeTab === "learn");
+      elements.infoPanel.classList.toggle("active", state.activeTab === "info");
+
+      createStepButtons();
+      renderSvg();
+    }
+
+    function applyEquation() {
+      const parsed = parseEquation(elements.equationInput.value);
+      if (parsed.error) {
+        elements.statusBox.textContent = parsed.error;
+        return;
+      }
+
+      state.b = parsed.b;
+      state.c = parsed.c;
+      state.step = 0;
+      elements.statusBox.textContent = `Visualisierung geladen: ${equationString()}. Nutze die Schrittkarten oder die Weiter-Taste.`;
+      render();
+    }
+
+    elements.applyBtn.addEventListener("click", applyEquation);
+    elements.equationInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        applyEquation();
+      }
+    });
+    elements.presetButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        elements.equationInput.value = button.dataset.equation;
+        applyEquation();
+      });
+    });
+    elements.prevBtn.addEventListener("click", () => {
+      if (state.step > 0) {
+        state.step -= 1;
+        render();
+      }
+    });
+    elements.nextBtn.addEventListener("click", () => {
+      if (state.step < stepDefinitions.length - 1) {
+        state.step += 1;
+        render();
+      }
+    });
+    elements.tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.activeTab = button.dataset.tab;
+        render();
+      });
+    });
+
+    render();
+    elements.statusBox.textContent = "Startbeispiel geladen. Für diese Visualisierung wird ein positives gerades b und ein positives ganzzahliges c verwendet.";
+  </script>
+</body>
+</html>
