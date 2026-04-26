@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quadratische Ergänzung mit Flächenmodell</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-2: #7c3aed;
+      --good: #16a34a;
+      --warn: #ea580c;
+      --bad: #dc2626;
+      --x2: #93c5fd;
+      --x: #f9a8d4;
+      --unit: #fde68a;
+      --neg: #d1d5db;
+      --shadow: 0 10px 30px rgba(31, 41, 55, 0.10);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin: 0 0 8px;
+      line-height: 1.15;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin: 0 0 10px;
+    }
+
+    p { line-height: 1.55; }
+    .muted { color: var(--muted); }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .equation {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      padding: 14px 16px;
+      border-radius: 16px;
+      margin-top: 12px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fafafa;
+      transition: all 180ms ease;
+    }
+
+    .step.active {
+      border-color: #93c5fd;
+      background: #eff6ff;
+      transform: translateY(-1px);
+    }
+
+    .step.done {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .step-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: var(--text);
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+    button.good { background: #dcfce7; color: #166534; }
+    button.warn { background: #ffedd5; color: #9a3412; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .chip.x2 { background: var(--x2); }
+    .chip.x { background: var(--x); }
+    .chip.unit { background: var(--unit); }
+    .chip.neg { background: var(--neg); }
+
+    .workspace {
+      display: grid;
+      gap: 16px;
+    }
+
+    .scene-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 660px;
+    }
+
+    .scene-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .board {
+      position: relative;
+      width: 100%;
+      height: 560px;
+      border-radius: 24px;
+      background:
+        linear-gradient(0deg, rgba(255,255,255,0.65), rgba(255,255,255,0.65)),
+        linear-gradient(90deg, rgba(148,163,184,0.14) 1px, transparent 1px),
+        linear-gradient(rgba(148,163,184,0.14) 1px, transparent 1px);
+      background-size: auto, 40px 40px, 40px 40px;
+      border: 1px solid #dbe3f0;
+      overflow: hidden;
+    }
+
+    .expr-label {
+      position: absolute;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #111827;
+      background: rgba(255,255,255,0.9);
+      padding: 4px 8px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .eq-sign {
+      position: absolute;
+      font-weight: 900;
+      font-size: 2.2rem;
+      color: #1f2937;
+    }
+
+    .divider {
+      position: absolute;
+      top: 70px;
+      bottom: 50px;
+      border-left: 3px dashed rgba(31,41,55,0.25);
+    }
+
+    .subdivider {
+      position: absolute;
+      border-top: 2px dashed rgba(31,41,55,0.25);
+    }
+
+    .tile {
+      position: absolute;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      user-select: none;
+      transition: all 650ms cubic-bezier(.2,.8,.2,1);
+      border: 2px solid rgba(17,24,39,0.08);
+      text-align: center;
+    }
+
+    .tile.x2 { background: var(--x2); }
+    .tile.x { background: var(--x); }
+    .tile.unit { background: var(--unit); }
+    .tile.ghost {
+      border: 3px dashed rgba(17,24,39,0.25);
+      background: rgba(250, 204, 21, 0.20);
+      box-shadow: none;
+    }
+
+    .tile.hidden { opacity: 0; transform: scale(0.8); }
+    .tile.sparkle::after {
+      content: "✨";
+      position: absolute;
+      top: -10px;
+      right: -8px;
+      font-size: 1.1rem;
+      animation: pop 700ms ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+      60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    .math-box {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+
+    .math-line {
+      font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+      font-size: 1.25rem;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 10px;
+    }
+
+    .math-line.highlight {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .task {
+      background: linear-gradient(135deg, #fff7ed, #fefce8);
+      border: 1px solid #fde68a;
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .task strong { display: block; margin-bottom: 6px; }
+
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .choice {
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .choice.correct { border-color: #86efac; background: #f0fdf4; }
+    .choice.wrong { border-color: #fca5a5; background: #fef2f2; }
+
+    .feedback {
+      min-height: 52px;
+      margin-top: 10px;
+      font-weight: 700;
+    }
+
+    .feedback.good { color: var(--good); }
+    .feedback.bad { color: var(--bad); }
+    .feedback.info { color: #1d4ed8; }
+
+    .footer-note {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .celebrate {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      top: -20px;
+      width: 12px;
+      height: 18px;
+      opacity: 0.9;
+      animation: fall 2200ms linear forwards;
+      border-radius: 3px;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(700px) rotate(540deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .math-box { grid-template-columns: 1fr; }
+      .scene-wrap { min-height: auto; }
+      .board { height: 500px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="left">
+      <div class="card">
+        <h1>Quadratische Ergänzung als Flächen-Puzzle</h1>
+        <p class="muted">
+          Ziel: Die Gleichung <strong>x² + 10x − 39 = 0</strong> wird durch algebraische Umformungen
+          und ein Flächenmodell gemeinsam entschlüsselt.
+        </p>
+        <div class="equation" id="equationBox">x² + 10x − 39 = 0</div>
+        <div class="chips">
+          <div class="chip x2">Blau: x²-Fläche</div>
+          <div class="chip x">Rosa: x-Rechtecke</div>
+          <div class="chip unit">Gelb: Einheitsflächen</div>
+          <div class="chip neg">Gleichzeichen trennt links und rechts</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Lernweg</h2>
+        <div class="steps" id="steps"></div>
+      </div>
+
+      <div class="card">
+        <h2>Steuerung</h2>
+        <div class="controls">
+          <button id="prevBtn">Zurück</button>
+          <button class="primary" id="nextBtn">Nächster Schritt</button>
+          <button id="hintBtn">Hinweis</button>
+          <button id="resetBtn">Neu starten</button>
+        </div>
+        <div class="feedback info" id="hintArea">Klicke auf „Nächster Schritt“, um zu beginnen.</div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="card scene-wrap">
+        <div class="scene-header">
+          <div>
+            <h2>Flächenmodell</h2>
+            <p class="muted" id="sceneText">Wir starten links nur mit x² und 10x. Noch ist nichts passend zum Quadrat angelegt.</p>
+          </div>
+          <div class="status" id="statusPill">Schritt 1 von 6</div>
+        </div>
+        <div class="board" id="board">
+          <div class="celebrate" id="celebrate"></div>
+        </div>
+      </div>
+
+      <div class="math-box">
+        <div class="card">
+          <h2>Algebra</h2>
+          <div id="mathLines"></div>
+        </div>
+
+        <div class="card">
+          <h2>Mitdenken</h2>
+          <div class="task">
+            <strong id="taskTitle">Beobachtung</strong>
+            <div id="taskText">Welche Teile der Gleichung lassen sich als Flächen darstellen?</div>
+            <div class="choices" id="choices"></div>
+            <div class="feedback" id="taskFeedback"></div>
+          </div>
+          <p class="footer-note" id="teacherNote">
+            Didaktische Idee: Die rosa Rechtecke stehen für 10x und werden erst später gezielt zerlegt und angelegt.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const equationBox = document.getElementById('equationBox');
+    const sceneText = document.getElementById('sceneText');
+    const statusPill = document.getElementById('statusPill');
+    const mathLines = document.getElementById('mathLines');
+    const stepsEl = document.getElementById('steps');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const hintArea = document.getElementById('hintArea');
+    const choicesEl = document.getElementById('choices');
+    const taskTitle = document.getElementById('taskTitle');
+    const taskText = document.getElementById('taskText');
+    const taskFeedback = document.getElementById('taskFeedback');
+    const teacherNote = document.getElementById('teacherNote');
+
+    let currentStep = 0;
+
+    const stepData = [
+      {
+        title: 'Ausgangsgleichung lesen',
+        short: 'x² + 10x − 39 = 0',
+        scene: 'Wir starten links nur mit x² und einem 10x-Rechteck. Noch ist nichts in zwei gleiche Streifen zerlegt.',
+        equation: 'x² + 10x − 39 = 0',
+        hint: 'Im ersten Bild soll man noch nicht das fast fertige Quadrat sehen. Es geht nur um den Ausgangsausdruck links.',
+        math: [
+          { text: 'x² + 10x − 39 = 0', highlight: true }
+        ],
+        taskTitle: 'Beobachtung',
+        taskText: 'Was ist im Startbild wichtig?',
+        choices: [
+          { text: 'Links sieht man zunächst x² und 10x, aber noch keine zwei gleichen Streifen.', correct: true },
+          { text: 'Die fehlende Ecke mit 25 ist schon ergänzt.', correct: false },
+          { text: 'Rechts stehen schon 39 und 25 als Flächen.', correct: false }
+        ],
+        note: 'Das Startbild darf noch nicht wie Schritt 3 wirken. Die Zerlegung von 10x passiert erst später.'
+      },
+      {
+        title: '−39 auf die rechte Seite bringen',
+        short: 'x² + 10x = 39',
+        scene: 'Jetzt wird −39 nach rechts gebracht. Links bleiben x² und 10x. Rechts erscheint die 39 als eigene Fläche.',
+        equation: 'x² + 10x = 39',
+        hint: 'Hier hilft eine deutliche Trennung von linker und rechter Seite, zum Beispiel durch ein Gleichzeichen im Modell.',
+        math: [
+          { text: 'x² + 10x − 39 = 0' },
+          { text: 'x² + 10x = 39', highlight: true }
+        ],
+        taskTitle: 'Äquivalenzumformung',
+        taskText: 'Was verändert sich in diesem Schritt?',
+        choices: [
+          { text: 'Die 39 wird rechts sichtbar, links bleibt die gestaltbare Fläche x² + 10x.', correct: true },
+          { text: 'Die 10x-Fläche wird schon in zwei 5x-Streifen zerlegt.', correct: false },
+          { text: 'Die 25 wird schon ergänzt.', correct: false }
+        ],
+        note: 'Dieser Schritt trennt sauber die geometrisch bearbeitbare linke Seite von der reinen Zahl rechts.'
+      },
+      {
+        title: '10x in zwei gleiche Teile zerlegen',
+        short: 'x² + 5x + 5x = 39',
+        scene: 'Nun wird die 10x-Fläche in zwei gleich große 5x-Streifen zerlegt. Erst jetzt entsteht die Grundlage für das spätere Anlegen.',
+        equation: 'x² + 5x + 5x = 39',
+        hint: 'Die Zerlegung in zwei gleiche Teile ist der Brückenschritt zur quadratischen Ergänzung.',
+        math: [
+          { text: 'x² + 10x = 39' },
+          { text: 'x² + 5x + 5x = 39', highlight: true }
+        ],
+        taskTitle: 'Zerlegung verstehen',
+        taskText: 'Warum wird 10x in 5x und 5x geteilt?',
+        choices: [
+          { text: 'Damit zwei gleich breite Streifen entstehen, die man an das Quadrat anlegen kann.', correct: true },
+          { text: 'Damit die 39 kleiner wird.', correct: false },
+          { text: 'Damit x verschwindet.', correct: false }
+        ],
+        note: 'Wichtig ist die Reihenfolge: erst zerlegen, dann anlegen.'
+      },
+      {
+        title: 'Fehlende Ecke ergänzen',
+        short: 'x² + 10x + 25 = 39 + 25',
+        scene: 'Die beiden 5x-Streifen werden an das x²-Quadrat gelegt. So wird die fehlende Ecke sichtbar. Diese Ecke hat die Fläche 25. Rechts bleibt die 39 erhalten und es kommt +25 dazu.',
+        equation: 'x² + 10x + 25 = 39 + 25',
+        hint: 'Rechts darf die 39 nicht verschwinden. Man sieht rechts am besten 39 und darunter oder daneben zusätzlich 25.',
+        math: [
+          { text: 'x² + 5x + 5x = 39' },
+          { text: 'x² + 10x + 25 = 39 + 25', highlight: true }
+        ],
+        taskTitle: 'Ergänzungsquadrat',
+        taskText: 'Was ist an diesem Schritt zentral?',
+        choices: [
+          { text: 'Die fehlende Ecke hat Fläche 25, und rechts wird dieselbe 25 ergänzt, während die 39 sichtbar bleibt.', correct: true },
+          { text: 'Rechts ersetzt die 25 die 39.', correct: false },
+          { text: 'Links entsteht sofort die Lösung x = 3.', correct: false }
+        ],
+        note: 'Hier wird die quadratische Ergänzung sichtbar: Links entsteht das vollständige Quadrat, rechts bleibt Gleichheit durch +25 erhalten.'
+      },
+      {
+        title: 'Als Binom lesen',
+        short: '(x + 5)² = 64',
+        scene: 'Links ist nun ein vollständiges Quadrat mit Seitenlänge x + 5. Rechts ergibt sich aus 39 + 25 die Zahl 64.',
+        equation: '(x + 5)² = 64',
+        hint: 'Das Flächenmodell erklärt genau diesen Schritt besonders gut: Aus Teilflächen wird ein ganzes Quadrat.',
+        math: [
+          { text: 'x² + 10x + 25 = 39 + 25' },
+          { text: '(x + 5)² = 64', highlight: true }
+        ],
+        taskTitle: 'Neue Schreibweise',
+        taskText: 'Warum darf man links jetzt (x + 5)² schreiben?',
+        choices: [
+          { text: 'Weil alle Teilflächen zusammen ein Quadrat mit Seitenlänge x + 5 bilden.', correct: true },
+          { text: 'Weil 64 auf der rechten Seite steht.', correct: false },
+          { text: 'Weil 25 immer ein Quadrat erzeugt.', correct: false }
+        ],
+        note: 'Dieser Schritt ist der didaktische Höhepunkt des Flächenmodells.'
+      },
+      {
+        title: 'Lösung bestimmen',
+        short: 'x = 3',
+        scene: 'Jetzt wird nur noch die positive Deutung aus dem Flächenmodell weiterverfolgt: Aus (x + 5)² = 64 wird x + 5 = 8 und damit x = 3.',
+        equation: 'x = 3',
+        hint: 'Hier bleibt die Lernumgebung bewusst bei der positiven Seitenlänge des Quadrats. Die negative Wurzel wird komplett weggelassen.',
+        math: [
+          { text: '(x + 5)² = 64' },
+          { text: 'x + 5 = 8' },
+          { text: 'x = 3', highlight: true }
+        ],
+        taskTitle: 'Abschluss',
+        taskText: 'Warum wird hier nur x = 3 betrachtet?',
+        choices: [
+          { text: 'Weil das Flächenmodell mit einer positiven Seitenlänge arbeitet und die negative Wurzel hier bewusst nicht thematisiert wird.', correct: true },
+          { text: 'Weil 64 keine zweite Möglichkeit hat.', correct: false },
+          { text: 'Weil x nie negativ sein darf.', correct: false }
+        ],
+        note: 'Für diese Lernumgebung wird die positive Seitenlänge aus dem Flächenmodell konsequent weitergeführt. Die negative Wurzel bleibt bewusst außen vor.'
+      }
+    ];
+
+    function renderSteps() {
+      stepsEl.innerHTML = '';
+      stepData.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'step' + (i === currentStep ? ' active' : '') + (i < currentStep ? ' done' : '');
+        div.innerHTML = `<div class="step-title">${i + 1}. ${s.title}</div><div class="muted">${s.short}</div>`;
+        stepsEl.appendChild(div);
+      });
+    }
+
+    function renderMath(step) {
+      mathLines.innerHTML = '';
+      step.math.forEach(line => {
+        const div = document.createElement('div');
+        div.className = 'math-line' + (line.highlight ? ' highlight' : '');
+        div.textContent = line.text;
+        mathLines.appendChild(div);
+      });
+    }
+
+    function renderTask(step) {
+      taskTitle.textContent = step.taskTitle;
+      taskText.textContent = step.taskText;
+      choicesEl.innerHTML = '';
+      taskFeedback.textContent = '';
+      taskFeedback.className = 'feedback';
+      step.choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = choice.text;
+        btn.addEventListener('click', () => {
+          const all = [...choicesEl.querySelectorAll('.choice')];
+          all.forEach(el => el.disabled = true);
+          if (choice.correct) {
+            btn.classList.add('correct');
+            taskFeedback.textContent = 'Richtig – genau diese Idee trägt den aktuellen Schritt.';
+            taskFeedback.classList.add('good');
+          } else {
+            btn.classList.add('wrong');
+            const correct = step.choices.find(c => c.correct)?.text;
+            taskFeedback.textContent = `Noch nicht. Treffender ist: ${correct}`;
+            taskFeedback.classList.add('bad');
+          }
+        });
+        choicesEl.appendChild(btn);
+      });
+      teacherNote.textContent = 'Didaktischer Hinweis: ' + step.note;
+    }
+
+    function addLabel(text, x, y) {
+      const div = document.createElement('div');
+      div.className = 'expr-label';
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      div.textContent = text;
+      board.appendChild(div);
+    }
+
+    function addEq(x, y) {
+      const div = document.createElement('div');
+      div.className = 'eq-sign';
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      div.textContent = '=';
+      board.appendChild(div);
+    }
+
+    function addDivider(x) {
+      const div = document.createElement('div');
+      div.className = 'divider';
+      div.style.left = x + 'px';
+      board.appendChild(div);
+    }
+
+    function addSubDivider(x, y, w) {
+      const div = document.createElement('div');
+      div.className = 'subdivider';
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      div.style.width = w + 'px';
+      board.appendChild(div);
+    }
+
+    function addTile({ cls, label, x, y, w, h, ghost = false, sparkle = false }) {
+      const div = document.createElement('div');
+      div.className = `tile ${cls}` + (ghost ? ' ghost' : '') + (sparkle ? ' sparkle' : '');
+      div.style.left = x + 'px';
+      div.style.top = y + 'px';
+      div.style.width = w + 'px';
+      div.style.height = h + 'px';
+      div.textContent = label;
+      board.appendChild(div);
+      return div;
+    }
+
+    function clearBoard() {
+      board.innerHTML = '<div class="celebrate" id="celebrate"></div>';
+    }
+
+    function makeConfetti() {
+      const layer = document.getElementById('celebrate');
+      const colors = ['#93c5fd', '#f9a8d4', '#fde68a', '#86efac', '#c4b5fd'];
+      for (let i = 0; i < 24; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.background = colors[i % colors.length];
+        c.style.animationDelay = (Math.random() * 250) + 'ms';
+        c.style.transform = `translateY(0) rotate(${Math.random() * 120}deg)`;
+        layer.appendChild(c);
+      }
+    }
+
+    function drawScene(stepIndex) {
+      clearBoard();
+
+      if (stepIndex === 0) {
+        addLabel('linke Seite', 70, 65);
+        addTile({ cls: 'x2', label: 'x²', x: 180, y: 170, w: 220, h: 220 });
+        addTile({ cls: 'x', label: '10x', x: 405, y: 170, w: 95, h: 220 });
+        addDivider(575);
+        addLabel('−39 noch nicht als Fläche dargestellt', 600, 90);
+      }
+
+      if (stepIndex === 1) {
+        addLabel('linke Seite', 60, 60);
+        addTile({ cls: 'x2', label: 'x²', x: 120, y: 165, w: 200, h: 240 });
+        addTile({ cls: 'x', label: '10x', x: 380, y: 220, w: 210, h: 90 });
+        addEq(615, 240);
+        addTile({ cls: 'unit', label: '39', x: 690, y: 170, w: 170, h: 170, sparkle: true });
+        addLabel('39 Einheitsflächen rechts', 680, 110);
+      }
+
+      if (stepIndex === 2) {
+        addLabel('zwei gleiche Streifen', 120, 65);
+        addTile({ cls: 'x2', label: 'x²', x: 170, y: 160, w: 190, h: 220 });
+        addTile({ cls: 'x', label: '5x', x: 365, y: 160, w: 58, h: 220, sparkle: true });
+        addTile({ cls: 'x', label: '5x', x: 430, y: 160, w: 58, h: 220, sparkle: true });
+        addEq(610, 235);
+        addTile({ cls: 'unit', label: '39', x: 700, y: 170, w: 150, h: 150 });
+      }
+
+      if (stepIndex === 3) {
+        addLabel('fehlende Ecke: 5 · 5 = 25', 110, 60);
+        addTile({ cls: 'x2', label: 'x²', x: 130, y: 150, w: 220, h: 220 });
+        addTile({ cls: 'x', label: '5x', x: 355, y: 150, w: 95, h: 220 });
+        addTile({ cls: 'x', label: '5x', x: 130, y: 375, w: 220, h: 95 });
+        addTile({ cls: 'unit', label: '25', x: 355, y: 375, w: 95, h: 95, sparkle: true });
+        addEq(535, 250);
+        addTile({ cls: 'unit', label: '39', x: 640, y: 145, w: 175, h: 145 });
+        addTile({ cls: 'unit', label: '25', x: 640, y: 293, w: 175, h: 95 });
+        addSubDivider(640, 291, 175);
+      }
+
+      if (stepIndex === 4) {
+        addLabel('ein vollständiges Quadrat', 120, 65);
+        addTile({ cls: 'x2', label: '(x + 5)²', x: 150, y: 150, w: 315, h: 315, sparkle: true });
+        addEq(540, 255);
+        addTile({ cls: 'unit', label: '64', x: 640, y: 190, w: 175, h: 175, sparkle: true });
+        addLabel('39 + 25 = 64', 655, 130);
+      }
+
+      if (stepIndex === 5) {
+        addLabel('positive Seitenlänge des Quadrats', 120, 70);
+        addTile({ cls: 'unit', label: 'x + 5 = 8', x: 150, y: 150, w: 260, h: 110, sparkle: true });
+        addTile({ cls: 'x', label: 'x = 3', x: 220, y: 320, w: 130, h: 80 });
+        addLabel('negative Wurzel wird hier bewusst nicht behandelt', 460, 210);
+        makeConfetti();
+      }
+    }
+
+    function updateUI() {
+      const step = stepData[currentStep];
+      equationBox.textContent = step.equation;
+      sceneText.textContent = step.scene;
+      statusPill.textContent = `Schritt ${currentStep + 1} von ${stepData.length}`;
+      hintArea.textContent = 'Arbeite den aktuellen Schritt gedanklich nach und nutze bei Bedarf den Hinweis.';
+      hintArea.className = 'feedback info';
+      renderSteps();
+      renderMath(step);
+      renderTask(step);
+      drawScene(currentStep);
+      nextBtn.textContent = currentStep === stepData.length - 1 ? 'Noch einmal von vorn' : 'Nächster Schritt';
+      prevBtn.disabled = currentStep === 0;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (currentStep < stepData.length - 1) {
+        currentStep += 1;
+      } else {
+        currentStep = 0;
+      }
+      updateUI();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentStep > 0) currentStep -= 1;
+      updateUI();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      currentStep = 0;
+      updateUI();
+    });
+
+    hintBtn.addEventListener('click', () => {
+      hintArea.textContent = stepData[currentStep].hint;
+      hintArea.className = 'feedback info';
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
