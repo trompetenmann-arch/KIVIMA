@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quadratische Ergänzung</title>
+<style>
+body{font-family:Arial;background:#f4f7fb;padding:20px}
+.box{max-width:800px;margin:auto;background:white;padding:20px;border-radius:12px}
+.shape{position:absolute;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.square{background:lightblue}
+.rect{background:pink}
+.small{background:gold}
+#area{position:relative;height:300px;border:1px solid #ccc;margin-top:20px}
+.feedback{margin-top:10px;font-weight:bold}
+button{padding:10px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>x² + 10x = 39</h2>
+<p id="text">Ziehe das Rechteck an das Quadrat.</p>
+
+<div id="area">
+<div id="sq" class="shape square">x²</div>
+<div id="rect" class="shape rect">10x</div>
+<div id="small" class="shape small" style="display:none">25</div>
+</div>
+
+<input id="input"><button onclick="check()">Prüfen</button>
+<div id="fb" class="feedback"></div>
+</div>
+
+<script>
+let step=0;
+
+let sq=document.getElementById("sq");
+let rect=document.getElementById("rect");
+let small=document.getElementById("small");
+
+sq.style.width="120px";
+sq.style.height="120px";
+sq.style.left="50px";
+sq.style.top="50px";
+
+rect.style.width="60px";
+rect.style.height="120px";
+rect.style.left="250px";
+rect.style.top="50px";
+
+let dragging=false;
+
+rect.onmousedown=()=>dragging=true;
+document.onmouseup=()=>dragging=false;
+
+document.onmousemove=e=>{
+ if(!dragging) return;
+ rect.style.left=e.pageX-30+"px";
+ rect.style.top=e.pageY-30+"px";
+}
+
+function check(){
+ let val=document.getElementById("input").value;
+ if(step==0){
+  if(rect.offsetLeft<200){
+    document.getElementById("fb").innerHTML="Gut!";
+    step=1;
+    document.getElementById("text").innerHTML="Wie groß ist die fehlende Fläche?";
+    small.style.display="block";
+  }else{
+    document.getElementById("fb").innerHTML="Zieh näher ran!";
+  }
+ }
+ else if(step==1){
+  if(val==25){
+    document.getElementById("fb").innerHTML="Richtig!";
+    step=2;
+    document.getElementById("text").innerHTML="Rechne 39 + 25";
+  }else{
+    document.getElementById("fb").innerHTML="Falsch!";
+  }
+ }
+ else if(step==2){
+  if(val==64){
+    document.getElementById("fb").innerHTML="Super! Jetzt letzte Frage: x+5=8 → x=?";
+    step=3;
+  }else{
+    document.getElementById("fb").innerHTML="Falsch!";
+  }
+ }
+ else if(step==3){
+  if(val==3){
+    document.getElementById("fb").innerHTML="Perfekt! x=3 🎉";
+  }else{
+    document.getElementById("fb").innerHTML="Nochmal!";
+  }
+ }
+}
+</script>
+</body>
+</html>
