@@ -278,28 +278,7 @@ main {
   flex: 1;
 }
 
-.variant-open {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.2rem;
-  border: 1px solid rgba(44, 141, 79, 0.24);
-  border-radius: 0.65rem;
-  background: #fff;
-  color: var(--primary-dark);
-  font-weight: 700;
-  text-decoration: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.variant-open:hover,
-.variant-open:focus-visible {
-  border-color: rgba(44, 141, 79, 0.45);
-  box-shadow: 0 6px 16px rgba(24, 62, 37, 0.1);
-  outline: none;
-}
-
-#studentische-ergebnisse {
+#variantPreviewContainer {
   scroll-margin-top: 7rem;
 }
 
