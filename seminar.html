@@ -50,8 +50,9 @@
             Ausgehend von einem Initialprompt entstand zunächst eine erste Version eines Bruchmemory.
             Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.
           </p>
-          <details>
-            <summary>Sitzung 1: Vibe Coding &amp; Bruchmemory</summary>
+          <section class="seminar-sitzungen">
+            <details class="seminar-sitzung">
+              <summary>Sitzung 1: Vibe Coding &amp; Bruchmemory</summary>
             <h3>Zusammenfassung</h3>
             <p>
               In der ersten Sitzung des Seminars „KIVIMA – KI-gestützte Visualisierungen im Mathematikunterricht“
@@ -99,57 +100,58 @@
               umgestellt. Hier konnten die Studierenden den HTML-Code einfach hineinkopieren und die Anwendung ohne
               lokale Speicherprobleme direkt im Browser des iPads testen.
             </p>
-            <h3>Materialien</h3>
-            <ul>
-              <li>
-                <a href="Seminar/Bruchmemory/brueche-memory.html">Ausgangsdatei</a>: Die erste, rein prompt-basierte
-                Version des Bruch-Memorys.
-              </li>
-              <li>
-                <a href="#variantPicker">Studentische Iterationen</a>: Sammlung der durch die Studierenden
-                verbesserten Versionen.
-              </li>
-              <li>
-                <a href="Seminar/Bruchmemory/brueche-memory_FINAL.html">Best-Practice-Version</a>: Eine von uns final
-                optimierte Version, die wir für den direkten Unterrichtseinsatz als besonders geeignet erachten.
-              </li>
-            </ul>
-            <h3>Quellen</h3>
-            <p>
-              Dilling, F. (2026). <em>Programmieren mit KI für den Mathematikunterricht. Kann Vibe Coding die
-              Entwicklung digitaler Unterrichtsressourcen revolutionieren?</em> MGDM Mitteldeutsche Gesellschaft für
-              Didaktik der Mathematik, 120, 13–19.
-            </p>
-          </details>
-          <p data-i18n="semVariantsText">
-            Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:
-          </p>
-          <section class="variant-picker" id="variantPicker" aria-label="Bruchmemory Varianten">
-            <p class="variant-picker-label" data-i18n="semVariantMenuLabel">Variante auswählen</p>
-            <div class="variant-grid">
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory_FINAL.html">Variante 1</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory-2.html">Variante 2</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory.html">Variante 3</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruche-memory.html">Variante 4</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruch-memory-verbessert.html">Variante 5</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruchmemory_konfetti.html">Variante 6</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemorie.html">Variante 7</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_download.html">Variante 8</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory Heuer.html">Variante 9</button>
-              <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_JannesKröker.html">Variante 10</button>
-            </div>
-            <section class="variant-preview" id="variantPreview">
-              <p class="variant-preview-hint" data-i18n="semVariantPreviewHint">Wähle oben eine Variante aus, um sie hier direkt zu öffnen.</p>
-              <p class="variant-preview-title" id="variantPreviewTitle"></p>
-              <a class="variant-preview-link" id="variantPreviewLink" target="_blank" rel="noopener noreferrer"></a>
-              <iframe
-                id="variantPreviewFrame"
-                class="variant-preview-frame"
-                title="Bruchmemory Variante"
-                loading="lazy"
-                referrerpolicy="no-referrer"
-              ></iframe>
-            </section>
+              <h3>Materialien</h3>
+              <ul>
+                <li>
+                  <a href="Seminar/Bruchmemory/brueche-memory.html">Ausgangsdatei</a>: Die erste, rein prompt-basierte
+                  Version des Bruch-Memorys.
+                </li>
+                <li>
+                  <a href="#variantPicker">Studentische Iterationen</a>: Sammlung der durch die Studierenden
+                  verbesserten Versionen.
+                </li>
+                <li>
+                  <a href="Seminar/Bruchmemory/brueche-memory_FINAL.html">Best-Practice-Version</a>: Eine von uns final
+                  optimierte Version, die wir für den direkten Unterrichtseinsatz als besonders geeignet erachten.
+                </li>
+              </ul>
+              <p data-i18n="semVariantsText">
+                Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:
+              </p>
+              <section class="variant-picker" id="variantPicker" aria-label="Bruchmemory Varianten">
+                <p class="variant-picker-label" data-i18n="semVariantMenuLabel">Variante auswählen</p>
+                <div class="variant-grid">
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory_FINAL.html">Variante 1</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory-2.html">Variante 2</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/brueche-memory.html">Variante 3</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruche-memory.html">Variante 4</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruch-memory-verbessert.html">Variante 5</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/bruchmemory_konfetti.html">Variante 6</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemorie.html">Variante 7</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_download.html">Variante 8</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory Heuer.html">Variante 9</button>
+                  <button type="button" class="variant-link" data-variant-src="Seminar/Bruchmemory/Bruchmemory_JannesKröker.html">Variante 10</button>
+                </div>
+                <section class="variant-preview" id="variantPreview">
+                  <p class="variant-preview-hint" data-i18n="semVariantPreviewHint">Wähle oben eine Variante aus, um sie hier direkt zu öffnen.</p>
+                  <p class="variant-preview-title" id="variantPreviewTitle"></p>
+                  <a class="variant-preview-link" id="variantPreviewLink" target="_blank" rel="noopener noreferrer"></a>
+                  <iframe
+                    id="variantPreviewFrame"
+                    class="variant-preview-frame"
+                    title="Bruchmemory Variante"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                  ></iframe>
+                </section>
+              </section>
+              <h3>Quellen</h3>
+              <p>
+                Dilling, F. (2026). <em>Programmieren mit KI für den Mathematikunterricht. Kann Vibe Coding die
+                Entwicklung digitaler Unterrichtsressourcen revolutionieren?</em> MGDM Mitteldeutsche Gesellschaft für
+                Didaktik der Mathematik, 120, 13–19.
+              </p>
+            </details>
           </section>
         </section>
       </article>

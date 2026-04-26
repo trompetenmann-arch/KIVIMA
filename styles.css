@@ -192,6 +192,39 @@ main {
   font-size: 1rem;
 }
 
+.seminar-sitzungen {
+  margin-top: 1rem;
+}
+
+.seminar-sitzung {
+  border: 2px solid rgba(44, 141, 79, 0.35);
+  border-radius: 1rem;
+  background: rgba(44, 141, 79, 0.08);
+  margin: 1rem 0;
+  padding: 0.9rem 1.05rem;
+}
+
+.seminar-sitzung summary {
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--primary-dark);
+}
+
+.seminar-sitzung summary:hover {
+  color: #184f2e;
+}
+
+.seminar-sitzung[open] summary {
+  margin-bottom: 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgba(31, 107, 59, 0.25);
+}
+
+.seminar-sitzung > *:not(summary) {
+  margin-left: 0.05rem;
+}
+
 .variant-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
