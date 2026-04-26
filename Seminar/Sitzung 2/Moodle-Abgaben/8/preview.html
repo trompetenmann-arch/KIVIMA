@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Quadratische Ergänzung – Lernversion</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(to right, #eef2f3, #dfe9f3);
+    font-size: 20px;
+}
+
+h1 { font-size: 36px; }
+h2 { font-size: 28px; }
+p, input, button { font-size: 22px; }
+
+.container { max-width: 950px; margin: auto; }
+
+.step { display: none; }
+.active { display: block; }
+
+.canvas {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    margin: 20px auto;
+    border: 2px solid #aaa;
+    background: white;
+}
+
+.shape { position: absolute; cursor: grab; }
+
+.square-x {
+    width: 200px;
+    height: 200px;
+    background: #4CAF50;
+    left: 70px;
+    top: 70px;
+}
+
+.rect { width: 200px; height: 50px; background: #2196F3; }
+.rect-vertical { width: 50px; height: 200px; background: #2196F3; }
+.small-square { width: 50px; height: 50px; background: #FF9800; }
+
+button {
+    padding: 12px 18px;
+    margin: 10px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+    border-radius: 8px;
+}
+
+.explain {
+    background: #fff3cd;
+    padding: 12px;
+    margin: 10px;
+    border-radius: 8px;
+}
+
+.summary {
+    background: #e8f5e9;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+    font-size: 22px;
+    text-align: left;
+    display: inline-block;
+}
+
+.big-square {
+    width: 260px;
+    height: 260px;
+    background: #4CAF50;
+    margin: auto;
+    line-height: 260px;
+    color: white;
+    font-size: 26px;
+    border-radius: 10px;
+}
+
+.hint { color: #ff9800; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎯 Quadratische Ergänzung lernen</h1>
+<p>⭐ Punkte: <span id="points">0</span></p>
+
+<div id="step1" class="step active">
+<h2>Start</h2>
+<p>x² + 10x − 39 = 0</p>
+<button onclick="nextStep()">Start</button>
+</div>
+
+<div id="step2" class="step">
+<h2>Umstellen</h2>
+<p>x² + 10x = 39</p>
+<button onclick="prevStep()">Zurück</button>
+<button onclick="nextStep()">Weiter</button>
+</div>
+
+<div id="step3" class="step">
+<h2>Baue das Quadrat!</h2>
+
+<div class="canvas">
+<div class="shape square-x"></div>
+<div id="rect1" class="shape rect"></div>
+<div id="rect2" class="shape rect-vertical"></div>
+<div id="small" class="shape small-square"></div>
+</div>
+
+<div class="explain">💡 Frei bauen – keine Bewertung!</div>
+
+<button onclick="nextStep()">Fertig → Weiter</button>
+</div>
+
+<div id="step4" class="step">
+<h2>Fehlendes Stück?</h2>
+<input type="number" id="input1"><br>
+<button onclick="check1()">Prüfen</button>
+<p id="hint1" class="hint"></p>
+</div>
+
+<div id="step5" class="step">
+<h2>Quadrat entsteht</h2>
+<p>(x + 5)² = 64</p>
+<button onclick="nextStep()">Weiter</button>
+</div>
+
+<div id="step6" class="step">
+<h2>Letzter Schritt</h2>
+<p>√64 = ?</p>
+<input type="number" id="input2"><br>
+<button onclick="check2()">Prüfen</button>
+<p id="hint2" class="hint"></p>
+</div>
+
+<div id="step7" class="step">
+<h2>🎉 Geschafft!</h2>
+<div class="big-square">(x + 5)² = 64</div>
+<button onclick="showSummary()">Zusammenfassung</button>
+</div>
+
+<div id="step8" class="step">
+<h2>📌 Zusammenfassung</h2>
+<div class="summary">
+<b>x² + 10x − 39 = 0</b><br>
+→ x² + 10x = 39<br><br>
+(10 ÷ 2)² = 25<br>
+→ (x + 5)² = 64<br>
+√64 = 8<br>
+x₁ = 3, x₂ = -13
+</div>
+</div>
+
+</div>
+
+<script>
+
+let step = 1;
+let points = 0;
+
+function nextStep(){
+document.getElementById("step"+step).classList.remove("active");
+step++;
+document.getElementById("step"+step).classList.add("active");
+}
+
+function prevStep(){
+document.getElementById("step"+step).classList.remove("active");
+step--;
+document.getElementById("step"+step).classList.add("active");
+}
+
+/* Drag */
+let selected=null, offsetX, offsetY;
+
+document.querySelectorAll(".shape").forEach(el=>{
+el.addEventListener("mousedown",e=>{
+selected=el;
+offsetX=e.clientX-el.offsetLeft;
+offsetY=e.clientY-el.offsetTop;
+});
+});
+
+document.addEventListener("mousemove",e=>{
+if(!selected) return;
+selected.style.left=(e.clientX-offsetX)+"px";
+selected.style.top=(e.clientY-offsetY)+"px";
+});
+
+document.addEventListener("mouseup",()=>selected=null);
+
+/* Tasks */
+function check1(){
+let v=document.getElementById("input1").value;
+if(v==25){
+nextStep();
+}else{
+document.getElementById("hint1").innerText="👉 Tipp: (10/2)²";
+}
+}
+
+function check2(){
+let v=document.getElementById("input2").value;
+if(v==8){
+nextStep();
+}else{
+document.getElementById("hint2").innerText="👉 8";
+}
+}
+
+function showSummary(){
+nextStep();
+}
+
+</script>
+
+</body>
+</html>
