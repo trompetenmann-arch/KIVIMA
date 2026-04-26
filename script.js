@@ -49,12 +49,23 @@ const translations = {
     semHeroText: "Das Seminar ist in drei aufeinander bezogene Phasen gegliedert.",
     semPhase1Title: "1) Entwicklungsphase",
     semPhase1Text: "Einführung in KI-Werkzeuge (z. B. BIKI), Entwicklung von Visualisierungsideen und technischer Aufbau erster Prototypen.",
+    semSessionsTitle: "Sitzungen",
     semVariantsTitle: "Erste Seminarsitzung - Bruchmemory",
     semVariantsIntro: "Ausgehend von einem Initialprompt entstand zunächst eine erste Version eines Bruchmemory. Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.",
     semVariantsText: "Übersicht aller im Seminar entstandenen Bruchmemory-Varianten:",
     semVariantMenuLabel: "Variante auswählen",
     semVariantPreviewHint: "Wähle oben eine Variante aus, um sie hier direkt zu öffnen.",
     semVariantOpenNewTab: "In neuem Tab öffnen",
+    semVariant1: "Variante 1",
+    semVariant2: "Variante 2",
+    semVariant3: "Variante 3",
+    semVariant4: "Variante 4",
+    semVariant5: "Variante 5",
+    semVariant6: "Variante 6",
+    semVariant7: "Variante 7",
+    semVariant8: "Variante 8",
+    semVariant9: "Variante 9",
+    semVariant10: "Variante 10",
     semSession1Summary: "Sitzung 1: Bruchmemory",
     semSession2Summary: "Sitzung 2: Quadratische Ergänzung",
     semSummaryHeading: "Zusammenfassung",
@@ -162,6 +173,7 @@ const translations = {
     semHeroText: "El seminario se organiza en tres fases relacionadas entre sí.",
     semPhase1Title: "1) Fase de desarrollo",
     semPhase1Text: "Introducción a herramientas de IA (p. ej., BIKI), desarrollo de ideas de visualización y construcción técnica de primeros prototipos.",
+    semSessionsTitle: "Sesiones",
     semVariantsTitle: "Variantes del Bruchmemory",
     semVariantsIntro: "A partir de un prompt inicial se creó primero un Bruchmemory. En el seminario se recopiló después el potencial de mejora y, sobre esa base, se elaboraron nuevas variantes.",
     semFirstSessionTitle: "Primera sesión del seminario",
@@ -169,6 +181,16 @@ const translations = {
     semVariantMenuLabel: "Elegir variante",
     semVariantPreviewHint: "Elige arriba una variante para verla aquí integrada.",
     semVariantOpenNewTab: "Abrir en una pestaña nueva",
+    semVariant1: "Variante 1",
+    semVariant2: "Variante 2",
+    semVariant3: "Variante 3",
+    semVariant4: "Variante 4",
+    semVariant5: "Variante 5",
+    semVariant6: "Variante 6",
+    semVariant7: "Variante 7",
+    semVariant8: "Variante 8",
+    semVariant9: "Variante 9",
+    semVariant10: "Variante 10",
     semSession1Summary: "Sesión 1: Bruchmemory",
     semSession2Summary: "Sesión 2: Completación del cuadrado",
     semSummaryHeading: "Resumen",
@@ -276,6 +298,7 @@ const translations = {
     semHeroText: "The seminar is divided into three interrelated phases.",
     semPhase1Title: "1) Development phase",
     semPhase1Text: "Introduction to AI tools (e.g., BIKI), development of visualization ideas, and technical construction of initial prototypes.",
+    semSessionsTitle: "Sessions",
     semVariantsTitle: "Bruchmemory variants",
     semVariantsIntro: "Starting from an initial prompt, a first Bruchmemory was created. In the seminar, improvement potential was then compiled and used as the basis for developing new versions.",
     semFirstSessionTitle: "First seminar session",
@@ -283,6 +306,16 @@ const translations = {
     semVariantMenuLabel: "Choose a variant",
     semVariantPreviewHint: "Choose a variant above to load it directly below.",
     semVariantOpenNewTab: "Open in a new tab",
+    semVariant1: "Variant 1",
+    semVariant2: "Variant 2",
+    semVariant3: "Variant 3",
+    semVariant4: "Variant 4",
+    semVariant5: "Variant 5",
+    semVariant6: "Variant 6",
+    semVariant7: "Variant 7",
+    semVariant8: "Variant 8",
+    semVariant9: "Variant 9",
+    semVariant10: "Variant 10",
     semSession1Summary: "Session 1: Bruchmemory",
     semSession2Summary: "Session 2: Completing the square",
     semSummaryHeading: "Summary",
@@ -395,15 +428,19 @@ const enforceBruchmemoryLinks = () => {
 
   parsedVariants
     .sort((a, b) => a.variantNumber - b.variantNumber)
-    .forEach(({ button, variantNumber }) => {
+    .forEach(({ button }) => {
       if (button.parentElement) {
-        button.textContent = `Variante ${variantNumber}`;
         button.parentElement.appendChild(button);
       }
     });
 };
 
 const getVariantNumber = (button) => {
+  const explicitVariantNumber = Number.parseInt(button.dataset.variantNumber || "", 10);
+  if (Number.isFinite(explicitVariantNumber)) {
+    return explicitVariantNumber;
+  }
+
   const variantMatch = (button.textContent || "").match(/(\d+)/);
   if (!variantMatch) {
     return Number.POSITIVE_INFINITY;
