@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digitale Lernumgebung – Quadratische Ergänzung</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#1f2a37;
+      --muted:#52606d;
+      --accent:#2563eb;
+      --accent-2:#0f766e;
+      --line:#d9e2ec;
+      --warn:#b45309;
+      --good:#166534;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.5;
+    }
+    header{
+      background:linear-gradient(135deg,#e8f0ff,#eefcf8);
+      padding:32px 20px;
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+    h1,h2,h3{margin:0 0 12px}
+    p{margin:0 0 12px}
+    .subtitle{max-width:900px;color:var(--muted)}
+    .layout{
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap:20px;
+      padding:24px 0 40px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 8px 24px rgba(15,23,42,.05);
+    }
+    .step-nav{
+      display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px
+    }
+    button{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    button.active{outline:3px solid rgba(37,99,235,.18);border-color:var(--accent)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef4ff;color:var(--accent);font-weight:700;font-size:14px;margin-bottom:10px}
+    .equation{
+      font-size:30px;
+      font-weight:700;
+      letter-spacing:.2px;
+      margin:10px 0 16px;
+    }
+    .math-note{
+      background:#f8fafc;border-left:5px solid var(--accent);padding:12px 14px;border-radius:10px;margin:12px 0;
+    }
+    .teacher-note{
+      background:#fff7ed;border-left:5px solid var(--warn);padding:12px 14px;border-radius:10px;margin-top:10px;
+    }
+    .success{
+      background:#f0fdf4;border-left:5px solid var(--good);padding:12px 14px;border-radius:10px;margin-top:10px;
+    }
+    svg{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:white}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .legend span{display:inline-flex;align-items:center;gap:8px;background:#f8fafc;padding:6px 10px;border-radius:999px;font-size:14px}
+    .dot{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+    .quiz label{display:block;margin:8px 0}
+    input[type="text"]{
+      width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px
+    }
+    .prompt-box{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:14px;white-space:pre-wrap;font-family:Consolas,monospace;font-size:14px;overflow:auto}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    ol{padding-left:20px}
+    li{margin-bottom:8px}
+    @media (max-width: 900px){.layout,.two-col{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="pill">Interaktive HTML-Lernumgebung</div>
+    <h1>Quadratische Ergänzung als Flächenmodell</h1>
+    <p class="subtitle">Diese Lernumgebung führt Schüler*innen Schritt für Schritt durch die Gleichung <strong>x² + 10x − 39 = 0</strong>. Die algebraischen Umformungen werden dabei eng mit einem Flächenmodell verknüpft – so wie auf der Tafel im Seminar.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="layout">
+    <section class="card">
+      <div class="step-nav">
+        <button id="prevBtn">← Zurück</button>
+        <button class="active" data-step="0">1</button>
+        <button data-step="1">2</button>
+        <button data-step="2">3</button>
+        <button data-step="3">4</button>
+        <button id="nextBtn" class="primary">Weiter →</button>
+      </div>
+      <div id="stepContent"></div>
+    </section>
+
+    <aside class="card">
+      <h2>Arbeitsauftrag – Ausarbeitung</h2>
+      <p>Unterhalb der interaktiven Lernumgebung findest du eine ausformulierte Bearbeitung des Seminarauftrags: Initialprompt, iterative Optimierung, didaktische Begründung und Hinweise zur lokalen Ausführung.</p>
+      <div class="two-col">
+        <div>
+          <h3>Didaktischer Fokus</h3>
+          <ol>
+            <li>Vom Term zur Fläche</li>
+            <li>Umordnen statt „blind umformen“</li>
+            <li>Fehlende Ecke bewusst ergänzen</li>
+            <li>Rückübersetzung in Algebra</li>
+            <li>Reflexion: Geometrie vs. algebraische Vollständigkeit</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Wichtiger Hinweis</h3>
+          <p>Das Flächenmodell arbeitet mit positiven Längen. Deshalb erscheint geometrisch vor allem die Lösung <strong>x = 3</strong>. Algebraisch gilt jedoch:</p>
+          <div class="equation" style="font-size:26px;">x = 3 &nbsp;oder&nbsp; x = -13</div>
+          <p>Die zweite Lösung entsteht beim Lösen von <strong>(x+5)² = 64</strong> durch <strong>x+5 = ±8</strong>. Sie ist im Flächenmodell als Seitenlänge nicht direkt interpretierbar.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card" style="margin-bottom:20px">
+    <h2>1. Geeigneter Initialprompt für das LLM</h2>
+    <div class="prompt-box">Erstelle eine eigenständige HTML-Datei (HTML, CSS und JavaScript in einer Datei) für eine interaktive Lernumgebung zur quadratischen Ergänzung. Zielgruppe sind Schüler*innen der Sekundarstufe. Ausgangsgleichung ist x² + 10x - 39 = 0.
+
+Die Lernumgebung soll die Umformungen eng mit einem Flächenmodell verknüpfen:
+- Stelle x² als Quadrat dar.
+- Stelle 10x als zwei Rechtecke der Maße 5·x dar.
+- Ordne die Rechtecke so um, dass fast ein großes Quadrat entsteht.
+- Zeige, dass zum vollständigen Quadrat die Ecke 5·5 = 25 ergänzt werden muss.
+- Verbinde jeden visuellen Schritt mit der passenden algebraischen Umformung.
+- Zeige anschließend die Rückübersetzung in die Form (x+5)² = 64.
+- Löse die Gleichung schrittweise und erläutere, warum das Flächenmodell vor allem zur positiven Lösung x = 3 führt, während algebraisch auch x = -13 entsteht.
+
+Anforderungen:
+- Schritt-für-Schritt-Navigation mit Zurück/Weiter.
+- Interaktive Visualisierung mit SVG oder Canvas.
+- Leicht verständliche didaktische Sprache.
+- Kurze Kontrollfragen oder Eingaben für Lernende.
+- Farbliche Unterscheidung von x², Rechtecken und Ergänzungsfläche.
+- Responsives Layout.
+- Keine externen Bibliotheken.
+- Sauber kommentierter Code.
+
+Gib nur den vollständigen lauffähigen HTML-Code aus.</div>
+  </section>
+
+  <section class="card" style="margin-bottom:20px">
+    <h2>2. Iterativer Prompting-Prozess</h2>
+    <ol>
+      <li><strong>Erste Optimierung:</strong> „Überarbeite die Lernumgebung sprachlich. Formuliere alle Erklärungen schülernah, in kurzen Sätzen und mit klarer Handlungsorientierung. Jede Umformung soll mit einer Beobachtung am Flächenmodell verbunden werden.“</li>
+      <li><strong>Zweite Optimierung:</strong> „Verbessere die Visualisierung. Nutze SVG, beschrifte alle Seitenlängen deutlich mit x bzw. 5 und markiere die Ergänzungsfläche 25 farblich auffällig.“</li>
+      <li><strong>Dritte Optimierung:</strong> „Ergänze zu jedem Schritt eine kleine Lernfrage mit unmittelbarem Feedback. Die Fragen sollen das Ergänzen zum Quadrat sichern.“</li>
+      <li><strong>Vierte Optimierung:</strong> „Füge eine didaktische Reflexion ein: Warum zeigt das Flächenmodell vor allem die positive Lösung? Wie kommt algebraisch die negative Lösung zustande?“</li>
+      <li><strong>Fünfte Optimierung:</strong> „Strukturiere den Code sauber mit kommentierten Abschnitten und achte auf eine lokal lauffähige Ein-Datei-Lösung ohne externe Abhängigkeiten.“</li>
+    </ol>
+  </section>
+
+  <section class="card" style="margin-bottom:20px">
+    <h2>3. Erklärung der Vorgehensweise</h2>
+    <p><strong>Ausgangspunkt:</strong> Die Gleichung <strong>x² + 10x − 39 = 0</strong> wird zuerst zu <strong>x² + 10x = 39</strong> umgeformt. So steht links die Fläche aus einem Quadrat <strong>x²</strong> und einem Rechteckinhalt <strong>10x</strong>, rechts die Vergleichsfläche <strong>39</strong>.</p>
+    <p><strong>Geometrische Deutung:</strong> Das Rechteck <strong>10x</strong> wird in zwei gleich große Rechtecke <strong>5x</strong> zerlegt. Diese werden an zwei Seiten des Quadrats angelegt. Dadurch entsteht fast ein großes Quadrat, nur eine Ecke fehlt.</p>
+    <p><strong>Quadratische Ergänzung:</strong> Die fehlende Ecke hat die Seitenlängen <strong>5</strong> und <strong>5</strong>, also den Flächeninhalt <strong>25</strong>. Deshalb ergänzt man auf beiden Seiten der Gleichung <strong>25</strong>. So bleibt die Gleichung äquivalent.</p>
+    <p><strong>Rückübersetzung:</strong> Links ist nun ein vollständiges Quadrat mit Seitenlänge <strong>x + 5</strong>. Deshalb gilt <strong>(x+5)² = 64</strong>.</p>
+    <p><strong>Lösen:</strong> Algebraisch folgt <strong>x + 5 = ±8</strong>, also <strong>x = 3</strong> oder <strong>x = -13</strong>. Im Flächenmodell ist jedoch nur <strong>x = 3</strong> direkt sinnvoll, weil Seitenlängen dort positiv gedacht werden.</p>
+    <div class="teacher-note"><strong>Didaktische Bewertung:</strong> Die Lernumgebung verbindet symbolische Umformung und anschauliches Handeln. Die Schüler*innen sehen nicht nur, <em>dass</em> man 25 ergänzt, sondern auch <em>warum</em>. Genau darin liegt der Mehrwert digitaler Lernumgebungen mit LLM-Unterstützung: Erklärungen, Visualisierung und Interaktion können gezielt aufeinander abgestimmt werden.</div>
+  </section>
+
+  <section class="card">
+    <h2>4. Testen und lokal speichern</h2>
+    <ol>
+      <li>Speichere diese Datei als <strong>quadratische_ergaenzung_lernumgebung.html</strong>.</li>
+      <li>Öffne die Datei per Doppelklick im Browser oder lade sie in OneCompiler hoch.</li>
+      <li>Prüfe die Navigation, die SVG-Darstellungen und die Quizfunktionen.</li>
+      <li>Falls nötig, passe Texte oder Farben weiter an und speichere die Datei erneut.</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+const steps = [
+  {
+    title: 'Schritt 1: Gleichung als Fläche deuten',
+    equation: 'x² + 10x = 39',
+    text: 'Wir bringen zuerst die 39 auf die rechte Seite. Jetzt können wir links Flächen lesen: x² ist ein Quadrat mit Seitenlänge x. 10x ist ein Rechteck mit den Seiten 10 und x.',
+    note: 'Wie auf der Tafel: Die Gleichung wird nicht nur gerechnet, sondern als Flächeninhalt gedeutet.',
+    quiz: {
+      question: 'Welche Fläche gehört zum Term x²?',
+      placeholder: 'z. B. ein Quadrat ...',
+      answerCheck: (v) => /quadrat/i.test(v),
+      feedbackOk: 'Richtig. x² wird als Quadrat mit Seitenlänge x dargestellt.',
+      feedbackBad: 'Noch nicht ganz. Denke an einen Flächeninhalt, der aus x · x entsteht.'
+    },
+    svg: () => `
+      <svg viewBox="0 0 700 380" aria-label="Flächenmodell Schritt 1">
+        <rect x="50" y="90" width="180" height="180" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+        <text x="140" y="190" text-anchor="middle" font-size="28" fill="#1e3a8a">x²</text>
+        <text x="140" y="290" text-anchor="middle" font-size="20">x</text>
+        <text x="28" y="185" text-anchor="middle" font-size="20">x</text>
+
+        <rect x="260" y="90" width="100" height="180" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+        <text x="310" y="190" text-anchor="middle" font-size="26" fill="#115e59">10x</text>
+        <text x="310" y="78" text-anchor="middle" font-size="20">10</text>
+        <text x="376" y="185" text-anchor="middle" font-size="20">x</text>
+
+        <text x="392" y="188" font-size="34">=</text>
+        <ellipse cx="560" cy="180" rx="90" ry="70" fill="#f8fafc" stroke="#64748b" stroke-width="3" stroke-dasharray="7 7"/>
+        <g fill="#ffffff" stroke="#64748b" stroke-width="2">
+          <rect x="520" y="125" width="22" height="22"/><rect x="554" y="120" width="22" height="22"/>
+          <rect x="585" y="142" width="22" height="22"/><rect x="505" y="164" width="22" height="22"/>
+          <rect x="540" y="176" width="22" height="22"/><rect x="576" y="188" width="22" height="22"/>
+        </g>
+        <text x="560" y="275" text-anchor="middle" font-size="24" fill="#7c2d12">39 Flächeneinheiten</text>
+      </svg>`
+  },
+  {
+    title: 'Schritt 2: 10x in zwei Rechtecke 5x und 5x zerlegen',
+    equation: 'x² + 5x + 5x = 39',
+    text: 'Das Rechteck 10x wird in zwei gleich große Rechtecke zerlegt. Jedes hat die Maße 5 und x. Eines legen wir oben an das Quadrat, das andere rechts daneben. So entsteht fast ein großes Quadrat.',
+    note: 'Didaktischer Kern: Die Aufteilung 10 = 5 + 5 wird im Bild sichtbar.',
+    quiz: {
+      question: 'Warum wählen wir 5 und 5?',
+      placeholder: 'Schreibe den Grund auf ...',
+      answerCheck: (v) => /halb|hälfte|10.*2|5\s*?
+?.*5/i.test(v) || (/10/.test(v) && /2/.test(v)),
+      feedbackOk: 'Genau. Wir halbieren 10, damit zwei gleich große Rechtecke entstehen.',
+      feedbackBad: 'Tipp: Wir teilen die 10 in zwei gleiche Teile.'
+    },
+    svg: () => `
+      <svg viewBox="0 0 700 420" aria-label="Flächenmodell Schritt 2">
+        <rect x="80" y="110" width="180" height="180" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+        <text x="170" y="205" text-anchor="middle" font-size="28" fill="#1e3a8a">x²</text>
+        <rect x="80" y="70" width="180" height="40" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+        <text x="170" y="97" text-anchor="middle" font-size="22" fill="#115e59">5x</text>
+        <rect x="260" y="110" width="40" height="180" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+        <text x="280" y="205" text-anchor="middle" font-size="22" fill="#115e59" transform="rotate(90 280 205)">5x</text>
+
+        <text x="170" y="310" text-anchor="middle" font-size="20">x</text>
+        <text x="64" y="205" text-anchor="middle" font-size="20">x</text>
+        <text x="170" y="58" text-anchor="middle" font-size="20">x</text>
+        <text x="280" y="306" text-anchor="middle" font-size="20">5</text>
+        <text x="322" y="205" text-anchor="middle" font-size="20">x</text>
+        <text x="316" y="95" text-anchor="middle" font-size="20">5</text>
+
+        <rect x="260" y="70" width="40" height="40" fill="#fff7ed" stroke="#b45309" stroke-width="3" stroke-dasharray="6 4"/>
+        <text x="280" y="95" text-anchor="middle" font-size="18" fill="#b45309">?</text>
+        <text x="400" y="210" font-size="28">Fehlende Ecke</text>
+        <path d="M370 205 Q340 180 300 95" fill="none" stroke="#b45309" stroke-width="3" marker-end="url(#arrow)"/>
+        <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#b45309"/></marker></defs>
+      </svg>`
+  },
+  {
+    title: 'Schritt 3: Fehlende Ecke ergänzen',
+    equation: 'x² + 10x + 25 = 39 + 25',
+    text: 'Die fehlende Ecke ist ein Quadrat mit Seitenlänge 5. Deshalb hat sie den Flächeninhalt 25. Wir ergänzen diese Fläche links – und damit die Gleichung gleich bleibt, ergänzen wir rechts ebenfalls 25.',
+    note: 'Hier wird die Äquivalenzumformung anschaulich: Was links hinzugefügt wird, muss auch rechts hinzugefügt werden.',
+    quiz: {
+      question: 'Wie groß ist die ergänzte Ecke?',
+      placeholder: 'Schreibe die Zahl ...',
+      answerCheck: (v) => v.replace(/\s/g,'') === '25',
+      feedbackOk: 'Richtig. 5 · 5 = 25.',
+      feedbackBad: 'Die Seiten der Ecke sind 5 und 5. Multipliziere beide.'
+    },
+    svg: () => `
+      <svg viewBox="0 0 760 430" aria-label="Flächenmodell Schritt 3">
+        <rect x="70" y="80" width="180" height="180" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+        <rect x="70" y="40" width="180" height="40" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+        <rect x="250" y="80" width="40" height="180" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+        <rect x="250" y="40" width="40" height="40" fill="#ffedd5" stroke="#b45309" stroke-width="3"/>
+
+        <text x="160" y="175" text-anchor="middle" font-size="28" fill="#1e3a8a">x²</text>
+        <text x="160" y="67" text-anchor="middle" font-size="22" fill="#115e59">5x</text>
+        <text x="270" y="170" text-anchor="middle" font-size="22" fill="#115e59" transform="rotate(90 270 170)">5x</text>
+        <text x="270" y="66" text-anchor="middle" font-size="20" fill="#9a3412">25</text>
+
+        <text x="160" y="282" text-anchor="middle" font-size="20">x</text>
+        <text x="52" y="175" text-anchor="middle" font-size="20">x</text>
+        <text x="270" y="282" text-anchor="middle" font-size="20">5</text>
+        <text x="306" y="175" text-anchor="middle" font-size="20">x</text>
+        <text x="270" y="28" text-anchor="middle" font-size="20">5</text>
+        <text x="160" y="28" text-anchor="middle" font-size="20">x</text>
+
+        <text x="360" y="170" font-size="34">=</text>
+        <ellipse cx="510" cy="160" rx="85" ry="62" fill="#f8fafc" stroke="#64748b" stroke-width="3" stroke-dasharray="7 7"/>
+        <g fill="#ffffff" stroke="#64748b" stroke-width="2">
+          <rect x="470" y="120" width="22" height="22"/><rect x="503" y="112" width="22" height="22"/>
+          <rect x="535" y="130" width="22" height="22"/><rect x="455" y="154" width="22" height="22"/>
+          <rect x="490" y="169" width="22" height="22"/><rect x="525" y="185" width="22" height="22"/>
+        </g>
+        <text x="510" y="248" text-anchor="middle" font-size="22">39</text>
+
+        <text x="610" y="170" font-size="34">+</text>
+        <g transform="translate(655 108)">
+          <rect x="0" y="0" width="55" height="55" fill="#ffedd5" stroke="#b45309" stroke-width="3"/>
+          <text x="27.5" y="32" text-anchor="middle" font-size="22" fill="#9a3412">25</text>
+        </g>
+        <text x="680" y="248" text-anchor="middle" font-size="22">= 64</text>
+      </svg>`
+  },
+  {
+    title: 'Schritt 4: Zurück in Algebra übersetzen und lösen',
+    equation: '(x + 5)² = 64',
+    text: 'Nun sehen wir links ein vollständiges Quadrat mit Seitenlänge x + 5. Daher gilt (x + 5)² = 64. Beim Wurzelziehen erhalten wir x + 5 = ±8. Also sind algebraisch zwei Lösungen möglich: x = 3 und x = -13. Im Flächenmodell passt jedoch nur x = 3 als positive Seitenlänge.',
+    note: 'Genau hier lässt sich sehr gut über Chancen und Grenzen des Flächenmodells sprechen.',
+    quiz: {
+      question: 'Welche Lösung ist im Flächenmodell direkt sinnvoll?',
+      placeholder: 'x = ...',
+      answerCheck: (v) => /3/.test(v),
+      feedbackOk: 'Ja. Geometrisch ist x = 3 die passende positive Seitenlänge.',
+      feedbackBad: 'Tipp: Im Flächenmodell müssen Seitenlängen positiv sein.'
+    },
+    svg: () => `
+      <svg viewBox="0 0 760 430" aria-label="Flächenmodell Schritt 4">
+        <rect x="80" y="70" width="220" height="220" fill="#eff6ff" stroke="#2563eb" stroke-width="4"/>
+        <line x1="80" y1="110" x2="300" y2="110" stroke="#0f766e" stroke-width="3"/>
+        <line x1="260" y1="70" x2="260" y2="290" stroke="#0f766e" stroke-width="3"/>
+        <rect x="260" y="70" width="40" height="40" fill="#ffedd5" stroke="#b45309" stroke-width="3"/>
+        <text x="190" y="185" text-anchor="middle" font-size="28">(x + 5)²</text>
+        <text x="190" y="315" text-anchor="middle" font-size="22">x + 5</text>
+        <text x="48" y="185" text-anchor="middle" font-size="22">x + 5</text>
+
+        <text x="390" y="125" font-size="28">(x + 5)² = 64</text>
+        <text x="390" y="185" font-size="28">x + 5 = ±8</text>
+        <text x="390" y="245" font-size="28">x = 3  oder  x = -13</text>
+        <text x="390" y="315" font-size="24" fill="#166534">Geometrisch direkt sichtbar: x = 3</text>
+      </svg>`
+  }
+];
+
+let currentStep = 0;
+
+function renderStep(i){
+  const step = steps[i];
+  const stepContent = document.getElementById('stepContent');
+  stepContent.innerHTML = `
+    <div class="pill">${step.title}</div>
+    <div class="equation">${step.equation}</div>
+    <p>${step.text}</p>
+    <div class="math-note"><strong>Beobachtung am Flächenmodell:</strong> ${step.note}</div>
+    ${step.svg()}
+    <div class="legend">
+      <span><i class="dot" style="background:#dbeafe"></i> Quadrat x² / Gesamtquadrat</span>
+      <span><i class="dot" style="background:#ccfbf1"></i> Rechtecke 5x</span>
+      <span><i class="dot" style="background:#ffedd5"></i> Ergänzungsfläche 25</span>
+    </div>
+    <div class="card quiz" style="margin-top:16px;background:#fbfdff">
+      <h3>Mini-Aufgabe</h3>
+      <p>${step.quiz.question}</p>
+      <input type="text" id="quizInput" placeholder="${step.quiz.placeholder}" />
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="primary" id="checkBtn">Antwort prüfen</button>
+      </div>
+      <div id="quizFeedback" style="margin-top:12px"></div>
+    </div>
+  `;
+
+  document.querySelectorAll('[data-step]').forEach((btn, idx)=>{
+    btn.classList.toggle('active', idx === i);
+  });
+
+  document.getElementById('checkBtn').onclick = () => {
+    const value = document.getElementById('quizInput').value.trim();
+    const ok = step.quiz.answerCheck(value);
+    document.getElementById('quizFeedback').innerHTML = ok
+      ? `<div class="success">${step.quiz.feedbackOk}</div>`
+      : `<div class="teacher-note">${step.quiz.feedbackBad}</div>`;
+  };
+}
+
+document.querySelectorAll('[data-step]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentStep = Number(btn.dataset.step);
+    renderStep(currentStep);
+  });
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentStep = (currentStep - 1 + steps.length) % steps.length;
+  renderStep(currentStep);
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentStep = (currentStep + 1) % steps.length;
+  renderStep(currentStep);
+});
+
+renderStep(currentStep);
+</script>
+</body>
+</html>
