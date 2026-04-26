@@ -211,6 +211,11 @@ main {
   color: var(--primary-dark);
 }
 
+.seminar-sitzung .bruchmemory-summary {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
 .seminar-sitzung summary:hover {
   color: #184f2e;
 }
@@ -317,7 +322,9 @@ main {
 .variant-preview-link {
   display: inline-block;
   margin: 0.2rem 0 0.65rem;
-  font-weight: 600;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .variant-preview-frame {
