@@ -296,7 +296,8 @@ main {
   flex: 1;
 }
 
-#variantPreviewContainer {
+#variantPreviewContainer,
+#session2VariantPreviewContainer {
   scroll-margin-top: 7rem;
 }
 
