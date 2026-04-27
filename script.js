@@ -467,7 +467,22 @@ const hasReachableHtmlSource = async (source) => {
 
   try {
     const response = await fetch(source, { method: "GET", cache: "no-store" });
-    return response.ok;
+    if (!response.ok) {
+      return false;
+    }
+
+    const htmlContent = await response.text();
+    const normalizedContent = htmlContent.toLowerCase();
+    const placeholderMarkers = [
+      "keine ausführbare",
+      "keine ausfuehrbare",
+      "dient als platzhalter",
+      "placeholder for",
+      "no executable .html"
+    ];
+
+    const isPlaceholderSource = placeholderMarkers.some((marker) => normalizedContent.includes(marker));
+    return !isPlaceholderSource;
   } catch (error) {
     return false;
   }
@@ -491,13 +506,15 @@ const initializeVariantPreview = ({
   allowedSource,
   defaultVariantNumber = 1,
   filterUnavailableSources = false,
-  relabelVisibleVariants = false
+  relabelVisibleVariants = false,
+  emptyStateText = ""
 }) => {
   const picker = document.getElementById(pickerId);
   const previewContainer = document.getElementById(previewContainerId);
   const frame = document.getElementById(previewFrameId);
   const title = document.getElementById(previewTitleId);
   const externalLink = document.getElementById(previewLinkId);
+  const variantGrid = picker ? picker.querySelector(".variant-grid") : null;
   const hint = previewContainer ? previewContainer.querySelector(".variant-preview-hint") : null;
   const initialVariantButtons = picker
     ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
@@ -530,6 +547,21 @@ const initializeVariantPreview = ({
     }
 
     if (variantButtons.length === 0) {
+      picker.hidden = true;
+      title.hidden = true;
+      externalLink.hidden = true;
+      frame.hidden = true;
+
+      if (emptyStateText) {
+        if (variantGrid) {
+          variantGrid.innerHTML = "";
+        }
+
+        const emptyStateElement = document.createElement("p");
+        emptyStateElement.className = "variant-empty-state";
+        emptyStateElement.textContent = emptyStateText;
+        picker.appendChild(emptyStateElement);
+      }
       return;
     }
 
@@ -705,6 +737,7 @@ initializeVariantPreview({
   previewFrameId: "session2VariantPreviewFrame",
   filterUnavailableSources: true,
   relabelVisibleVariants: true,
+  emptyStateText: translations.de.semNoStudentVariants,
   defaultVariantNumber: 1
 });
 initializeMobileNavigation();
