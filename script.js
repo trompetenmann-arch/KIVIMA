@@ -406,41 +406,6 @@ const getVariantFileName = (source) => {
 const normalizedAllowedVariantFiles = BRUCHMEMORY_ALLOWED_FILES.map((fileName) => fileName.normalize("NFC"));
 const isAllowedVariantSource = (source) => normalizedAllowedVariantFiles.includes(getVariantFileName(source));
 
-const enforceBruchmemoryLinks = () => {
-  const variantButtons = Array.from(document.querySelectorAll("#variantPicker .variant-link[data-variant-src]"));
-  if (variantButtons.length === 0) {
-    return;
-  }
-
-  const parsedVariants = [];
-
-  variantButtons.forEach((button) => {
-    const source = button.dataset.variantSrc || "";
-    if (!isAllowedVariantSource(source)) {
-      button.remove();
-      return;
-    }
-
-    const variantMatch = (button.textContent || "").match(/(\d+)/);
-    const variantNumber = variantMatch ? Number.parseInt(variantMatch[1], 10) : NaN;
-
-    if (!Number.isFinite(variantNumber)) {
-      button.remove();
-      return;
-    }
-
-    parsedVariants.push({ button, variantNumber });
-  });
-
-  parsedVariants
-    .sort((a, b) => a.variantNumber - b.variantNumber)
-    .forEach(({ button }) => {
-      if (button.parentElement) {
-        button.parentElement.appendChild(button);
-      }
-    });
-};
-
 const getVariantNumber = (button) => {
   const explicitVariantNumber = Number.parseInt(button.dataset.variantNumber || "", 10);
   if (Number.isFinite(explicitVariantNumber)) {
@@ -460,34 +425,6 @@ const getVariantNumber = (button) => {
   return variantNumber;
 };
 
-const hasReachableHtmlSource = async (source) => {
-  if (!source || !source.toLowerCase().endsWith(".html")) {
-    return false;
-  }
-
-  try {
-    const response = await fetch(source, { method: "GET", cache: "no-store" });
-    if (!response.ok) {
-      return false;
-    }
-
-    const htmlContent = await response.text();
-    const normalizedContent = htmlContent.toLowerCase();
-    const placeholderMarkers = [
-      "keine ausführbare",
-      "keine ausfuehrbare",
-      "dient als platzhalter",
-      "placeholder for",
-      "no executable .html"
-    ];
-
-    const isPlaceholderSource = placeholderMarkers.some((marker) => normalizedContent.includes(marker));
-    return !isPlaceholderSource;
-  } catch (error) {
-    return false;
-  }
-};
-
 const relabelVariantButtons = (buttons) => {
   buttons.forEach((button, index) => {
     const variantNumber = index + 1;
@@ -495,6 +432,25 @@ const relabelVariantButtons = (buttons) => {
     button.dataset.i18n = `semVariant${variantNumber}`;
     button.textContent = `Variante ${variantNumber}`;
   });
+};
+
+const sanitizeVariantButtons = (buttons, allowedSource) => {
+  const validButtons = [];
+
+  buttons.forEach((button) => {
+    const source = (button.dataset.variantSrc || "").trim();
+    const isHtmlSource = /\.html?$/i.test(source);
+    const isAllowedSource = typeof allowedSource === "function" ? allowedSource(source) : true;
+
+    if (!source || !isHtmlSource || !isAllowedSource) {
+      button.closest(".variant-tile")?.remove();
+      return;
+    }
+
+    validButtons.push(button);
+  });
+
+  return validButtons.sort((a, b) => getVariantNumber(a) - getVariantNumber(b));
 };
 
 const initializeVariantPreview = ({
@@ -505,7 +461,6 @@ const initializeVariantPreview = ({
   previewFrameId,
   allowedSource,
   defaultVariantNumber = 1,
-  filterUnavailableSources = false,
   relabelVisibleVariants = false,
   emptyStateText = ""
 }) => {
@@ -524,27 +479,8 @@ const initializeVariantPreview = ({
     return;
   }
 
-  const setupPreview = async () => {
-    let variantButtons = [...initialVariantButtons];
-
-    if (filterUnavailableSources) {
-      const sourceChecks = await Promise.all(
-        variantButtons.map(async (button) => ({
-          button,
-          isAvailable: await hasReachableHtmlSource(button.dataset.variantSrc || "")
-        }))
-      );
-
-      variantButtons = sourceChecks
-        .filter(({ isAvailable }) => isAvailable)
-        .map(({ button }) => button);
-
-      sourceChecks
-        .filter(({ isAvailable }) => !isAvailable)
-        .forEach(({ button }) => {
-          button.closest(".variant-tile")?.remove();
-        });
-    }
+  const setupPreview = () => {
+    const variantButtons = sanitizeVariantButtons(initialVariantButtons, allowedSource);
 
     if (variantButtons.length === 0) {
       picker.hidden = true;
@@ -570,40 +506,38 @@ const initializeVariantPreview = ({
     }
 
     const fitVariantInFrame = () => {
-    const frameDocument = frame.contentDocument;
+      const frameDocument = frame.contentDocument;
+      if (!frameDocument) {
+        return;
+      }
 
-    if (!frameDocument) {
-      return;
-    }
+      const html = frameDocument.documentElement;
+      const body = frameDocument.body;
+      if (!html || !body) {
+        return;
+      }
 
-    const html = frameDocument.documentElement;
-    const body = frameDocument.body;
+      const frameRect = frame.getBoundingClientRect();
+      const availableWidth = Math.max(frameRect.width - 20, 320);
+      const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
+      const scale = Math.min(1, availableWidth / contentWidth);
 
-    if (!html || !body) {
-      return;
-    }
-
-    const frameRect = frame.getBoundingClientRect();
-    const availableWidth = Math.max(frameRect.width - 20, 320);
-    const contentWidth = Math.max(html.scrollWidth, body.scrollWidth, body.offsetWidth, 1);
-    const scale = Math.min(1, availableWidth / contentWidth);
-
-    html.style.overflowX = "auto";
-    html.style.overflowY = "auto";
-    html.style.height = "auto";
-    body.style.margin = "0 auto";
-    body.style.transformOrigin = "top center";
-    body.style.transform = `scale(${scale})`;
-    body.style.width = `${100 / scale}%`;
-    body.style.minHeight = "100%";
+      html.style.overflowX = "auto";
+      html.style.overflowY = "auto";
+      html.style.height = "auto";
+      body.style.margin = "0 auto";
+      body.style.transformOrigin = "top center";
+      body.style.transform = `scale(${scale})`;
+      body.style.width = `${100 / scale}%`;
+      body.style.minHeight = "100%";
     };
 
     const updatePreviewFrameHeight = () => {
-    const topOffset = frame.getBoundingClientRect().top;
-    const viewportHeight = window.innerHeight || 800;
-    const preferredHeight = viewportHeight - topOffset - 24;
-    const clampedHeight = Math.max(360, Math.min(900, preferredHeight));
-    frame.style.height = `${clampedHeight}px`;
+      const topOffset = frame.getBoundingClientRect().top;
+      const viewportHeight = window.innerHeight || 800;
+      const preferredHeight = viewportHeight - topOffset - 24;
+      const clampedHeight = Math.max(360, Math.min(900, preferredHeight));
+      frame.style.height = `${clampedHeight}px`;
     };
 
     frame.addEventListener("load", () => {
@@ -625,71 +559,59 @@ const initializeVariantPreview = ({
       hint.hidden = true;
     }
 
-    const loadVariantIntoFrame = async (source) => {
-    try {
-      const response = await fetch(source, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const htmlContent = await response.text();
-      const absoluteUrl = new URL(source, window.location.href).href;
-      frame.srcdoc = `<base href="${absoluteUrl}">${htmlContent}`;
-      frame.removeAttribute("src");
-    } catch (error) {
+    const loadVariantIntoFrame = (source) => {
       frame.removeAttribute("srcdoc");
       frame.src = source;
-    }
     };
 
-    const activateVariant = async (button, scrollPreview = true) => {
-    const source = button.dataset.variantSrc || "";
-    if (allowedSource && !allowedSource(source)) {
-      return;
-    }
+    const activateVariant = (button, scrollPreview = true) => {
+      const source = button.dataset.variantSrc || "";
+      if (allowedSource && !allowedSource(source)) {
+        return;
+      }
 
-    const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
-    await loadVariantIntoFrame(source);
-    externalLink.href = source;
-    const externalLinkLabel = externalLink.querySelector("span");
-    if (externalLinkLabel) {
-      externalLinkLabel.textContent = translations[currentLanguage].semVariantOpenNewTab;
-    } else {
-      externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
-    }
+      const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
+      loadVariantIntoFrame(source);
+      externalLink.href = source;
+      const externalLinkLabel = externalLink.querySelector("span");
+      if (externalLinkLabel) {
+        externalLinkLabel.textContent = translations[currentLanguage].semVariantOpenNewTab;
+      } else {
+        externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+      }
 
-    variantButtons.forEach((variantButton) => {
-      const isActive = variantButton === button;
-      variantButton.classList.toggle("is-active", isActive);
-      variantButton.setAttribute("aria-current", isActive ? "true" : "false");
-    });
+      variantButtons.forEach((variantButton) => {
+        const isActive = variantButton === button;
+        variantButton.classList.toggle("is-active", isActive);
+        variantButton.setAttribute("aria-current", isActive ? "true" : "false");
+      });
 
-    if (hint) {
-      hint.hidden = true;
-    }
-    externalLink.hidden = false;
-    sourceLink.hidden = false;
-    frame.hidden = false;
-    updatePreviewFrameHeight();
-    fitVariantInFrame();
+      if (hint) {
+        hint.hidden = true;
+      }
+      externalLink.hidden = false;
+      sourceLink.hidden = false;
+      frame.hidden = false;
+      updatePreviewFrameHeight();
+      fitVariantInFrame();
 
-    if (scrollPreview) {
-      frame.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+      if (scrollPreview) {
+        frame.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     };
 
     variantButtons.forEach((button) => {
-      button.addEventListener("click", async (event) => {
+      button.addEventListener("click", (event) => {
         event.preventDefault();
-        await activateVariant(button);
+        activateVariant(button);
       });
     });
 
     const defaultButton = variantButtons.find((button) => getVariantNumber(button) === defaultVariantNumber);
     if (defaultButton) {
-      await activateVariant(defaultButton, false);
+      activateVariant(defaultButton, false);
     } else if (variantButtons[0]) {
-      await activateVariant(variantButtons[0], false);
+      activateVariant(variantButtons[0], false);
     }
   };
 
@@ -723,7 +645,6 @@ const initializeStickyNavigation = () => {
   window.addEventListener("scroll", updateScrolledState, { passive: true });
 };
 
-enforceBruchmemoryLinks();
 initializeVariantPreview({
   pickerId: "variantPicker",
   previewContainerId: "variantPreviewContainer",
@@ -731,7 +652,8 @@ initializeVariantPreview({
   previewSourceLinkId: "variantPreviewSourceLink",
   previewFrameId: "variantPreviewFrame",
   allowedSource: isAllowedVariantSource,
-  defaultVariantNumber: 1
+  defaultVariantNumber: 1,
+  relabelVisibleVariants: true
 });
 initializeVariantPreview({
   pickerId: "session2VariantPicker",
@@ -739,7 +661,6 @@ initializeVariantPreview({
   previewLinkId: "session2VariantPreviewLink",
   previewSourceLinkId: "session2VariantPreviewSourceLink",
   previewFrameId: "session2VariantPreviewFrame",
-  filterUnavailableSources: true,
   relabelVisibleVariants: true,
   emptyStateText: translations.de.semNoStudentVariants,
   defaultVariantNumber: 1
