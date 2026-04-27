@@ -460,6 +460,28 @@ const getVariantNumber = (button) => {
   return variantNumber;
 };
 
+const hasReachableHtmlSource = async (source) => {
+  if (!source || !source.toLowerCase().endsWith(".html")) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(source, { method: "GET", cache: "no-store" });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+};
+
+const relabelVariantButtons = (buttons) => {
+  buttons.forEach((button, index) => {
+    const variantNumber = index + 1;
+    button.dataset.variantNumber = String(variantNumber);
+    button.dataset.i18n = `semVariant${variantNumber}`;
+    button.textContent = `Variante ${variantNumber}`;
+  });
+};
+
 const initializeVariantPreview = ({
   pickerId,
   previewContainerId,
@@ -467,7 +489,9 @@ const initializeVariantPreview = ({
   previewLinkId,
   previewFrameId,
   allowedSource,
-  defaultVariantNumber = 1
+  defaultVariantNumber = 1,
+  filterUnavailableSources = false,
+  relabelVisibleVariants = false
 }) => {
   const picker = document.getElementById(pickerId);
   const previewContainer = document.getElementById(previewContainerId);
@@ -475,15 +499,45 @@ const initializeVariantPreview = ({
   const title = document.getElementById(previewTitleId);
   const externalLink = document.getElementById(previewLinkId);
   const hint = previewContainer ? previewContainer.querySelector(".variant-preview-hint") : null;
-  const variantButtons = picker
+  const initialVariantButtons = picker
     ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
     : [];
 
-  if (!picker || !previewContainer || !frame || !title || !externalLink || variantButtons.length === 0) {
+  if (!picker || !previewContainer || !frame || !title || !externalLink || initialVariantButtons.length === 0) {
     return;
   }
 
-  const fitVariantInFrame = () => {
+  const setupPreview = async () => {
+    let variantButtons = [...initialVariantButtons];
+
+    if (filterUnavailableSources) {
+      const sourceChecks = await Promise.all(
+        variantButtons.map(async (button) => ({
+          button,
+          isAvailable: await hasReachableHtmlSource(button.dataset.variantSrc || "")
+        }))
+      );
+
+      variantButtons = sourceChecks
+        .filter(({ isAvailable }) => isAvailable)
+        .map(({ button }) => button);
+
+      sourceChecks
+        .filter(({ isAvailable }) => !isAvailable)
+        .forEach(({ button }) => {
+          button.closest(".variant-tile")?.remove();
+        });
+    }
+
+    if (variantButtons.length === 0) {
+      return;
+    }
+
+    if (relabelVisibleVariants) {
+      relabelVariantButtons(variantButtons);
+    }
+
+    const fitVariantInFrame = () => {
     const frameDocument = frame.contentDocument;
 
     if (!frameDocument) {
@@ -510,33 +564,36 @@ const initializeVariantPreview = ({
     body.style.transform = `scale(${scale})`;
     body.style.width = `${100 / scale}%`;
     body.style.minHeight = "100%";
-  };
+    };
 
-  const updatePreviewFrameHeight = () => {
+    const updatePreviewFrameHeight = () => {
     const topOffset = frame.getBoundingClientRect().top;
     const viewportHeight = window.innerHeight || 800;
     const preferredHeight = viewportHeight - topOffset - 24;
     const clampedHeight = Math.max(360, Math.min(900, preferredHeight));
     frame.style.height = `${clampedHeight}px`;
-  };
+    };
 
-  frame.addEventListener("load", () => {
-    updatePreviewFrameHeight();
-    fitVariantInFrame();
-    window.setTimeout(fitVariantInFrame, 250);
-    window.setTimeout(fitVariantInFrame, 700);
-  });
+    frame.addEventListener("load", () => {
+      updatePreviewFrameHeight();
+      fitVariantInFrame();
+      window.setTimeout(fitVariantInFrame, 250);
+      window.setTimeout(fitVariantInFrame, 700);
+    });
 
-  window.addEventListener("resize", () => {
-    updatePreviewFrameHeight();
-    fitVariantInFrame();
-  });
+    window.addEventListener("resize", () => {
+      updatePreviewFrameHeight();
+      fitVariantInFrame();
+    });
 
-  title.hidden = true;
-  externalLink.hidden = true;
-  frame.hidden = true;
+    title.hidden = true;
+    externalLink.hidden = true;
+    frame.hidden = true;
+    if (hint) {
+      hint.hidden = true;
+    }
 
-  const loadVariantIntoFrame = async (source) => {
+    const loadVariantIntoFrame = async (source) => {
     try {
       const response = await fetch(source, { cache: "no-store" });
       if (!response.ok) {
@@ -551,9 +608,9 @@ const initializeVariantPreview = ({
       frame.removeAttribute("srcdoc");
       frame.src = source;
     }
-  };
+    };
 
-  const activateVariant = async (button, scrollPreview = true) => {
+    const activateVariant = async (button, scrollPreview = true) => {
     const source = button.dataset.variantSrc || "";
     if (allowedSource && !allowedSource(source)) {
       return;
@@ -583,21 +640,24 @@ const initializeVariantPreview = ({
     if (scrollPreview) {
       frame.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+    };
+
+    variantButtons.forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await activateVariant(button);
+      });
+    });
+
+    const defaultButton = variantButtons.find((button) => getVariantNumber(button) === defaultVariantNumber);
+    if (defaultButton) {
+      await activateVariant(defaultButton, false);
+    } else if (variantButtons[0]) {
+      await activateVariant(variantButtons[0], false);
+    }
   };
 
-  variantButtons.forEach((button) => {
-    button.addEventListener("click", async (event) => {
-      event.preventDefault();
-      await activateVariant(button);
-    });
-  });
-
-  const defaultButton = variantButtons.find((button) => getVariantNumber(button) === defaultVariantNumber);
-  if (defaultButton) {
-    activateVariant(defaultButton, false);
-  } else if (variantButtons[0]) {
-    activateVariant(variantButtons[0], false);
-  }
+  setupPreview();
 };
 
 const initializeMobileNavigation = () => {
@@ -643,6 +703,8 @@ initializeVariantPreview({
   previewTitleId: "session2VariantPreviewTitle",
   previewLinkId: "session2VariantPreviewLink",
   previewFrameId: "session2VariantPreviewFrame",
+  filterUnavailableSources: true,
+  relabelVisibleVariants: true,
   defaultVariantNumber: 1
 });
 initializeMobileNavigation();
