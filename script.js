@@ -66,6 +66,8 @@ const translations = {
     semVariant8: "Variante 8",
     semVariant9: "Variante 9",
     semVariant10: "Variante 10",
+    semVariant11: "Variante 11",
+    semVariant12: "Variante 12",
     semSession1Summary: "Sitzung 1: Bruchmemory",
     semSession2Summary: "Sitzung 2: Quadratische Ergänzung",
     semSummaryHeading: "Zusammenfassung",
@@ -191,6 +193,8 @@ const translations = {
     semVariant8: "Variante 8",
     semVariant9: "Variante 9",
     semVariant10: "Variante 10",
+    semVariant11: "Variante 11",
+    semVariant12: "Variante 12",
     semSession1Summary: "Sesión 1: Bruchmemory",
     semSession2Summary: "Sesión 2: Completación del cuadrado",
     semSummaryHeading: "Resumen",
@@ -316,6 +320,8 @@ const translations = {
     semVariant8: "Variant 8",
     semVariant9: "Variant 9",
     semVariant10: "Variant 10",
+    semVariant11: "Variant 11",
+    semVariant12: "Variant 12",
     semSession1Summary: "Session 1: Bruchmemory",
     semSession2Summary: "Session 2: Completing the square",
     semSummaryHeading: "Summary",
@@ -401,7 +407,7 @@ const normalizedAllowedVariantFiles = BRUCHMEMORY_ALLOWED_FILES.map((fileName) =
 const isAllowedVariantSource = (source) => normalizedAllowedVariantFiles.includes(getVariantFileName(source));
 
 const enforceBruchmemoryLinks = () => {
-  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
+  const variantButtons = Array.from(document.querySelectorAll("#variantPicker .variant-link[data-variant-src]"));
   if (variantButtons.length === 0) {
     return;
   }
@@ -454,19 +460,25 @@ const getVariantNumber = (button) => {
   return variantNumber;
 };
 
-const getOrderedVariantButtons = () => {
-  const variantButtons = Array.from(document.querySelectorAll(".variant-link[data-variant-src]"));
-  return variantButtons.sort((a, b) => getVariantNumber(a) - getVariantNumber(b));
-};
+const initializeVariantPreview = ({
+  pickerId,
+  previewContainerId,
+  previewTitleId,
+  previewLinkId,
+  previewFrameId,
+  allowedSource
+}) => {
+  const picker = document.getElementById(pickerId);
+  const previewContainer = document.getElementById(previewContainerId);
+  const frame = document.getElementById(previewFrameId);
+  const title = document.getElementById(previewTitleId);
+  const externalLink = document.getElementById(previewLinkId);
+  const hint = previewContainer ? previewContainer.querySelector(".variant-preview-hint") : null;
+  const variantButtons = picker
+    ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
+    : [];
 
-const initializeVariantPreview = () => {
-  const frame = document.getElementById("variantPreviewFrame");
-  const title = document.getElementById("variantPreviewTitle");
-  const externalLink = document.getElementById("variantPreviewLink");
-  const hint = document.querySelector(".variant-preview-hint");
-  const variantButtons = getOrderedVariantButtons();
-
-  if (!frame || !title || !externalLink || !hint || variantButtons.length === 0) {
+  if (!picker || !previewContainer || !frame || !title || !externalLink || !hint || variantButtons.length === 0) {
     return;
   }
 
@@ -542,7 +554,7 @@ const initializeVariantPreview = () => {
 
   const activateVariant = async (button, scrollPreview = true) => {
     const source = button.dataset.variantSrc || "";
-    if (!isAllowedVariantSource(source)) {
+    if (allowedSource && !allowedSource(source)) {
       return;
     }
 
@@ -609,6 +621,20 @@ const initializeStickyNavigation = () => {
 };
 
 enforceBruchmemoryLinks();
-initializeVariantPreview();
+initializeVariantPreview({
+  pickerId: "variantPicker",
+  previewContainerId: "variantPreviewContainer",
+  previewTitleId: "variantPreviewTitle",
+  previewLinkId: "variantPreviewLink",
+  previewFrameId: "variantPreviewFrame",
+  allowedSource: isAllowedVariantSource
+});
+initializeVariantPreview({
+  pickerId: "session2VariantPicker",
+  previewContainerId: "session2VariantPreviewContainer",
+  previewTitleId: "session2VariantPreviewTitle",
+  previewLinkId: "session2VariantPreviewLink",
+  previewFrameId: "session2VariantPreviewFrame"
+});
 initializeMobileNavigation();
 initializeStickyNavigation();
