@@ -500,8 +500,8 @@ const relabelVariantButtons = (buttons) => {
 const initializeVariantPreview = ({
   pickerId,
   previewContainerId,
-  previewTitleId,
   previewLinkId,
+  previewSourceLinkId,
   previewFrameId,
   allowedSource,
   defaultVariantNumber = 1,
@@ -512,15 +512,15 @@ const initializeVariantPreview = ({
   const picker = document.getElementById(pickerId);
   const previewContainer = document.getElementById(previewContainerId);
   const frame = document.getElementById(previewFrameId);
-  const title = document.getElementById(previewTitleId);
   const externalLink = document.getElementById(previewLinkId);
+  const sourceLink = document.getElementById(previewSourceLinkId);
   const variantGrid = picker ? picker.querySelector(".variant-grid") : null;
   const hint = previewContainer ? previewContainer.querySelector(".variant-preview-hint") : null;
   const initialVariantButtons = picker
     ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
     : [];
 
-  if (!picker || !previewContainer || !frame || !title || !externalLink || initialVariantButtons.length === 0) {
+  if (!picker || !previewContainer || !frame || !externalLink || !sourceLink || initialVariantButtons.length === 0) {
     return;
   }
 
@@ -548,8 +548,8 @@ const initializeVariantPreview = ({
 
     if (variantButtons.length === 0) {
       picker.hidden = true;
-      title.hidden = true;
       externalLink.hidden = true;
+      sourceLink.hidden = true;
       frame.hidden = true;
 
       if (emptyStateText) {
@@ -618,8 +618,8 @@ const initializeVariantPreview = ({
       fitVariantInFrame();
     });
 
-    title.hidden = true;
     externalLink.hidden = true;
+    sourceLink.hidden = true;
     frame.hidden = true;
     if (hint) {
       hint.hidden = true;
@@ -650,9 +650,13 @@ const initializeVariantPreview = ({
 
     const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
     await loadVariantIntoFrame(source);
-    title.textContent = button.textContent || "";
     externalLink.href = source;
-    externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+    const externalLinkLabel = externalLink.querySelector("span");
+    if (externalLinkLabel) {
+      externalLinkLabel.textContent = translations[currentLanguage].semVariantOpenNewTab;
+    } else {
+      externalLink.textContent = translations[currentLanguage].semVariantOpenNewTab;
+    }
 
     variantButtons.forEach((variantButton) => {
       const isActive = variantButton === button;
@@ -663,8 +667,8 @@ const initializeVariantPreview = ({
     if (hint) {
       hint.hidden = true;
     }
-    title.hidden = false;
     externalLink.hidden = false;
+    sourceLink.hidden = false;
     frame.hidden = false;
     updatePreviewFrameHeight();
     fitVariantInFrame();
@@ -723,8 +727,8 @@ enforceBruchmemoryLinks();
 initializeVariantPreview({
   pickerId: "variantPicker",
   previewContainerId: "variantPreviewContainer",
-  previewTitleId: "variantPreviewTitle",
   previewLinkId: "variantPreviewLink",
+  previewSourceLinkId: "variantPreviewSourceLink",
   previewFrameId: "variantPreviewFrame",
   allowedSource: isAllowedVariantSource,
   defaultVariantNumber: 1
@@ -732,8 +736,8 @@ initializeVariantPreview({
 initializeVariantPreview({
   pickerId: "session2VariantPicker",
   previewContainerId: "session2VariantPreviewContainer",
-  previewTitleId: "session2VariantPreviewTitle",
   previewLinkId: "session2VariantPreviewLink",
+  previewSourceLinkId: "session2VariantPreviewSourceLink",
   previewFrameId: "session2VariantPreviewFrame",
   filterUnavailableSources: true,
   relabelVisibleVariants: true,

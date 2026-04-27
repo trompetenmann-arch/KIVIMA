@@ -264,7 +264,7 @@ main {
   min-height: 3rem;
   color: #1f6b3b;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   cursor: pointer;
@@ -286,22 +286,6 @@ main {
   box-shadow: 0 10px 24px rgba(13, 49, 29, 0.28);
   background: #1f6b3b;
   color: #ffffff;
-}
-
-.variant-link.is-active::before {
-  content: "✓";
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
-  margin-right: 0.45rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .variant-tile {
@@ -346,21 +330,10 @@ main {
   color: #365844;
 }
 
-.variant-preview-title {
-  margin: 0;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.variant-preview-title::before {
-  content: "Aktuell ausgewählt: ";
-  font-weight: 600;
-}
-
 .variant-preview-link {
   display: inline-flex;
-  margin: 0;
-  color: #ffffff;
+  margin: 0 0 0.4rem;
+  color: #1f6b3b;
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -378,13 +351,53 @@ main {
 .variant-preview-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.8rem;
   margin: 0.2rem 0 0.65rem;
   padding: 0.7rem 0.9rem;
   border-radius: 0.7rem 0.7rem 0 0;
   background: #1f6b3b;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.variant-toolbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.toolbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.toolbar-link:hover,
+.toolbar-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.toolbar-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .source-preview {
@@ -582,8 +595,11 @@ footer .inner {
   }
 
   .variant-preview-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  .variant-toolbar-right {
+    gap: 0.5rem;
   }
 
   .seminar-layout {
