@@ -371,10 +371,15 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
   color: #ffffff;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 400;
+  cursor: pointer;
 }
 
 .toolbar-link:hover,
