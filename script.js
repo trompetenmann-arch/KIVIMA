@@ -46,9 +46,9 @@ const translations = {
     matFooter: "KIVIMA – Materialien aus dem Seminar und dem teutolab mathematik.",
 
     semHeroTitle: "Ablauf des Seminars",
-    semHeroText: "Das Seminar ist in drei aufeinander bezogene Phasen gegliedert.",
-    semPhase1Title: "1) Entwicklungsphase",
-    semPhase1Text: "Einführung in KI-Werkzeuge (z. B. BIKI), Entwicklung von Visualisierungsideen und technischer Aufbau erster Prototypen.",
+    semHeroText: "Hier werden die zentralen Ergebnisse des Seminars gesammelt und fortlaufend dokumentiert.",
+    semPhase1Title: "Ablauf des Seminars",
+    semPhase1Text: "Hier werden die zentralen Ergebnisse des Seminars gesammelt und fortlaufend dokumentiert.",
     semSessionsTitle: "Sitzungen",
     semVariantsTitle: "Erste Seminarsitzung - Bruchmemory",
     semVariantsIntro: "Ausgehend von einem Initialprompt entstand zunächst eine erste Version eines Bruchmemory. Im Seminar wurde anschließend Verbesserungspotential gesammelt und als Grundlage für neue Varianten genutzt.",
@@ -170,9 +170,9 @@ const translations = {
     matFooter: "KIVIMA – Materiales del seminario y de teutolab mathematik.",
 
     semHeroTitle: "Estructura del seminario",
-    semHeroText: "El seminario se organiza en tres fases relacionadas entre sí.",
-    semPhase1Title: "1) Fase de desarrollo",
-    semPhase1Text: "Introducción a herramientas de IA (p. ej., BIKI), desarrollo de ideas de visualización y construcción técnica de primeros prototipos.",
+    semHeroText: "Aquí se recopilan y documentan continuamente los resultados centrales del seminario.",
+    semPhase1Title: "Desarrollo del seminario",
+    semPhase1Text: "Aquí se recopilan y documentan continuamente los resultados centrales del seminario.",
     semSessionsTitle: "Sesiones",
     semVariantsTitle: "Variantes del Bruchmemory",
     semVariantsIntro: "A partir de un prompt inicial se creó primero un Bruchmemory. En el seminario se recopiló después el potencial de mejora y, sobre esa base, se elaboraron nuevas variantes.",
@@ -295,9 +295,9 @@ const translations = {
     matFooter: "KIVIMA – Materials from the seminar and teutolab mathematik.",
 
     semHeroTitle: "Seminar structure",
-    semHeroText: "The seminar is divided into three interrelated phases.",
-    semPhase1Title: "1) Development phase",
-    semPhase1Text: "Introduction to AI tools (e.g., BIKI), development of visualization ideas, and technical construction of initial prototypes.",
+    semHeroText: "This page documents and continuously updates the seminar’s central outcomes.",
+    semPhase1Title: "Seminar process",
+    semPhase1Text: "This page documents and continuously updates the seminar’s central outcomes.",
     semSessionsTitle: "Sessions",
     semVariantsTitle: "Bruchmemory variants",
     semVariantsIntro: "Starting from an initial prompt, a first Bruchmemory was created. In the seminar, improvement potential was then compiled and used as the basis for developing new versions.",
@@ -594,6 +594,21 @@ const initializeMobileNavigation = () => {
   });
 };
 
+const initializeStickyNavigation = () => {
+  const nav = document.querySelector(".nav");
+  if (!nav) {
+    return;
+  }
+
+  const updateScrolledState = () => {
+    nav.classList.toggle("is-scrolled", window.scrollY > 18);
+  };
+
+  updateScrolledState();
+  window.addEventListener("scroll", updateScrolledState, { passive: true });
+};
+
 enforceBruchmemoryLinks();
 initializeVariantPreview();
 initializeMobileNavigation();
+initializeStickyNavigation();
