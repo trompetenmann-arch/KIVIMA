@@ -123,8 +123,23 @@
               <section id="variantPreviewContainer" class="variant-preview" aria-live="polite">
                 <p class="variant-preview-hint" data-i18n="semVariantPreviewHint">Wähle oben eine Variante aus, um sie direkt darunter zu laden.</p>
                 <div class="variant-preview-toolbar">
-                  <h4 id="variantPreviewTitle" class="variant-preview-title" hidden></h4>
-                  <a id="variantPreviewLink" class="variant-preview-link" href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="semVariantOpenNewTab">In neuem Tab öffnen</a>
+                  <div class="variant-toolbar-right">
+                    <a id="variantPreviewLink" class="toolbar-link" href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="semVariantOpenNewTab">
+                      <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M14 5h5v5M19 5l-7 7"></path>
+                        <path d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"></path>
+                      </svg>
+                      <span data-i18n="semVariantOpenNewTab">In neuem Tab öffnen</span>
+                    </a>
+                    <span class="toolbar-separator" aria-hidden="true"></span>
+                    <a id="variantPreviewSourceLink" class="toolbar-link" href="Seminar/Bruchmemory/Bruchmemory_Prototyp.html" hidden>
+                      <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M3 12a9 9 0 1 0 2.64-6.36"></path>
+                        <path d="M3 4v6h6"></path>
+                      </svg>
+                      <span>Zur Ausgangsdatei</span>
+                    </a>
+                  </div>
                 </div>
                 <iframe id="variantPreviewFrame" class="variant-preview-frame" title="Bruchmemory Variante" loading="lazy" hidden></iframe>
               </section>
@@ -204,8 +219,23 @@
               </section>
               <section id="session2VariantPreviewContainer" class="variant-preview" aria-live="polite">
                 <div class="variant-preview-toolbar">
-                  <h4 id="session2VariantPreviewTitle" class="variant-preview-title" hidden></h4>
-                  <a id="session2VariantPreviewLink" class="variant-preview-link" href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="semVariantOpenNewTab">In neuem Tab öffnen</a>
+                  <div class="variant-toolbar-right">
+                    <a id="session2VariantPreviewLink" class="toolbar-link" href="#" target="_blank" rel="noopener noreferrer" hidden data-i18n="semVariantOpenNewTab">
+                      <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M14 5h5v5M19 5l-7 7"></path>
+                        <path d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"></path>
+                      </svg>
+                      <span data-i18n="semVariantOpenNewTab">In neuem Tab öffnen</span>
+                    </a>
+                    <span class="toolbar-separator" aria-hidden="true"></span>
+                    <a id="session2VariantPreviewSourceLink" class="toolbar-link" href="Seminar/Sitzung 2/quadratische_Ergänzung.html" hidden>
+                      <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M3 12a9 9 0 1 0 2.64-6.36"></path>
+                        <path d="M3 4v6h6"></path>
+                      </svg>
+                      <span>Zur Ausgangsdatei</span>
+                    </a>
+                  </div>
                 </div>
                 <iframe id="session2VariantPreviewFrame" class="variant-preview-frame" title="Quadratische Ergänzung Variante" loading="lazy" hidden></iframe>
               </section>
