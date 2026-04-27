@@ -466,7 +466,8 @@ const initializeVariantPreview = ({
   previewTitleId,
   previewLinkId,
   previewFrameId,
-  allowedSource
+  allowedSource,
+  defaultVariantNumber = 1
 }) => {
   const picker = document.getElementById(pickerId);
   const previewContainer = document.getElementById(previewContainerId);
@@ -478,7 +479,7 @@ const initializeVariantPreview = ({
     ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
     : [];
 
-  if (!picker || !previewContainer || !frame || !title || !externalLink || !hint || variantButtons.length === 0) {
+  if (!picker || !previewContainer || !frame || !title || !externalLink || variantButtons.length === 0) {
     return;
   }
 
@@ -570,7 +571,9 @@ const initializeVariantPreview = ({
       variantButton.setAttribute("aria-current", isActive ? "true" : "false");
     });
 
-    hint.hidden = true;
+    if (hint) {
+      hint.hidden = true;
+    }
     title.hidden = false;
     externalLink.hidden = false;
     frame.hidden = false;
@@ -583,12 +586,16 @@ const initializeVariantPreview = ({
   };
 
   variantButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
       await activateVariant(button);
     });
   });
 
-  if (variantButtons[0]) {
+  const defaultButton = variantButtons.find((button) => getVariantNumber(button) === defaultVariantNumber);
+  if (defaultButton) {
+    activateVariant(defaultButton, false);
+  } else if (variantButtons[0]) {
     activateVariant(variantButtons[0], false);
   }
 };
@@ -627,14 +634,16 @@ initializeVariantPreview({
   previewTitleId: "variantPreviewTitle",
   previewLinkId: "variantPreviewLink",
   previewFrameId: "variantPreviewFrame",
-  allowedSource: isAllowedVariantSource
+  allowedSource: isAllowedVariantSource,
+  defaultVariantNumber: 1
 });
 initializeVariantPreview({
   pickerId: "session2VariantPicker",
   previewContainerId: "session2VariantPreviewContainer",
   previewTitleId: "session2VariantPreviewTitle",
   previewLinkId: "session2VariantPreviewLink",
-  previewFrameId: "session2VariantPreviewFrame"
+  previewFrameId: "session2VariantPreviewFrame",
+  defaultVariantNumber: 1
 });
 initializeMobileNavigation();
 initializeStickyNavigation();
