@@ -581,33 +581,19 @@ const initializeVariantPreview = () => {
   }
 };
 
-const setLanguage = (lang) => {
-  const selectedLanguage = translations[lang] ? lang : "de";
-  document.documentElement.lang = selectedLanguage;
-  localStorage.setItem("kivima-language", selectedLanguage);
-
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    const key = element.dataset.i18n;
-    if (translations[selectedLanguage][key]) {
-      element.innerHTML = translations[selectedLanguage][key];
-    }
-  });
-
-  document.querySelectorAll(".lang-btn").forEach((button) => {
-    button.classList.toggle("active", button.dataset.lang === selectedLanguage);
-  });
-
-  const previewLink = document.getElementById("variantPreviewLink");
-  if (previewLink && previewLink.href) {
-    previewLink.textContent = translations[selectedLanguage].semVariantOpenNewTab;
+const initializeMobileNavigation = () => {
+  const navRight = document.querySelector(".nav-right");
+  const navToggle = document.querySelector(".nav-toggle");
+  if (!navRight || !navToggle) {
+    return;
   }
+
+  navToggle.addEventListener("click", () => {
+    const isOpen = navRight.classList.toggle("is-open");
+    navToggle.setAttribute("aria-expanded", String(isOpen));
+  });
 };
 
-document.querySelectorAll(".lang-btn").forEach((button) => {
-  button.addEventListener("click", () => setLanguage(button.dataset.lang));
-});
-
-const storedLanguage = localStorage.getItem("kivima-language") || "de";
 enforceBruchmemoryLinks();
 initializeVariantPreview();
-setLanguage(storedLanguage);
+initializeMobileNavigation();

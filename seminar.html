@@ -15,16 +15,14 @@
         <span>KIVIMA • teutolab mathematik</span>
       </div>
       <div class="nav-right">
-        <div class="language-switch" aria-label="Sprachauswahl">
-          <button type="button" class="lang-btn" data-lang="de" aria-label="Deutsch" title="Deutsch">🇩🇪</button>
-          <button type="button" class="lang-btn" data-lang="es" aria-label="Español" title="Español">🇪🇸</button>
-          <button type="button" class="lang-btn" data-lang="en" aria-label="English" title="English">🇬🇧</button>
-        </div>
-        <nav>
-          <ul>
+        <button class="nav-toggle" type="button" aria-expanded="false">
+          Menü
+        </button>
+        <nav aria-label="Hauptnavigation">
+          <ul class="nav-list">
             <li><a href="index.html" data-i18n="navStart">Start</a></li>
-            <li><a href="materialien.html" data-i18n="navMaterialien">Materialien</a></li>
             <li><a href="seminar.html" aria-current="page" data-i18n="navSeminar">Seminar</a></li>
+            <li><a href="materialien.html" data-i18n="navMaterialien">Material</a></li>
             <li><a href="mitmachen.html" data-i18n="navMitmachen">Mitmachen</a></li>
           </ul>
         </nav>
@@ -38,8 +36,8 @@
 
   <main>
     <div class="seminar-layout">
-      <article class="card">
-        <h3 data-i18n="semPhase1Title">1) Entwicklungsphase</h3>
+      <article class="seminar-plan">
+        <h3 data-i18n="semPhase1Title">Seminarplan</h3>
         <p data-i18n="semPhase1Text">
           Einführung in KI-Werkzeuge (z. B. BIKI), Entwicklung von Visualisierungsideen und
           technischer Aufbau erster Prototypen.
@@ -197,20 +195,6 @@
             </details>
           </section>
         </section>
-      </article>
-      <article class="card">
-        <h3 data-i18n="semPhase2Title">2) Erprobung im teutolab mathematik</h3>
-        <p data-i18n="semPhase2Text">
-          Durchführung von Stationen mit Schüler*innen der Klassen 9/10,
-          Beobachtung und direkte Reflexion in den Studierendenteams.
-        </p>
-      </article>
-      <article class="card">
-        <h3 data-i18n="semPhase3Title">3) Nachbereitung & OER</h3>
-        <p data-i18n="semPhase3Text">
-          Überarbeitung der Materialien inklusive didaktischer Kommentare und Veröffentlichung
-          ausgewählter Ergebnisse als offen zugängliche Ressourcen.
-        </p>
       </article>
     </div>
   </main>
