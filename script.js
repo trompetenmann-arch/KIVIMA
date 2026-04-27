@@ -56,6 +56,7 @@ const translations = {
     semVariantMenuLabel: "Variante auswählen",
     semVariantPreviewHint: "Wähle oben eine Variante aus, um sie hier direkt zu öffnen.",
     semVariantOpenNewTab: "In neuem Tab öffnen",
+    semVariantReset: "Zurücksetzen",
     semVariant1: "Variante 1",
     semVariant2: "Variante 2",
     semVariant3: "Variante 3",
@@ -183,6 +184,7 @@ const translations = {
     semVariantMenuLabel: "Elegir variante",
     semVariantPreviewHint: "Elige arriba una variante para verla aquí integrada.",
     semVariantOpenNewTab: "Abrir en una pestaña nueva",
+    semVariantReset: "Restablecer",
     semVariant1: "Variante 1",
     semVariant2: "Variante 2",
     semVariant3: "Variante 3",
@@ -310,6 +312,7 @@ const translations = {
     semVariantMenuLabel: "Choose a variant",
     semVariantPreviewHint: "Choose a variant above to load it directly below.",
     semVariantOpenNewTab: "Open in a new tab",
+    semVariantReset: "Reset",
     semVariant1: "Variant 1",
     semVariant2: "Variant 2",
     semVariant3: "Variant 3",
@@ -468,14 +471,14 @@ const initializeVariantPreview = ({
   const previewContainer = document.getElementById(previewContainerId);
   const frame = document.getElementById(previewFrameId);
   const externalLink = document.getElementById(previewLinkId);
-  const sourceLink = document.getElementById(previewSourceLinkId);
+  const resetButton = document.getElementById(previewSourceLinkId);
   const variantGrid = picker ? picker.querySelector(".variant-grid") : null;
   const hint = previewContainer ? previewContainer.querySelector(".variant-preview-hint") : null;
   const initialVariantButtons = picker
     ? Array.from(picker.querySelectorAll(".variant-link[data-variant-src]")).sort((a, b) => getVariantNumber(a) - getVariantNumber(b))
     : [];
 
-  if (!picker || !previewContainer || !frame || !externalLink || !sourceLink || initialVariantButtons.length === 0) {
+  if (!picker || !previewContainer || !frame || !externalLink || !resetButton || initialVariantButtons.length === 0) {
     return;
   }
 
@@ -485,7 +488,7 @@ const initializeVariantPreview = ({
     if (variantButtons.length === 0) {
       picker.hidden = true;
       externalLink.hidden = true;
-      sourceLink.hidden = true;
+      resetButton.hidden = true;
       frame.hidden = true;
 
       if (emptyStateText) {
@@ -553,7 +556,7 @@ const initializeVariantPreview = ({
     });
 
     externalLink.hidden = true;
-    sourceLink.hidden = true;
+    resetButton.hidden = true;
     frame.hidden = true;
     if (hint) {
       hint.hidden = true;
@@ -590,7 +593,7 @@ const initializeVariantPreview = ({
         hint.hidden = true;
       }
       externalLink.hidden = false;
-      sourceLink.hidden = false;
+      resetButton.hidden = false;
       frame.hidden = false;
       updatePreviewFrameHeight();
       fitVariantInFrame();
@@ -605,6 +608,16 @@ const initializeVariantPreview = ({
         event.preventDefault();
         activateVariant(button);
       });
+    });
+
+    resetButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      const activeSource = frame.getAttribute("src");
+      if (!activeSource) {
+        return;
+      }
+
+      loadVariantIntoFrame(activeSource);
     });
 
     const defaultButton = variantButtons.find((button) => getVariantNumber(button) === defaultVariantNumber);
