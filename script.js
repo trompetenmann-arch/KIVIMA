@@ -658,6 +658,34 @@ const initializeStickyNavigation = () => {
   window.addEventListener("scroll", updateScrolledState, { passive: true });
 };
 
+const initializeSourcePreview = ({
+  frameId,
+  openLinkId,
+  resetButtonId
+}) => {
+  const frame = document.getElementById(frameId);
+  const openLink = document.getElementById(openLinkId);
+  const resetButton = document.getElementById(resetButtonId);
+
+  if (!frame || !openLink || !resetButton) {
+    return;
+  }
+
+  const initialSource = frame.getAttribute("src");
+  if (!initialSource) {
+    return;
+  }
+
+  openLink.href = initialSource;
+
+  resetButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    const currentSource = frame.getAttribute("src") || initialSource;
+    frame.removeAttribute("srcdoc");
+    frame.src = currentSource;
+  });
+};
+
 initializeVariantPreview({
   pickerId: "variantPicker",
   previewContainerId: "variantPreviewContainer",
@@ -677,6 +705,16 @@ initializeVariantPreview({
   relabelVisibleVariants: true,
   emptyStateText: translations.de.semNoStudentVariants,
   defaultVariantNumber: 1
+});
+initializeSourcePreview({
+  frameId: "session1SourcePreviewFrame",
+  openLinkId: "session1SourcePreviewLink",
+  resetButtonId: "session1SourcePreviewReset"
+});
+initializeSourcePreview({
+  frameId: "session2SourcePreviewFrame",
+  openLinkId: "session2SourcePreviewLink",
+  resetButtonId: "session2SourcePreviewReset"
 });
 initializeMobileNavigation();
 initializeStickyNavigation();

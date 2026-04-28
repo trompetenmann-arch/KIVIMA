@@ -410,8 +410,8 @@ main {
 }
 
 .source-preview-frame {
-  margin-top: 0.2rem;
-  border-radius: 0.6rem;
+  margin-top: 0;
+  border-radius: 0 0 0.7rem 0.7rem;
 }
 
 .process-highlight {
