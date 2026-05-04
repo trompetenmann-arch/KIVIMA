@@ -442,10 +442,12 @@ const sanitizeVariantButtons = (buttons, allowedSource) => {
 
   buttons.forEach((button) => {
     const source = (button.dataset.variantSrc || "").trim();
-    const isHtmlSource = /\.html?$/i.test(source);
+    const isRemoteSource = /^https?:\/\//i.test(source);
+    const isHtmlSource = /\.html?(?:[#?].*)?$/i.test(source);
+    const isValidSource = isRemoteSource || isHtmlSource;
     const isAllowedSource = typeof allowedSource === "function" ? allowedSource(source) : true;
 
-    if (!source || !isHtmlSource || !isAllowedSource) {
+    if (!source || !isValidSource || !isAllowedSource) {
       button.closest(".variant-tile")?.remove();
       return;
     }
@@ -574,7 +576,7 @@ const initializeVariantPreview = ({
       }
 
       const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
-      loadVariantIntoFrame(source);
+      const isRemoteSource = /^https?:\/\//i.test(source);
       externalLink.href = source;
       const externalLinkLabel = externalLink.querySelector("span");
       if (externalLinkLabel) {
@@ -590,16 +592,25 @@ const initializeVariantPreview = ({
       });
 
       if (hint) {
-        hint.hidden = true;
+        if (isRemoteSource) {
+          hint.hidden = false;
+          hint.textContent = "Diese externe Canva-Variante blockiert die Darstellung im iframe. Bitte über 'In neuem Tab öffnen' ansehen.";
+        } else {
+          hint.hidden = true;
+        }
       }
       externalLink.hidden = false;
-      resetButton.hidden = false;
-      frame.hidden = false;
-      updatePreviewFrameHeight();
-      fitVariantInFrame();
+      resetButton.hidden = isRemoteSource;
+      frame.hidden = isRemoteSource;
+
+      if (!isRemoteSource) {
+        loadVariantIntoFrame(source);
+        updatePreviewFrameHeight();
+        fitVariantInFrame();
+      }
 
       if (scrollPreview) {
-        frame.scrollIntoView({ behavior: "smooth", block: "start" });
+        (isRemoteSource ? externalLink : frame).scrollIntoView({ behavior: "smooth", block: "start" });
       }
     };
 
@@ -715,6 +726,16 @@ initializeSourcePreview({
   frameId: "session2SourcePreviewFrame",
   openLinkId: "session2SourcePreviewLink",
   resetButtonId: "session2SourcePreviewReset"
+});
+initializeVariantPreview({
+  pickerId: "session3VariantPicker",
+  previewContainerId: "session3VariantPreviewContainer",
+  previewLinkId: "session3VariantPreviewLink",
+  previewSourceLinkId: "session3VariantPreviewSourceLink",
+  previewFrameId: "session3VariantPreviewFrame",
+  relabelVisibleVariants: true,
+  emptyStateText: translations.de.semNoStudentVariants,
+  defaultVariantNumber: 1
 });
 initializeSourcePreview({
   frameId: "session3SourcePreviewFrame",
