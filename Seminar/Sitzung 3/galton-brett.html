@@ -1,54 +1,1118 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Galton-Brett Simulation</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif}
-    .panel{max-width:1100px;margin:0 auto;padding:16px}
-    .card{background:#1e293b;border:1px solid #334155;border-radius:12px}
-    canvas{display:block;width:100%}
-    button{background:#e11d48;color:white;border:0;border-radius:8px;padding:8px 12px;font-weight:700}
+    html, body { height: 100%; margin: 0; }
+    * { box-sizing: border-box; }
+
+    :root {
+      --wood-dark: #5C3A1E;
+      --wood-mid: #8B5E3C;
+      --wood-light: #C4956A;
+      --wood-highlight: #D4A76A;
+      --bg-main: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --text-main: #eaeaea;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    .wood-frame {
+      background: linear-gradient(135deg, var(--wood-mid), var(--wood-dark));
+      border: 4px solid var(--wood-highlight);
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4);
+      border-radius: 12px;
+      position: relative;
+    }
+
+    .wood-frame::before {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border: 2px solid rgba(196,149,106,0.3);
+      border-radius: 10px;
+      pointer-events: none;
+    }
+
+    .wood-side-left, .wood-side-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 18px;
+      z-index: 5;
+    }
+
+    .wood-side-left {
+      left: 0;
+      background: linear-gradient(90deg, var(--wood-dark), var(--wood-mid), rgba(139,94,60,0.3));
+      border-radius: 12px 0 0 12px;
+    }
+
+    .wood-side-right {
+      right: 0;
+      background: linear-gradient(270deg, var(--wood-dark), var(--wood-mid), rgba(139,94,60,0.3));
+      border-radius: 0 12px 12px 0;
+    }
+
+    .wood-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 18px;
+      background: linear-gradient(0deg, var(--wood-dark), var(--wood-mid));
+      border-radius: 0 0 12px 12px;
+      z-index: 5;
+    }
+
+    .ball {
+      position: absolute;
+      border-radius: 50%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--accent2);
+      color: white;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .btn-secondary:hover { background: #1a4a80; }
+
+    .tab-active { background: var(--accent); color: white; }
+    .tab-inactive { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .speed-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+
+    .speed-btn:hover { background: rgba(255,255,255,0.2); }
+
+    input[type="number"] {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: 'Nunito', sans-serif;
+      width: 70px;
+      text-align: center;
+    }
+
+    input[type="number"]:focus { outline: 2px solid var(--accent); }
+
+    .formula {
+      font-family: 'Source Serif 4', serif;
+      font-size: 1rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in { animation: fadeIn 0.4s ease-out; }
+
+    .quiz-option {
+      width: 100%;
+      text-align: left;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 14px;
+      transition: all 0.2s;
+      color: var(--text-main);
+    }
+
+    .quiz-option:hover:not(:disabled) {
+      background: rgba(233,69,96,0.15);
+      border-color: rgba(233,69,96,0.4);
+    }
+
+    .quiz-option:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
   </style>
 </head>
-<body>
-  <div class="panel">
-    <h1 class="text-3xl font-bold text-rose-400 text-center">Galton-Brett</h1>
-    <p class="text-center text-slate-300 mb-4">Die Binomialverteilung entdecken</p>
-    <div class="card p-3 mb-3 flex gap-2 flex-wrap items-center">
-      <button onclick="drop(1)">1 Kugel</button>
-      <button onclick="drop(10)">10 Kugeln</button>
-      <button onclick="drop(50)">50 Kugeln</button>
-      <button onclick="resetBoard()" style="background:#0ea5e9">Zurücksetzen</button>
-      <span id="total" class="ml-auto text-sm">Gesamt: 0</span>
+
+<body class="h-full overflow-auto">
+  <div id="app" class="w-full min-h-full" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);">
+
+    <header class="text-center pt-6 pb-3 px-4">
+      <h1 id="main-title" class="text-3xl font-extrabold tracking-tight" style="color: var(--accent);">Galton-Brett</h1>
+      <p id="subtitle" class="text-base mt-1 opacity-70">Die Binomialverteilung entdecken</p>
+    </header>
+
+    <div class="flex justify-center gap-2 px-4 mb-4">
+      <button id="tab1" class="tab-active rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all" onclick="setLevel(1)">
+        🎯 Stufe 1 – Entdecken
+      </button>
+      <button id="tab2" class="tab-inactive rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all" onclick="setLevel(2)">
+        📐 Stufe 2 – Vertiefen
+      </button>
     </div>
-    <div class="card p-2"><canvas id="board" height="420"></canvas></div>
-    <div class="card p-2 mt-3"><canvas id="hist" height="180"></canvas></div>
+
+    <div class="max-w-7xl mx-auto px-4 pb-8">
+      <div class="flex flex-col lg:flex-row gap-5">
+
+        <div class="flex-1">
+          <div class="card mb-4 flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold opacity-60 uppercase tracking-wide">Kugeln:</span>
+              <button class="btn-secondary text-xs px-3 py-1" onclick="startDrop(1)">1</button>
+              <button class="btn-secondary text-xs px-3 py-1" onclick="startDrop(10)">10</button>
+              <button class="btn-secondary text-xs px-3 py-1" onclick="startDrop(50)">50</button>
+              <input type="number" id="customCount" min="1" max="500" value="25" class="text-xs">
+              <button class="btn-primary text-xs px-3 py-1" onclick="startDrop(getCustom())">Start</button>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+              <span class="text-xs font-semibold opacity-60 uppercase tracking-wide">Tempo:</span>
+              <button class="speed-btn" onclick="changeSpeed(-1)">−</button>
+              <span id="speedLabel" class="text-xs font-bold w-8 text-center">1×</span>
+              <button class="speed-btn" onclick="changeSpeed(1)">+</button>
+            </div>
+
+            <button class="btn-secondary text-xs px-3 py-1" onclick="resetBoard()">Zurücksetzen</button>
+          </div>
+
+          <div class="wood-frame" id="boardFrame" style="height: 420px; overflow: hidden;">
+            <div class="wood-side-left"></div>
+            <div class="wood-side-right"></div>
+            <div class="wood-bottom"></div>
+            <canvas id="boardCanvas" style="position:absolute; top:0; left:18px; right:18px; bottom:18px; z-index:1;"></canvas>
+            <div id="ballContainer" style="position:absolute; top:0; left:18px; right:18px; bottom:18px; z-index:10;"></div>
+          </div>
+
+          <div id="histLevel1" class="card mt-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-bold opacity-80">📊 Verteilung der Kugeln</h3>
+              <span id="totalLabel" class="text-xs opacity-50">Gesamt: 0</span>
+            </div>
+            <canvas id="histCanvas" height="150" style="width:100%;"></canvas>
+          </div>
+
+          <div id="histLevel2" class="card mt-4" style="display:none;">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-bold opacity-80">📊 Theoretisch vs. Experimentell</h3>
+              <span id="totalLabel2" class="text-xs opacity-50">Gesamt: 0</span>
+            </div>
+
+            <p class="text-xs text-center opacity-60 mb-3">
+              Beide Diagramme verwenden Prozentwerte. So lassen sich Theorie und Experiment direkt vergleichen.
+            </p>
+
+            <div class="flex flex-col lg:flex-row gap-4">
+              <div class="flex-1">
+                <div class="text-center mb-2">
+                  <p class="text-xs opacity-60 font-semibold">Experimentell: relative Häufigkeit</p>
+                  <p id="expTotalLabel" style="color:#ff4d6d; font-weight:800; font-size:14px; text-shadow:0 0 6px rgba(255,77,109,0.55);">
+                    Gesamt: 0 Kugeln
+                  </p>
+                </div>
+                <canvas id="histExpCanvas" height="170" style="width:100%;"></canvas>
+              </div>
+
+              <div class="flex-1">
+                <p class="text-xs opacity-60 mb-2 font-semibold text-center">Theoretisch (%)</p>
+                <canvas id="histTheoCanvas" height="170" style="width:100%;"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full lg:w-96 flex flex-col gap-4 max-h-max overflow-y-auto" style="max-height: 900px;">
+          <div id="level1" class="animate-in">
+            <div class="card">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">🎲 Was passiert hier?</h3>
+
+              <p class="text-sm leading-relaxed opacity-85">
+                Jede Kugel fällt durch das Brett und trifft auf <strong>Nägel</strong>.
+                An jedem <strong>Nagel</strong> geht sie zufällig nach <strong>links</strong>
+                oder <strong>rechts</strong> — wie bei einem Münzwurf.
+              </p>
+
+              <p class="text-sm leading-relaxed opacity-85 mt-2">
+                Das Brett hat <strong>8 Reihen</strong>. Deshalb gibt es unten
+                <strong>9 Fächer</strong>, nummeriert von 0 bis 8.
+              </p>
+
+              <p class="text-sm leading-relaxed opacity-85 mt-2">
+                Obwohl jede Kugel zufällig fällt, entsteht bei vielen Kugeln eine typische
+                <strong>Glockenform</strong>.
+              </p>
+            </div>
+
+            <div class="card mt-3">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">💡 Beobachte!</h3>
+              <ul class="text-sm space-y-1 opacity-85">
+                <li>• Die mittleren Fächer füllen sich meistens stärker.</li>
+                <li>• Die äußeren Fächer bleiben oft fast leer.</li>
+                <li>• Je mehr Kugeln fallen, desto stabiler wird die Form.</li>
+              </ul>
+            </div>
+
+            <div class="card mt-3">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">🤔 Denkfrage</h3>
+              <p class="text-sm opacity-85">
+                Warum landen besonders viele Kugeln in der Mitte?
+                <em>Tipp: Wie viele verschiedene Wege führen dorthin?</em>
+              </p>
+            </div>
+          </div>
+
+          <div id="level2" class="animate-in" style="display:none;">
+            <div class="card">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">📐 Binomialverteilung B(n, p)</h3>
+
+              <p class="text-sm leading-relaxed opacity-85">
+                Das Galton-Brett modelliert <strong>n = 8</strong> unabhängige Entscheidungen.
+                Bei jedem Nagel ist die Wahrscheinlichkeit für rechts <strong>p = 0,5</strong>.
+              </p>
+
+              <p class="text-sm leading-relaxed opacity-85 mt-2">
+                Die Zufallsvariable <strong>X</strong> zählt, wie oft die Kugel nach rechts abbiegt.
+                Das Endfach entspricht also dem Wert <strong>k</strong>.
+              </p>
+
+              <div class="mt-3 p-3 rounded-lg" style="background:rgba(233,69,96,0.1); border:1px solid rgba(233,69,96,0.25);">
+                <p class="formula text-center">
+                  P(X = k) = C(n, k) · p<sup>k</sup> · (1 − p)<sup>n − k</sup>
+                </p>
+                <p class="formula text-center text-sm mt-1 opacity-75">
+                  Hier: P(X = k) = C(8, k) · 0,5<sup>8</sup>
+                </p>
+              </div>
+            </div>
+
+            <div class="card mt-3">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">🔢 Pascalsches Dreieck</h3>
+              <p class="text-xs opacity-70 mb-2">Die Anzahl der Wege zu jedem Fach:</p>
+              <div id="pascalRow" class="flex justify-center gap-1 flex-wrap"></div>
+              <p class="text-xs opacity-60 mt-2">Diese Zahlen sind die Binomialkoeffizienten C(8, k).</p>
+            </div>
+
+            <div class="card mt-3">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">📊 Vergleich: Theorie ↔ Experiment</h3>
+              <div id="compTable" class="text-xs"></div>
+              <p class="text-xs mt-2 opacity-60">
+                Mit wachsender Kugelzahl nähert sich die experimentelle Verteilung meistens besser der theoretischen Verteilung an.
+                Das erklärt das <strong>Gesetz der großen Zahlen</strong>.
+              </p>
+            </div>
+
+            <div class="card mt-3">
+              <h3 class="font-bold text-base mb-2" style="color:var(--accent);">📏 Kenngrößen</h3>
+              <div id="statsPanel" class="text-sm space-y-1 opacity-85"></div>
+            </div>
+          </div>
+
+          <div id="quizContainer" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
   </div>
-<script>
-const rows=8,bins=9;
-let counts=Array(bins).fill(0), total=0, balls=[];
-const board=document.getElementById('board'), bctx=board.getContext('2d');
-const hist=document.getElementById('hist'), hctx=hist.getContext('2d');
-let W,H,pegY,pegX,startY;
-function resize(){W=board.clientWidth;board.width=W;H=board.height;pegY=(H*0.62)/rows;startY=36;pegX=(W-80)/bins;draw();drawHist();}
-window.addEventListener('resize',resize);
-function pegPos(r,c){const n=r+2,rowW=(n-1)*pegX,sx=(W-rowW)/2;return{x:sx+c*pegX,y:startY+r*pegY};}
-function createBall(){let right=0,path=[];for(let r=0;r<rows;r++){right+=Math.random()<.5?1:0;path.push(right)};return{x:W/2,y:8,row:-1,tx:W/2,ty:startY,path,bin:right,color:`hsl(${Math.random()*360} 85% 60%)`}}
-function drop(n){for(let i=0;i<n;i++)balls.push(createBall());}
-function resetBoard(){counts=Array(bins).fill(0);total=0;balls=[];updateTotal();draw();drawHist();}
-function updateTotal(){document.getElementById('total').textContent='Gesamt: '+total;}
-function step(){const sp=3.5;for(let i=balls.length-1;i>=0;i--){const b=balls[i],dx=b.tx-b.x,dy=b.ty-b.y,d=Math.hypot(dx,dy);if(d<sp){b.x=b.tx;b.y=b.ty;b.row++;if(b.row>=rows){counts[b.bin]++;total++;balls.splice(i,1);updateTotal();}else{const p=pegPos(b.row,b.path[b.row]);b.tx=p.x;b.ty=p.y;}}else{b.x+=dx/d*sp;b.y+=dy/d*sp;}}}
-function draw(){bctx.clearRect(0,0,W,H);const g=bctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#172554');g.addColorStop(1,'#1e1b4b');bctx.fillStyle=g;bctx.fillRect(0,0,W,H);
-for(let r=0;r<rows;r++){for(let c=0;c<r+2;c++){const p=pegPos(r,c);bctx.beginPath();bctx.arc(p.x,p.y,3.6,0,Math.PI*2);bctx.fillStyle='#cbd5e1';bctx.fill();}}
-const baseY=startY+rows*pegY+8; bctx.fillStyle='rgba(148,163,184,.5)';
-const sx=(W-((rows)*pegX))/2-pegX/2; for(let i=0;i<=bins;i++) bctx.fillRect(sx+i*pegX,baseY,2,H-baseY);
-for(let i=0;i<bins;i++){const maxH=H-baseY-8, r=4, left=sx+i*pegX+4,right=sx+(i+1)*pegX-4, bw=right-left, per=Math.max(1,Math.floor(bw/(r*2)));for(let j=0;j<counts[i];j++){const rr=Math.floor(j/per),cc=j%per,x=left+r+cc*(bw-r*2)/Math.max(1,per-1),y=H-r-4-rr*r*2;if(y<baseY)break;bctx.beginPath();bctx.arc(x,y,r,0,Math.PI*2);bctx.fillStyle='#fb7185';bctx.fill();}}
-for(const b of balls){bctx.beginPath();bctx.arc(b.x,b.y,4,0,Math.PI*2);bctx.fillStyle=b.color;bctx.fill();}}
-function drawHist(){const w=hist.clientWidth;hist.width=w;const h=hist.height;hctx.clearRect(0,0,w,h);const max=Math.max(1,...counts),bw=(w-30)/bins;for(let i=0;i<bins;i++){const bh=(counts[i]/max)*(h-35),x=15+i*bw,y=h-20-bh;hctx.fillStyle='#f43f5e';hctx.fillRect(x+2,y,bw-4,bh);hctx.fillStyle='white';hctx.font='10px sans-serif';hctx.textAlign='center';hctx.fillText(i,x+bw/2,h-6);}}
-function loop(){step();draw();drawHist();requestAnimationFrame(loop);}resize();loop();
-</script>
+
+  <script>
+    const NUM_BINS = 9;
+    const NUM_ROWS = 8;
+
+    let speed = 1;
+    let bins = new Array(NUM_BINS).fill(0);
+    let totalBalls = 0;
+    let activeBalls = [];
+    let animFrame = null;
+    let dropping = false;
+    let dropQueue = 0;
+    let currentLevel = 1;
+
+    const ballColors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+      '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A9DFBF',
+      '#F5B7B1', '#AED6F1', '#D7BDE2', '#A3E4D7', '#FAD7A0'
+    ];
+
+    let boardW, boardH, pegSpacingX, pegSpacingY, pegStartY, binAreaY;
+
+    function initBoard() {
+      const frame = document.getElementById('boardFrame');
+      const canvas = document.getElementById('boardCanvas');
+
+      boardW = frame.clientWidth - 36;
+      boardH = frame.clientHeight - 18;
+      canvas.width = boardW;
+      canvas.height = boardH;
+
+      pegSpacingY = (boardH * 0.6) / NUM_ROWS;
+      pegStartY = 30;
+      binAreaY = pegStartY + NUM_ROWS * pegSpacingY + 20;
+      pegSpacingX = (boardW - 40) / NUM_BINS;
+
+      drawBoard();
+      drawHist();
+      drawHistsLevel2();
+    }
+
+    function drawBoard() {
+      const c = document.getElementById('boardCanvas');
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+
+      const grad = ctx.createLinearGradient(0, 0, 0, c.height);
+      grad.addColorStop(0, '#1e2a45');
+      grad.addColorStop(1, '#0f1a2e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.beginPath();
+      ctx.moveTo(boardW / 2 - 20, 0);
+      ctx.lineTo(boardW / 2 + 20, 0);
+      ctx.lineTo(boardW / 2 + 8, pegStartY - 5);
+      ctx.lineTo(boardW / 2 - 8, pegStartY - 5);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(196,149,106,0.25)';
+      ctx.fill();
+
+      for (let row = 0; row < NUM_ROWS; row++) {
+        const nailsInRow = row + 2;
+        const rowWidth = (nailsInRow - 1) * pegSpacingX;
+        const startX = (boardW - rowWidth) / 2;
+        const y = pegStartY + row * pegSpacingY;
+
+        for (let col = 0; col < nailsInRow; col++) {
+          const x = startX + col * pegSpacingX;
+          ctx.beginPath();
+          ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+
+          const pg = ctx.createRadialGradient(x - 1, y - 1, 0, x, y, 4);
+          pg.addColorStop(0, '#D4A76A');
+          pg.addColorStop(1, '#8B5E3C');
+
+          ctx.fillStyle = pg;
+          ctx.fill();
+        }
+      }
+
+      const dividerTop = binAreaY - 10;
+      const lastRowNails = NUM_ROWS + 1;
+      const lastRowWidth = (lastRowNails - 1) * pegSpacingX;
+      const lastStartX = (boardW - lastRowWidth) / 2;
+
+      for (let i = 0; i <= NUM_BINS; i++) {
+        const x = lastStartX - pegSpacingX / 2 + i * pegSpacingX;
+        ctx.fillStyle = 'rgba(196,149,106,0.5)';
+        ctx.fillRect(x - 1.5, dividerTop, 3, c.height - dividerTop);
+      }
+
+      const binBottom = c.height - 4;
+      const ballR = 4;
+
+      for (let b = 0; b < NUM_BINS; b++) {
+        const count = bins[b];
+        const binLeft = lastStartX - pegSpacingX / 2 + b * pegSpacingX + 3;
+        const binRight = lastStartX - pegSpacingX / 2 + (b + 1) * pegSpacingX - 3;
+        const binW = binRight - binLeft;
+        const ballsPerRow = Math.max(1, Math.floor(binW / (ballR * 2)));
+
+        for (let i = 0; i < count; i++) {
+          const row = Math.floor(i / ballsPerRow);
+          const col = i % ballsPerRow;
+          const bx = binLeft + ballR + col * (binW - ballR * 2) / Math.max(1, ballsPerRow - 1);
+          const by = binBottom - ballR - row * (ballR * 2);
+
+          if (by < dividerTop) continue;
+
+          ctx.beginPath();
+          ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+
+          const bg = ctx.createRadialGradient(bx - 1, by - 1, 0, bx, by, ballR);
+          bg.addColorStop(0, '#ff7b9c');
+          bg.addColorStop(1, '#e94560');
+
+          ctx.fillStyle = bg;
+          ctx.fill();
+        }
+      }
+    }
+
+    function getPegPos(row, col) {
+      const nailsInRow = row + 2;
+      const rowWidth = (nailsInRow - 1) * pegSpacingX;
+      const startX = (boardW - rowWidth) / 2;
+
+      return {
+        x: startX + col * pegSpacingX,
+        y: pegStartY + row * pegSpacingY
+      };
+    }
+
+    function createBall() {
+      const ball = {
+        x: boardW / 2,
+        y: 5,
+        row: -1,
+        targetX: boardW / 2,
+        targetY: pegStartY,
+        path: [],
+        settled: false,
+        bin: -1,
+        color: ballColors[Math.floor(Math.random() * ballColors.length)]
+      };
+
+      let rightCount = 0;
+
+      for (let r = 0; r < NUM_ROWS; r++) {
+        const goRight = Math.random() < 0.5 ? 1 : 0;
+        rightCount += goRight;
+        ball.path.push(rightCount);
+      }
+
+      ball.bin = rightCount;
+      return ball;
+    }
+
+    function updateBalls() {
+      const spd = 2 + speed * 2.5;
+
+      for (let i = activeBalls.length - 1; i >= 0; i--) {
+        const b = activeBalls[i];
+        if (b.settled) continue;
+
+        const dx = b.targetX - b.x;
+        const dy = b.targetY - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < spd) {
+          b.x = b.targetX;
+          b.y = b.targetY;
+          b.row++;
+
+          if (b.row >= NUM_ROWS) {
+            b.settled = true;
+            bins[b.bin]++;
+            totalBalls++;
+
+            updateTotalLabels();
+
+            activeBalls.splice(i, 1);
+
+            drawBoard();
+            drawHist();
+            drawHistsLevel2();
+
+            if (currentLevel === 2) updateStats();
+          } else {
+            const pos = getPegPos(b.row, b.path[b.row]);
+            b.targetX = pos.x;
+            b.targetY = pos.y;
+          }
+        } else {
+          b.x += (dx / dist) * spd;
+          b.y += (dy / dist) * spd;
+        }
+      }
+    }
+
+    function renderBalls() {
+      const container = document.getElementById('ballContainer');
+
+      while (container.children.length > activeBalls.length) {
+        container.lastChild.remove();
+      }
+
+      while (container.children.length < activeBalls.length) {
+        const el = document.createElement('div');
+        el.className = 'ball';
+        el.style.width = '8px';
+        el.style.height = '8px';
+        el.style.boxShadow = '0 0 6px rgba(0,0,0,0.4)';
+        container.appendChild(el);
+      }
+
+      for (let i = 0; i < activeBalls.length; i++) {
+        const ball = activeBalls[i];
+        const el = container.children[i];
+
+        el.style.background = `radial-gradient(circle at 30% 30%, ${ball.color}, ${ball.color}dd)`;
+        el.style.left = (ball.x - 4) + 'px';
+        el.style.top = (ball.y - 4) + 'px';
+      }
+    }
+
+    function gameLoop() {
+      updateBalls();
+      renderBalls();
+      animFrame = requestAnimationFrame(gameLoop);
+    }
+
+    function startDrop(n) {
+      n = Math.min(500, Math.max(1, parseInt(n) || 1));
+      dropQueue += n;
+
+      if (!dropping) {
+        dropping = true;
+        if (!animFrame) animFrame = requestAnimationFrame(gameLoop);
+        releaseBalls();
+      }
+    }
+
+    function releaseBalls() {
+      if (dropQueue <= 0) {
+        dropping = false;
+        return;
+      }
+
+      activeBalls.push(createBall());
+      dropQueue--;
+
+      const delay = Math.max(15, 150 / speed);
+      setTimeout(releaseBalls, delay);
+    }
+
+    function getCustom() {
+      return Math.min(500, Math.max(1, parseInt(document.getElementById('customCount').value) || 1));
+    }
+
+    function changeSpeed(d) {
+      speed = Math.min(4, Math.max(1, speed + d));
+      document.getElementById('speedLabel').textContent = speed + '×';
+    }
+
+    function resetBoard() {
+      bins = new Array(NUM_BINS).fill(0);
+      totalBalls = 0;
+      activeBalls = [];
+      dropQueue = 0;
+      dropping = false;
+
+      updateTotalLabels();
+      document.getElementById('ballContainer').innerHTML = '';
+
+      drawBoard();
+      drawHist();
+      drawHistsLevel2();
+
+      if (currentLevel === 2) updateStats();
+    }
+
+    function updateTotalLabels() {
+      document.getElementById('totalLabel').textContent = 'Gesamt: ' + totalBalls;
+      document.getElementById('totalLabel2').textContent = 'Gesamt: ' + totalBalls;
+
+      const expLabel = document.getElementById('expTotalLabel');
+      if (expLabel) {
+        expLabel.textContent = 'Gesamt: ' + totalBalls + ' Kugeln';
+      }
+    }
+
+    function drawHist() {
+      const c = document.getElementById('histCanvas');
+      if (!c) return;
+
+      c.width = c.clientWidth;
+      const ctx = c.getContext('2d');
+      const w = c.width;
+      const h = c.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const maxVal = Math.max(1, ...bins);
+      const barW = (w - 40) / NUM_BINS;
+      const barAreaH = h - 35;
+
+      for (let i = 0; i < NUM_BINS; i++) {
+        const barH = (bins[i] / maxVal) * barAreaH;
+        const x = 20 + i * barW + 2;
+        const y = h - 24 - barH;
+
+        const grad = ctx.createLinearGradient(x, y, x, h - 24);
+        grad.addColorStop(0, '#e94560');
+        grad.addColorStop(1, '#a82040');
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barW - 4, barH);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '10px Nunito';
+        ctx.textAlign = 'center';
+        ctx.fillText(bins[i], x + (barW - 4) / 2, y - 4);
+
+        const percent = totalBalls > 0 ? (bins[i] / totalBalls * 100).toFixed(1) + '%' : '0%';
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fillText(percent, x + (barW - 4) / 2, h - 13);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText(i, x + (barW - 4) / 2, h - 2);
+      }
+    }
+
+    function drawHistsLevel2() {
+      drawHistExp();
+      drawHistTheo();
+    }
+
+    function drawHistExp() {
+      const c = document.getElementById('histExpCanvas');
+      if (!c) return;
+
+      c.width = c.clientWidth;
+      const ctx = c.getContext('2d');
+      const w = c.width;
+      const h = c.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const barW = (w - 40) / NUM_BINS;
+      const barAreaH = h - 35;
+      const maxProb = Math.max(...Array.from({ length: NUM_BINS }, (_, i) => binomProb(NUM_ROWS, i, 0.5)));
+
+      for (let i = 0; i < NUM_BINS; i++) {
+        const relFreq = totalBalls > 0 ? bins[i] / totalBalls : 0;
+        const barH = (relFreq / maxProb) * barAreaH;
+        const x = 20 + i * barW + 2;
+        const y = h - 24 - barH;
+        const labelX = x + (barW - 4) / 2;
+        const baseY = h - 24;
+
+        const grad = ctx.createLinearGradient(x, y, x, baseY);
+        grad.addColorStop(0, '#e94560');
+        grad.addColorStop(1, '#a82040');
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barW - 4, Math.max(0, barH));
+
+        ctx.textAlign = 'center';
+
+        // Prozentwert über dem Balken
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = 'bold 10px Nunito';
+        ctx.fillText((relFreq * 100).toFixed(1) + '%', labelX, Math.max(12, y - 4));
+
+        // Absolute Häufigkeit im Balken, wie n=...
+        if (bins[i] > 0 && barH > 18) {
+          ctx.fillStyle = 'rgba(255,255,255,0.62)';
+          ctx.font = 'bold 10px Nunito';
+          ctx.fillText('n=' + bins[i], labelX, y + Math.min(22, barH - 5));
+        } else if (bins[i] > 0) {
+          ctx.fillStyle = '#ffd6df';
+          ctx.font = 'bold 9px Nunito';
+          ctx.fillText('n=' + bins[i], labelX, Math.max(22, y - 16));
+        }
+
+        // Fachnummer unten
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '10px Nunito';
+        ctx.fillText(i, labelX, h - 6);
+      }
+    }
+
+    function drawHistTheo() {
+      const c = document.getElementById('histTheoCanvas');
+      if (!c) return;
+
+      c.width = c.clientWidth;
+      const ctx = c.getContext('2d');
+      const w = c.width;
+      const h = c.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const barW = (w - 40) / NUM_BINS;
+      const barAreaH = h - 35;
+      const maxProb = Math.max(...Array.from({ length: NUM_BINS }, (_, i) => binomProb(NUM_ROWS, i, 0.5)));
+
+      for (let i = 0; i < NUM_BINS; i++) {
+        const prob = binomProb(NUM_ROWS, i, 0.5);
+        const barH = (prob / maxProb) * barAreaH;
+        const x = 20 + i * barW + 2;
+        const y = h - 24 - barH;
+
+        const grad = ctx.createLinearGradient(x, y, x, h - 24);
+        grad.addColorStop(0, '#4fc3f7');
+        grad.addColorStop(1, '#0284c7');
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, barW - 4, barH);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '10px Nunito';
+        ctx.textAlign = 'center';
+        ctx.fillText((prob * 100).toFixed(1) + '%', x + (barW - 4) / 2, y - 4);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText(i, x + (barW - 4) / 2, h - 6);
+      }
+    }
+
+    function factorial(n) {
+      let r = 1;
+      for (let i = 2; i <= n; i++) r *= i;
+      return r;
+    }
+
+    function comb(n, k) {
+      if (k < 0 || k > n) return 0;
+      return factorial(n) / (factorial(k) * factorial(n - k));
+    }
+
+    function binomProb(n, k, p) {
+      return comb(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+    }
+
+    function updateStats() {
+      let html = '<table class="w-full"><thead><tr class="border-b border-white/10">';
+      html += '<th class="py-1 text-left">k</th>';
+      html += '<th class="py-1">Theorie</th>';
+      html += '<th class="py-1">Experiment</th>';
+      html += '<th class="py-1">Differenz</th>';
+      html += '</tr></thead><tbody>';
+
+      for (let k = 0; k < NUM_BINS; k++) {
+        const theo = binomProb(NUM_ROWS, k, 0.5);
+        const exp = totalBalls > 0 ? bins[k] / totalBalls : 0;
+        const diff = Math.abs(theo - exp);
+
+        html += `<tr class="border-b border-white/5">
+          <td class="py-0.5">${k}</td>
+          <td class="text-center">${(theo * 100).toFixed(1)}%</td>
+          <td class="text-center">${(exp * 100).toFixed(1)}%</td>
+          <td class="text-center" style="color:${diff > 0.05 ? '#ff7b9c' : '#4fc3f7'}">${(diff * 100).toFixed(1)}%</td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      document.getElementById('compTable').innerHTML = html;
+
+      const mu = NUM_ROWS * 0.5;
+      const sigma = Math.sqrt(NUM_ROWS * 0.5 * 0.5);
+
+      let expMu = 0;
+      if (totalBalls > 0) {
+        for (let k = 0; k < NUM_BINS; k++) {
+          expMu += k * bins[k] / totalBalls;
+        }
+      }
+
+      let expVar = 0;
+      if (totalBalls > 0) {
+        for (let k = 0; k < NUM_BINS; k++) {
+          expVar += Math.pow(k - expMu, 2) * bins[k] / totalBalls;
+        }
+      }
+
+      document.getElementById('statsPanel').innerHTML = `
+        <div class="flex justify-between gap-4">
+          <span>Erwartungswert μ = n · p</span>
+          <span class="font-bold">${mu.toFixed(1)}</span>
+        </div>
+
+        <div class="flex justify-between gap-4">
+          <span>Experimenteller Mittelwert x̄</span>
+          <span class="font-bold" style="color:#4fc3f7">${totalBalls > 0 ? expMu.toFixed(2) : '–'}</span>
+        </div>
+
+        <div class="flex justify-between gap-4">
+          <span>Standardabweichung σ = √(n · p · (1 − p))</span>
+          <span class="font-bold">${sigma.toFixed(2)}</span>
+        </div>
+
+        <div class="flex justify-between gap-4">
+          <span>Experimentelle Standardabweichung s</span>
+          <span class="font-bold" style="color:#4fc3f7">${totalBalls > 0 ? Math.sqrt(expVar).toFixed(2) : '–'}</span>
+        </div>
+      `;
+
+      drawHistsLevel2();
+    }
+
+    function buildPascalRow() {
+      const el = document.getElementById('pascalRow');
+      el.innerHTML = '';
+
+      for (let k = 0; k <= NUM_ROWS; k++) {
+        const d = document.createElement('div');
+        d.className = 'flex items-center justify-center rounded text-xs font-bold';
+        d.style.cssText = 'width:34px;height:30px;background:rgba(233,69,96,0.15);border:1px solid rgba(233,69,96,0.3);color:#ff7b9c;';
+        d.textContent = comb(NUM_ROWS, k);
+        el.appendChild(d);
+      }
+    }
+
+    function shuffleArray(arr) {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    const quizData = [
+      {
+        question: 'Warum gibt es 9 Fächer, wenn das Brett 8 Reihen von Nägeln hat?',
+        options: [
+          'Weil jede Kugel genau 9-mal abbiegt.',
+          'Weil nach 8 Entscheidungen links/rechts genau 9 mögliche Ergebnisse entstehen.',
+          'Weil die Fächer von 1 bis 9 nummeriert sind.',
+          'Weil das Brett zufällig so gebaut wurde.'
+        ],
+        correct: 1,
+        feedback: [
+          'Nicht ganz. Eine Kugel trifft hier auf 8 Entscheidungen, nicht auf 9.',
+          'Richtig! Nach 8 Entscheidungen kann die Kugel 0, 1, 2, ..., 8-mal nach rechts gehen. Das ergibt 9 mögliche Endfächer.',
+          'Nicht ganz. Die Nummerierung ist nicht der mathematische Grund.',
+          'Nicht ganz. Die Anzahl der Fächer folgt aus der Struktur des Galton-Bretts.'
+        ]
+      },
+      {
+        question: 'Wie viele verschiedene Wege gibt es, wenn die Kugel genau 3-mal nach rechts geht?',
+        options: [
+          '8 Wege',
+          '24 Wege',
+          '56 Wege',
+          '3 Wege'
+        ],
+        correct: 2,
+        feedback: [
+          'Nicht ganz. 8 ist nur die Anzahl der Entscheidungen.',
+          'Nicht ganz. 24 ist hier nicht der passende Wert.',
+          'Richtig! Es gibt C(8, 3) = 56 Möglichkeiten, 3 Rechtsbewegungen unter 8 Entscheidungen auszuwählen.',
+          'Nicht ganz. Die Anzahl der Wege ist viel größer als 3.'
+        ]
+      },
+      {
+        question: 'Welches Fach ist am wahrscheinlichsten?',
+        options: [
+          'Die äußeren Fächer 0 oder 8.',
+          'Das mittlere Fach k = 4.',
+          'Alle Fächer sind gleich wahrscheinlich.',
+          'Die Fächer k = 1 oder k = 7.'
+        ],
+        correct: 1,
+        feedback: [
+          'Nicht ganz. Die äußeren Fächer haben nur sehr wenige mögliche Wege.',
+          'Richtig! Zum mittleren Fach k = 4 führen die meisten Wege: C(8, 4) = 70.',
+          'Nicht ganz. Die Verteilung ist nicht gleichmäßig, sondern binomial.',
+          'Nicht ganz. Diese Fächer sind weniger wahrscheinlich als die Mitte.'
+        ]
+      },
+      {
+        question: 'Was bedeutet k in der Binomialverteilung P(X = k)?',
+        options: [
+          'Die Gesamtzahl der Entscheidungen pro Kugel.',
+          'Die Anzahl der Rechtsbewegungen und damit das Endfach.',
+          'Die aktuelle Nagelreihe.',
+          'Die Anzahl der Nägel in jeder Reihe.'
+        ],
+        correct: 1,
+        feedback: [
+          'Nicht ganz. Das wäre n. In diesem Brett gilt n = 8.',
+          'Richtig! k zählt, wie oft die Kugel nach rechts abbiegt. Dadurch wird das Endfach bestimmt.',
+          'Nicht ganz. k beschreibt nicht die aktuelle Reihe.',
+          'Nicht ganz. k beschreibt nicht die Anzahl der Nägel.'
+        ]
+      },
+      {
+        question: 'Warum stimmen die relativen Häufigkeiten bei sehr vielen Kugeln meistens besser mit der Theorie überein?',
+        options: [
+          'Weil der Zufall vollständig verschwindet.',
+          'Weil die Nägel mit der Zeit gleichmäßiger werden.',
+          'Wegen des Gesetzes der großen Zahlen.',
+          'Weil die Kugeln langsamer werden.'
+        ],
+        correct: 2,
+        feedback: [
+          'Nicht ganz. Der Zufall verschwindet nicht, aber er gleicht sich bei vielen Wiederholungen besser aus.',
+          'Nicht ganz. Die Nägel verändern sich nicht.',
+          'Richtig! Das Gesetz der großen Zahlen erklärt, warum sich relative Häufigkeiten langfristig den theoretischen Wahrscheinlichkeiten annähern.',
+          'Nicht ganz. Die Geschwindigkeit ist dafür nicht entscheidend.'
+        ]
+      }
+    ];
+
+    let currentQuizIndex = 0;
+    let shuffledQuiz = shuffleArray(quizData);
+
+    function showQuiz() {
+      const container = document.getElementById('quizContainer');
+      if (!container || currentLevel !== 2) return;
+
+      const quiz = shuffledQuiz[currentQuizIndex];
+      const shuffledOptions = shuffleArray(
+        quiz.options.map((opt, idx) => ({ text: opt, origIdx: idx }))
+      );
+
+      let html = `
+        <div class="card animate-in">
+          <h3 class="font-bold text-base mb-3" style="color:var(--accent);">
+            ❓ Frage ${currentQuizIndex + 1} von ${shuffledQuiz.length}
+          </h3>
+
+          <p class="text-sm mb-4 leading-relaxed">${quiz.question}</p>
+
+          <div class="space-y-2">
+      `;
+
+      shuffledOptions.forEach((opt, idx) => {
+        html += `
+          <button class="quiz-option" data-idx="${opt.origIdx}" onclick="checkAnswer(event, ${opt.origIdx}, ${quiz.correct})">
+            <span class="font-semibold text-blue-400">${String.fromCharCode(65 + idx)}.</span>
+            ${opt.text}
+          </button>
+        `;
+      });
+
+      html += `
+          </div>
+          <div id="feedback" class="mt-4"></div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function checkAnswer(e, selected, correct) {
+      e.preventDefault();
+
+      const feedback = document.getElementById('feedback');
+      const quiz = shuffledQuiz[currentQuizIndex];
+      const isCorrect = selected === correct;
+
+      if (isCorrect) {
+        feedback.innerHTML = `
+          <div class="p-3 rounded-lg bg-green-900/20 border border-green-500/30 text-green-300 text-sm">
+            ${quiz.feedback[selected]}
+          </div>
+          <button class="btn-primary mt-3 text-xs px-4 py-2" onclick="nextQuestion()">
+            Nächste Frage →
+          </button>
+        `;
+      } else {
+        feedback.innerHTML = `
+          <div class="p-3 rounded-lg bg-red-900/20 border border-red-500/30 text-red-300 text-sm">
+            ${quiz.feedback[selected]}
+          </div>
+          <button class="btn-secondary mt-3 text-xs px-4 py-2" onclick="showQuiz()">
+            Noch einmal versuchen
+          </button>
+        `;
+      }
+
+      document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+    }
+
+    function nextQuestion() {
+      currentQuizIndex++;
+
+      if (currentQuizIndex >= shuffledQuiz.length) {
+        currentQuizIndex = 0;
+        shuffledQuiz = shuffleArray(quizData);
+      }
+
+      showQuiz();
+    }
+
+    function setLevel(lv) {
+      currentLevel = lv;
+
+      document.getElementById('tab1').className =
+        lv === 1
+          ? 'tab-active rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all'
+          : 'tab-inactive rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all';
+
+      document.getElementById('tab2').className =
+        lv === 2
+          ? 'tab-active rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all'
+          : 'tab-inactive rounded-full px-5 py-2 text-sm font-bold cursor-pointer transition-all';
+
+      document.getElementById('level1').style.display = lv === 1 ? 'block' : 'none';
+      document.getElementById('level2').style.display = lv === 2 ? 'block' : 'none';
+
+      document.getElementById('histLevel1').style.display = lv === 1 ? 'block' : 'none';
+      document.getElementById('histLevel2').style.display = lv === 2 ? 'block' : 'none';
+
+      document.getElementById('quizContainer').style.display = lv === 2 ? 'block' : 'none';
+
+      if (lv === 2) {
+        updateStats();
+        buildPascalRow();
+        showQuiz();
+      }
+
+      drawHist();
+      drawHistsLevel2();
+    }
+
+    window.addEventListener('resize', initBoard);
+
+    initBoard();
+    buildPascalRow();
+    updateStats();
+    setLevel(1);
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
 </body>
 </html>
