@@ -716,6 +716,16 @@ initializeSourcePreview({
   openLinkId: "session2SourcePreviewLink",
   resetButtonId: "session2SourcePreviewReset"
 });
+initializeVariantPreview({
+  pickerId: "session3VariantPicker",
+  previewContainerId: "session3VariantPreviewContainer",
+  previewLinkId: "session3VariantPreviewLink",
+  previewSourceLinkId: "session3VariantPreviewSourceLink",
+  previewFrameId: "session3VariantPreviewFrame",
+  relabelVisibleVariants: true,
+  emptyStateText: translations.de.semNoStudentVariants,
+  defaultVariantNumber: 1
+});
 initializeSourcePreview({
   frameId: "session3SourcePreviewFrame",
   openLinkId: "session3SourcePreviewLink",
