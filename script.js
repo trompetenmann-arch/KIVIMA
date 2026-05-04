@@ -716,5 +716,10 @@ initializeSourcePreview({
   openLinkId: "session2SourcePreviewLink",
   resetButtonId: "session2SourcePreviewReset"
 });
+initializeSourcePreview({
+  frameId: "session3SourcePreviewFrame",
+  openLinkId: "session3SourcePreviewLink",
+  resetButtonId: "session3SourcePreviewReset"
+});
 initializeMobileNavigation();
 initializeStickyNavigation();
