@@ -1,1 +1,824 @@
-<!doctype html><html lang="de" class="h-full"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Galton-Brett</title></head><body><p>Diese Variante wurde extern bereitgestellt. Bitte den vollständigen Export einsetzen.</p></body></html>
+<!doctype html>
+<html lang="de" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galton-Brett</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Fraunces:wght@600;700&amp;display=swap" rel="stylesheet">
+  <style>
+html, body { height: 100%; margin: 0; }
+* { box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; }
+.font-display { font-family: 'Fraunces', serif; }
+
+.peg {
+  width: 10px; height: 10px;
+  background: var(--peg-color);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+.ball {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ball-color);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  z-index: 10;
+  transition: none;
+}
+
+.bin-bar {
+  background: var(--bar-color);
+  transition: height 0.3s ease;
+  border-radius: 4px 4px 0 0;
+}
+
+.control-btn {
+  transition: all 0.15s ease;
+}
+.control-btn:hover { transform: scale(1.05); }
+.control-btn:active { transform: scale(0.97); }
+
+.activity-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid;
+  border-color: var(--surface);
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+}
+.activity-card:hover {
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.05);
+}
+.activity-card.completed {
+  opacity: 0.5;
+  border-color: var(--primary);
+}
+
+.activity-card .check-icon {
+  display: none;
+}
+.activity-card.completed .check-icon {
+  display: inline;
+  color: var(--primary);
+}
+
+.tooltip-box {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--primary);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.mode-btn {
+  transition: all 0.2s ease;
+  border: 2px solid var(--secondary);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  background: transparent;
+  cursor: pointer;
+}
+.mode-btn.active {
+  background: var(--secondary);
+  color: white;
+  border-color: var(--secondary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.fade-in { animation: fadeIn 0.5s ease forwards; }
+.fade-in-d1 { animation: fadeIn 0.5s ease 0.1s forwards; opacity: 0; }
+.fade-in-d2 { animation: fadeIn 0.5s ease 0.2s forwards; opacity: 0; }
+.slide-in { animation: slideIn 0.4s ease forwards; }
+
+.success-flash {
+  background: var(--primary);
+  color: #0f172a;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto" style="background: #0f172a;">
+  <div id="app" class="h-full w-full flex flex-col items-center" style="--peg-color:#94a3b8; --ball-color:#f59e0b; --bar-color:#3b82f6; --bg:#0f172a; --surface:#1e293b; --text:#f1f5f9; --primary:#f59e0b; --secondary:#3b82f6;"><!-- Header -->
+   <header class="w-full text-center pt-6 pb-3 fade-in">
+    <h1 id="mainTitle" class="font-display text-3xl md:text-4xl font-bold" style="color: var(--primary);">Galton-Brett</h1>
+    <p id="subtitleText" class="mt-1 text-sm tracking-wide" style="color: var(--text); opacity:0.6;">Interaktive Simulation</p>
+   </header><!-- Mode Toggle -->
+   <div class="flex gap-2 mb-4 fade-in-d1"><button onclick="switchMode('free')" id="modeFreeBtnTop" class="mode-btn active">Frei erkunden</button> <button onclick="switchMode('activities')" id="modeActBtnTop" class="mode-btn">Aufgaben</button>
+   </div><!-- Free Explore Mode -->
+   <div id="freeMode" class="flex flex-col gap-4 px-4 pb-4 fade-in-d1 w-full max-w-xl">
+    <div class="flex flex-wrap justify-center gap-4">
+     <div class="flex items-center gap-3 rounded-xl px-4 py-2.5" style="background: var(--surface);">
+      <label class="text-xs font-medium uppercase tracking-wider" style="color:var(--text);opacity:0.5;">Reihen</label> <button onclick="changeRows(-1)" class="control-btn w-8 h-8 rounded-lg flex items-center justify-center font-bold" style="background:var(--primary);color:#0f172a;">−</button> <span id="rowDisplay" class="text-lg font-bold w-6 text-center" style="color:var(--text);">8</span> <button onclick="changeRows(1)" class="control-btn w-8 h-8 rounded-lg flex items-center justify-center font-bold" style="background:var(--primary);color:#0f172a;">+</button>
+     </div>
+     <div class="flex items-center gap-3 rounded-xl px-4 py-2.5" style="background: var(--surface);">
+      <label class="text-xs font-medium uppercase tracking-wider" style="color:var(--text);opacity:0.5;">Kugeln</label> <button onclick="changeBalls(-10)" class="control-btn w-8 h-8 rounded-lg flex items-center justify-center font-bold" style="background:var(--secondary);color:#fff;">−</button> <input id="ballInput" type="number" value="50" min="10" max="1000000" onchange="updateBallsFromInput()" class="text-lg font-bold px-2 py-1 rounded-lg" style="background:var(--bg);color:var(--text);border:1px solid var(--secondary);width:80px;"> <button onclick="changeBalls(10)" class="control-btn w-8 h-8 rounded-lg flex items-center justify-center font-bold" style="background:var(--secondary);color:#fff;">+</button>
+     </div><button id="startBtn" onclick="startSimulation()" class="control-btn rounded-xl px-6 py-2.5 font-bold text-sm flex items-center gap-2" style="background:var(--primary);color:#0f172a;"> <i data-lucide="play" style="width:16px;height:16px;"></i> Start </button> <button onclick="resetSimulation()" class="control-btn rounded-xl px-4 py-2.5 font-bold text-sm flex items-center gap-2 border" style="border-color:var(--text);color:var(--text);opacity:0.5;"> <i data-lucide="rotate-ccw" style="width:16px;height:16px;"></i> Reset </button>
+    </div>
+    <div id="skipBtnContainer" class="hidden flex justify-center"><button onclick="skipAnimation()" class="control-btn rounded-xl px-6 py-2.5 font-bold text-sm flex items-center gap-2 border" style="border-color:var(--primary);color:var(--primary);"> <i data-lucide="fast-forward" style="width:16px;height:16px;"></i> Überspringen </button>
+    </div>
+   </div><!-- Activity Mode -->
+   <div id="activityMode" class="hidden flex flex-col gap-3 px-4 pb-4 w-full max-w-2xl fade-in-d1">
+    <div class="w-full px-4 py-3 rounded-xl" style="background: var(--surface);">
+     <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--primary);">Fortschritt</span> <span id="progressText" class="text-xs" style="color: var(--text); opacity: 0.6;">1 von 6</span>
+     </div>
+     <div class="w-full h-2 rounded-full" style="background: rgba(255,255,255,0.1); overflow: hidden;">
+      <div id="progressBar" class="h-full rounded-full" style="background: var(--primary); width: 0%; transition: width 0.3s ease;"></div>
+     </div>
+    </div>
+    <div id="currentActivityDisplay" class="flex flex-col gap-2 px-4 py-3 rounded-xl" style="background: rgba(255,255,255,0.02); border: 2px solid var(--primary);">
+     <div id="activityTitle" class="text-lg font-bold" style="color: var(--primary);"></div>
+     <p id="activityDescription" class="text-sm" style="color: var(--text); opacity: 0.8;"></p>
+     <div class="tooltip-box" style="margin-top: 8px; margin-bottom: 0;">
+      <strong style="color: var(--primary);">📝 Aufgabe:</strong><br><span id="activityQuestion"></span>
+     </div>
+     <div class="tooltip-box" style="background: rgba(59, 130, 246, 0.05); border-left-color: var(--secondary); margin-top: 8px; margin-bottom: 0;">
+      <strong style="color: var(--secondary);">💡 Tipp:</strong><br><span id="activityHint"></span>
+     </div>
+     <div class="flex gap-2 mt-3">
+      <button onclick="startActivitySimulation()" id="activityStartBtn" class="flex-1 px-4 py-2.5 rounded-lg font-bold text-sm" style="background: var(--primary); color: #0f172a;"> <i data-lucide="play" style="width: 14px; height: 14px; display: inline; margin-right: 6px;"></i> Start </button> <button onclick="skipToNextActivity()" id="skipActivityBtn" class="px-4 py-2.5 rounded-lg font-bold text-sm border" style="border-color: var(--text); color: var(--text); opacity: 0.5;"> <i data-lucide="skip-forward" style="width: 14px; height: 14px; display: inline;"></i> </button>
+     </div>
+    </div>
+    <div id="completedList" class="flex flex-col gap-2"></div>
+   </div><!-- Board -->
+   <div class="flex-1 flex flex-col items-center w-full max-w-2xl px-4 pb-6 fade-in-d2" style="min-height:0;">
+    <div class="relative w-full flex-1 rounded-2xl overflow-hidden" style="background:var(--surface); min-height:300px;">
+     <canvas id="boardCanvas" class="w-full h-full"></canvas>
+    </div>
+    <div id="stats" class="mt-3 text-xs text-center" style="color:var(--text);opacity:0.4;"></div>
+    <div id="activityFeedback" class="w-full mt-2 hidden"></div>
+    <div class="w-full flex flex-col gap-2 rounded-xl px-4 py-3 mt-4" style="background: var(--surface);">
+     <div class="flex items-center justify-between gap-3"><label class="text-xs font-medium uppercase tracking-wider" style="color:var(--text);opacity:0.5;">Geschwindigkeit</label> <span id="speedDisplay" class="text-sm font-bold" style="color:var(--primary);">1x</span>
+     </div><input id="speedSlider" type="range" min="1" max="20" step="1" value="1" onchange="updateSpeed()" class="w-full" style="accent-color:var(--secondary);">
+    </div>
+   </div>
+  </div>
+  <script>
+let rows = 8, numBalls = 50, running = false, animSpeed = 1;
+let bins = [], balls = [], animFrame = null;
+let currentMode = 'free';
+let currentActivityIdx = -1;
+let completedActivities = new Set();
+
+const canvas = document.getElementById('boardCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, pegSpacingX, pegSpacingY, pegStartY, binAreaH;
+
+// Activities
+const activities = [
+  {
+    id: 'explore',
+    title: '🔍 Erkundung: Was passiert hier?',
+    description: 'Starte mit wenigen Kugeln (5-10) mehrfach. Landen sie immer an der gleichen Stelle?',
+    rows: 6,
+    balls: 8,
+    question: 'Beobachte: Warum landen die Kugeln nicht immer an der gleichen Stelle?',
+    hint: 'Der Zufall bestimmt den Weg jeder Kugel!'
+  },
+  {
+    id: 'pattern',
+    title: '📐 Mustererkennung: Baue eine Pyramide',
+    description: 'Erhöhe die Kugelanzahl schrittweise: 20 → 50 → 100 → 200',
+    rows: 8,
+    balls: 100,
+    question: 'Welche Form entsteht in der Mitte? Warum landen dort mehr Kugeln?',
+    hint: 'Die meisten Kugeln landen in der Mitte = Glockenform (Normalverteilung)'
+  },
+  {
+    id: 'hypothesis',
+    title: '🎯 Hypothese: Ich tippe auf...',
+    description: 'Schätze: In welchem Fach landen die meisten Kugeln? Starte die Simulation.',
+    rows: 8,
+    balls: 100,
+    question: 'War deine Vermutung richtig? Probiere es mehrfach!',
+    hint: 'Jedes Mal sollte die Mitte gewinnen – aber die genauen Zahlen können unterschiedlich sein'
+  },
+  {
+    id: 'compare',
+    title: '⚖️ Vergleich: Reihen verändern',
+    description: 'Vergleiche: 4 Reihen mit 100 Kugeln vs. 12 Reihen mit 100 Kugeln',
+    rows: 8,
+    balls: 100,
+    question: 'Wie beeinflusst die Anzahl der Reihen die Form der Pyramide?',
+    hint: 'Mehr Reihen = mehr Fächer = flachere, breitere Verteilung'
+  },
+  {
+    id: 'extreme',
+    title: '🚀 Extremtest: Große Zahlen',
+    description: 'Teste sehr große Zahlen: 10.000 → 100.000 → 1.000.000 Kugeln',
+    rows: 10,
+    balls: 100000,
+    question: 'Die Form bleibt gleich – aber was wird größer?',
+    hint: 'Die Kurvenform bleibt stabil, nur die Zahlen werden riesig!'
+  },
+  {
+    id: 'speed',
+    title: '⚡ Geschwindigkeit: Langsam vs. Schnell',
+    description: 'Nutze den Geschwindigkeits-Schieber oben. Vergleiche 1x mit 10x+',
+    rows: 8,
+    balls: 100,
+    question: 'Ändert sich das Ergebnis, wenn du schneller oder langsamer läufst?',
+    hint: 'Die Animation ist nur zum Anschauen – das Ergebnis bleibt gleich!'
+  }
+];
+
+// Config / SDK
+const defaultConfig = {
+  main_title: 'Galton-Brett',
+  subtitle_text: 'Interaktive Simulation',
+  activity_intro: 'Erkunde das Galton-Brett mit Aufgaben!',
+  background_color: '#0f172a',
+  surface_color: '#1e293b',
+  text_color: '#f1f5f9',
+  primary_color: '#f59e0b',
+  secondary_color: '#3b82f6',
+  font_family: 'DM Sans',
+  font_size: 16
+};
+
+function applyConfig(c) {
+  const app = document.getElementById('app');
+  app.style.setProperty('--bg', c.background_color || defaultConfig.background_color);
+  app.style.setProperty('--surface', c.surface_color || defaultConfig.surface_color);
+  app.style.setProperty('--text', c.text_color || defaultConfig.text_color);
+  app.style.setProperty('--primary', c.primary_color || defaultConfig.primary_color);
+  app.style.setProperty('--secondary', c.secondary_color || defaultConfig.secondary_color);
+  app.style.setProperty('--peg-color', c.text_color || defaultConfig.text_color);
+  app.style.setProperty('--ball-color', c.primary_color || defaultConfig.primary_color);
+  app.style.setProperty('--bar-color', c.secondary_color || defaultConfig.secondary_color);
+  document.body.style.background = c.background_color || defaultConfig.background_color;
+  document.getElementById('mainTitle').textContent = c.main_title || defaultConfig.main_title;
+  document.getElementById('subtitleText').textContent = c.subtitle_text || defaultConfig.subtitle_text;
+  document.getElementById('activityIntro').textContent = c.activity_intro || defaultConfig.activity_intro;
+  const ff = (c.font_family || defaultConfig.font_family);
+  document.body.style.fontFamily = `${ff}, sans-serif`;
+  const fs = c.font_size || defaultConfig.font_size;
+  document.getElementById('mainTitle').style.fontSize = `${fs * 2}px`;
+  document.getElementById('subtitleText').style.fontSize = `${fs * 0.85}px`;
+  drawBoard();
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (c) => applyConfig(c),
+  mapToCapabilities: (c) => ({
+    recolorables: [
+      { get: () => c.background_color || defaultConfig.background_color, set: v => { c.background_color = v; window.elementSdk.setConfig({background_color:v}); }},
+      { get: () => c.surface_color || defaultConfig.surface_color, set: v => { c.surface_color = v; window.elementSdk.setConfig({surface_color:v}); }},
+      { get: () => c.text_color || defaultConfig.text_color, set: v => { c.text_color = v; window.elementSdk.setConfig({text_color:v}); }},
+      { get: () => c.primary_color || defaultConfig.primary_color, set: v => { c.primary_color = v; window.elementSdk.setConfig({primary_color:v}); }},
+      { get: () => c.secondary_color || defaultConfig.secondary_color, set: v => { c.secondary_color = v; window.elementSdk.setConfig({secondary_color:v}); }},
+    ],
+    borderables: [],
+    fontEditable: { get: () => c.font_family || defaultConfig.font_family, set: v => { c.font_family = v; window.elementSdk.setConfig({font_family:v}); }},
+    fontSizeable: { get: () => c.font_size || defaultConfig.font_size, set: v => { c.font_size = v; window.elementSdk.setConfig({font_size:v}); }},
+  }),
+  mapToEditPanelValues: (c) => new Map([
+    ['main_title', c.main_title || defaultConfig.main_title],
+    ['subtitle_text', c.subtitle_text || defaultConfig.subtitle_text],
+    ['activity_intro', c.activity_intro || defaultConfig.activity_intro],
+  ])
+});
+
+function switchMode(mode) {
+  currentMode = mode;
+  const free = document.getElementById('freeMode');
+  const act = document.getElementById('activityMode');
+  const btn1 = document.getElementById('modeFreeBtnTop');
+  const btn2 = document.getElementById('modeActBtnTop');
+
+  if (mode === 'free') {
+    free.classList.remove('hidden');
+    act.classList.add('hidden');
+    btn1.classList.add('active');
+    btn2.classList.remove('active');
+    resetSimulation();
+  } else {
+    free.classList.add('hidden');
+    act.classList.remove('hidden');
+    btn1.classList.remove('active');
+    btn2.classList.add('active');
+    
+    // Start with first activity
+    if (currentActivityIdx < 0) {
+      currentActivityIdx = 0;
+    }
+    displayCurrentActivity();
+    resetSimulation();
+  }
+}
+
+function displayCurrentActivity() {
+  if (currentActivityIdx < 0 || currentActivityIdx >= activities.length) {
+    currentActivityIdx = 0;
+  }
+  
+  const act = activities[currentActivityIdx];
+  
+  // Update title and description
+  document.getElementById('activityTitle').textContent = act.title;
+  document.getElementById('activityDescription').textContent = act.description;
+  document.getElementById('activityQuestion').textContent = act.question;
+  document.getElementById('activityHint').textContent = act.hint;
+  
+  // Update progress
+  const completed = completedActivities.size;
+  document.getElementById('progressText').textContent = `${completed + 1} von ${activities.length}`;
+  const progressPercent = ((completed + 1) / activities.length) * 100;
+  document.getElementById('progressBar').style.width = progressPercent + '%';
+  
+  // Set board parameters
+  rows = act.rows;
+  numBalls = act.balls;
+  document.getElementById('rowDisplay').textContent = rows;
+  document.getElementById('ballInput').value = numBalls;
+  
+  // Show completed activities
+  renderCompletedActivities();
+  
+  // Reset board
+  bins = new Array(rows + 1).fill(0);
+  balls = [];
+  drawBoard();
+  
+  // Update button states
+  document.getElementById('activityStartBtn').disabled = false;
+  document.getElementById('activityStartBtn').style.opacity = '1';
+  document.getElementById('skipActivityBtn').style.opacity = '1';
+}
+
+function renderCompletedActivities() {
+  const list = document.getElementById('completedList');
+  list.innerHTML = '';
+  
+  completedActivities.forEach((id) => {
+    const act = activities.find(a => a.id === id);
+    if (act) {
+      const card = document.createElement('div');
+      card.className = 'activity-card completed';
+      card.style.opacity = '0.6';
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--primary);">✓</span>
+          <div>
+            <div style="font-weight: 600; font-size: 14px; color: var(--text);">${act.title}</div>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+  });
+}
+
+function startActivitySimulation() {
+  document.getElementById('activityStartBtn').disabled = true;
+  document.getElementById('activityStartBtn').style.opacity = '0.5';
+  document.getElementById('skipActivityBtn').style.opacity = '0.7';
+  startSimulation();
+}
+
+function skipToNextActivity() {
+  // Mark current activity as completed immediately
+  if (currentActivityIdx >= 0 && currentActivityIdx < activities.length) {
+    const currentAct = activities[currentActivityIdx];
+    completedActivities.add(currentAct.id);
+    renderCompletedActivities();
+  }
+  
+  // Clear any animations and move to next activity
+  running = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  
+  // Show feedback
+  const feedback = document.getElementById('activityFeedback');
+  const msg = document.createElement('div');
+  msg.className = 'success-flash';
+  msg.textContent = '✓ Übersprungen! Nächste Aufgabe wird geladen...';
+  feedback.innerHTML = '';
+  feedback.appendChild(msg);
+  feedback.classList.remove('hidden');
+  
+  // Move to next activity after delay
+  setTimeout(() => {
+    if (currentActivityIdx < activities.length - 1) {
+      currentActivityIdx++;
+      displayCurrentActivity();
+      document.getElementById('activityFeedback').classList.add('hidden');
+    } else {
+      msg.textContent = '🎉 Alle Aufgaben abgeschlossen!';
+      currentActivityIdx = -1;
+    }
+  }, 1200);
+}
+
+function renderActivities() {
+  const list = document.getElementById('activityList');
+  list.innerHTML = '';
+  activities.forEach((act, idx) => {
+    const card = document.createElement('div');
+    card.className = `activity-card${completedActivities.has(act.id) ? ' completed' : ''}`;
+    card.innerHTML = `
+      <div style="display:flex; justify-content: space-between; align-items: start; gap: 12px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: var(--text);">${act.title} <span class="check-icon">✓</span></div>
+          <div style="font-size: 12px; color: var(--text); opacity: 0.7; margin-top: 4px;">${act.description}</div>
+        </div>
+      </div>
+    `;
+    card.onclick = () => selectActivity(idx);
+    list.appendChild(card);
+  });
+}
+
+function getColor(varName) {
+  return getComputedStyle(document.getElementById('app')).getPropertyValue(varName).trim();
+}
+
+function sizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  W = canvas.width; H = canvas.height;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  W = rect.width; H = rect.height;
+  binAreaH = H * 0.28;
+  pegStartY = H * 0.08;
+  const pegEndY = H - binAreaH - 10;
+  pegSpacingY = (pegEndY - pegStartY) / rows;
+  pegSpacingX = Math.min(pegSpacingY * 1.1, (W * 0.8) / (rows + 1));
+}
+
+function pegPos(r, c) {
+  const numInRow = r + 1;
+  const rowW = numInRow * pegSpacingX;
+  const x = W / 2 - rowW / 2 + c * pegSpacingX + pegSpacingX / 2;
+  const y = pegStartY + r * pegSpacingY;
+  return { x, y };
+}
+
+function drawBoard() {
+  sizeCanvas();
+  ctx.clearRect(0, 0, W, H);
+  const pegColor = getColor('--peg-color');
+  const barColor = getColor('--bar-color');
+  const textColor = getColor('--text');
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c <= r; c++) {
+      const p = pegPos(r, c);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = pegColor;
+      ctx.fill();
+    }
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 15, pegStartY - 20);
+  ctx.lineTo(W/2, pegStartY - 8);
+  ctx.lineTo(W/2 + 15, pegStartY - 20);
+  ctx.strokeStyle = pegColor;
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.4;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  const numBins = rows + 1;
+  const binW = (numInBinsArea()) / numBins;
+  const binBottom = H - 8;
+  const maxBin = Math.max(...bins, 1);
+  const logMax = Math.log(maxBin + 1);
+
+  for (let i = 0; i <= numBins; i++) {
+    const x = binStartX() + i * binW;
+    ctx.beginPath();
+    ctx.moveTo(x, H - binAreaH);
+    ctx.lineTo(x, binBottom);
+    ctx.strokeStyle = pegColor;
+    ctx.globalAlpha = 0.15;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  for (let i = 0; i < numBins; i++) {
+    if (bins[i] > 0) {
+      const x = binStartX() + i * binW + 2;
+      const expectedMax = numBalls / numBins * 2;
+      const barH = (bins[i] / expectedMax) * (binAreaH - 20);
+      ctx.fillStyle = barColor;
+      ctx.globalAlpha = 0.85;
+      const r = 3;
+      const bx = x, by = binBottom - barH, bw = binW - 4, bh = barH;
+      ctx.beginPath();
+      ctx.moveTo(bx + r, by);
+      ctx.lineTo(bx + bw - r, by);
+      ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+      ctx.lineTo(bx + bw, by + bh);
+      ctx.lineTo(bx, by + bh);
+      ctx.lineTo(bx, by + r);
+      ctx.quadraticCurveTo(bx, by, bx + r, by);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = textColor;
+      ctx.font = '10px DM Sans';
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = 0.7;
+      ctx.fillText(bins[i], x + (binW - 4) / 2, by - 4);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  const ballColor = getColor('--ball-color');
+  for (const b of balls) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = ballColor;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 3;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function binStartX() {
+  const numBins = rows + 1;
+  return W / 2 - (numBins * pegSpacingX) / 2;
+}
+function numInBinsArea() {
+  return (rows + 1) * pegSpacingX;
+}
+
+function changeRows(d) {
+  if (running) return;
+  rows = Math.max(2, Math.min(16, rows + d));
+  document.getElementById('rowDisplay').textContent = rows;
+  bins = new Array(rows + 1).fill(0);
+  balls = [];
+  drawBoard();
+}
+
+function changeBalls(d) {
+  if (running) return;
+  numBalls = Math.max(10, Math.min(1000000, numBalls + d));
+  document.getElementById('ballInput').value = numBalls;
+}
+
+function updateBallsFromInput() {
+  if (running) return;
+  const val = parseInt(document.getElementById('ballInput').value, 10);
+  if (!isNaN(val)) {
+    numBalls = Math.max(10, Math.min(1000000, val));
+    document.getElementById('ballInput').value = numBalls;
+  }
+}
+
+function updateSpeed() {
+  const val = parseFloat(document.getElementById('speedSlider').value);
+  animSpeed = val;
+  document.getElementById('speedDisplay').textContent = val.toFixed(1) + 'x';
+}
+
+function adjustInputWidth() {
+  const input = document.getElementById('ballInput');
+  const val = input.value || '50';
+  input.style.width = Math.max(60, val.length * 14 + 16) + 'px';
+}
+
+document.getElementById('ballInput').addEventListener('input', adjustInputWidth);
+
+function resetSimulation() {
+  running = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  bins = new Array(rows + 1).fill(0);
+  balls = [];
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startBtn').style.opacity = '1';
+  document.getElementById('skipBtnContainer').classList.add('hidden');
+  document.getElementById('stats').textContent = '';
+  drawBoard();
+}
+
+function skipAnimation() {
+  let settled = 0;
+  for (let b of bins) {
+    settled += b;
+  }
+  
+  for (const b of balls) {
+    if (b.state !== 'done') {
+      bins[b.binIndex]++;
+      settled++;
+    }
+  }
+  
+  while (settled < numBalls) {
+    const randomBin = Math.floor(Math.random() * (rows + 1));
+    bins[randomBin]++;
+    settled++;
+  }
+  
+  balls = [];
+  running = false;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startBtn').style.opacity = '1';
+  document.getElementById('skipBtnContainer').classList.add('hidden');
+  document.getElementById('stats').textContent = `${numBalls} Kugeln verteilt auf ${rows + 1} Fächer`;
+  
+  // Mark activity as completed
+  if (currentMode === 'activities' && currentActivityIdx >= 0) {
+    completedActivities.add(activities[currentActivityIdx].id);
+    renderActivities();
+    showSuccessMessage();
+  }
+  
+  drawBoard();
+}
+
+function showSuccessMessage() {
+  const feedback = document.getElementById('activityFeedback');
+  const msg = document.createElement('div');
+  msg.className = 'success-flash';
+  msg.textContent = '✓ Aufgabe abgeschlossen!';
+  feedback.innerHTML = '';
+  feedback.appendChild(msg);
+  feedback.classList.remove('hidden');
+  
+  // In activity mode, auto-advance to next activity
+  if (currentMode === 'activities' && currentActivityIdx < activities.length - 1) {
+    setTimeout(() => {
+      msg.innerHTML = '⏭️ Nächste Aufgabe wird geladen...';
+    }, 600);
+    
+    setTimeout(() => {
+      currentActivityIdx++;
+      displayCurrentActivity();
+      document.getElementById('activityFeedback').classList.add('hidden');
+    }, 1800);
+  } else if (currentMode === 'activities' && currentActivityIdx === activities.length - 1) {
+    setTimeout(() => {
+      msg.innerHTML = '🎉 Alle Aufgaben abgeschlossen!';
+    }, 600);
+  }
+}
+
+function startSimulation() {
+  if (running) return;
+  running = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').style.opacity = '0.5';
+  document.getElementById('skipBtnContainer').classList.remove('hidden');
+  bins = new Array(rows + 1).fill(0);
+  balls = [];
+  sizeCanvas();
+
+  let launched = 0, settled = 0;
+  let launchInterval = Math.max(10, 1500 / numBalls);
+  let lastLaunch = 0;
+
+  function tick(ts) {
+    if (!running) return;
+
+    if (launched < numBalls && ts - lastLaunch > launchInterval) {
+      const b = {
+        x: W / 2 + (Math.random() - 0.5) * 4,
+        y: pegStartY - 25,
+        row: 0, col: 0,
+        vy: 0, vx: 0,
+        targetX: 0, targetY: 0,
+        state: 'falling_to_peg',
+        binIndex: 0
+      };
+      let col = 0;
+      const path = [];
+      for (let r = 0; r < rows; r++) {
+        const goRight = Math.random() < 0.5 ? 0 : 1;
+        col += goRight;
+        path.push({ r, col, goRight });
+      }
+      b.path = path;
+      b.pathIdx = 0;
+      b.binIndex = col;
+      const firstPeg = pegPos(0, 0);
+      b.targetX = firstPeg.x;
+      b.targetY = firstPeg.y;
+      balls.push(b);
+      launched++;
+      lastLaunch = ts;
+    }
+
+    const speed = 3.5 * animSpeed;
+    for (let i = balls.length - 1; i >= 0; i--) {
+      const b = balls[i];
+      if (b.state === 'done') continue;
+
+      if (b.state === 'falling_to_peg') {
+        const dx = b.targetX - b.x, dy = b.targetY - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < speed) {
+          b.x = b.targetX; b.y = b.targetY;
+          const step = b.path[b.pathIdx];
+          if (step) {
+            const nextR = step.r + 1;
+            if (nextR < rows) {
+              b.pathIdx++;
+              const ns = b.path[b.pathIdx];
+              if (ns) {
+                const np = pegPos(ns.r, ns.col);
+                b.targetX = np.x; b.targetY = np.y;
+              } else {
+                b.state = 'falling_to_bin';
+                const binW = numInBinsArea() / (rows + 1);
+                b.targetX = binStartX() + b.binIndex * binW + binW / 2;
+                b.targetY = H - 12;
+              }
+            } else {
+              b.pathIdx++;
+              if (b.pathIdx < b.path.length) {
+                const ns = b.path[b.pathIdx];
+                const np = pegPos(ns.r, ns.col);
+                b.targetX = np.x; b.targetY = np.y;
+              } else {
+                b.state = 'falling_to_bin';
+                const binW = numInBinsArea() / (rows + 1);
+                b.targetX = binStartX() + b.binIndex * binW + binW / 2;
+                b.targetY = H - 12;
+              }
+            }
+          } else {
+            b.state = 'falling_to_bin';
+            const binW = numInBinsArea() / (rows + 1);
+            b.targetX = binStartX() + b.binIndex * binW + binW / 2;
+            b.targetY = H - 12;
+          }
+        } else {
+          b.x += (dx / dist) * speed;
+          b.y += (dy / dist) * speed;
+        }
+      } else if (b.state === 'falling_to_bin') {
+        const dx = b.targetX - b.x, dy = b.targetY - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < speed * 1.5) {
+          b.state = 'done';
+          bins[b.binIndex]++;
+          settled++;
+          balls.splice(i, 1);
+          if (settled === numBalls) {
+            running = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').style.opacity = '1';
+            document.getElementById('stats').textContent = `${numBalls} Kugeln verteilt auf ${rows + 1} Fächer`;
+            
+            if (currentMode === 'activities' && currentActivityIdx >= 0) {
+              completedActivities.add(activities[currentActivityIdx].id);
+              renderActivities();
+              showSuccessMessage();
+            }
+          }
+        } else {
+          b.x += (dx / dist) * speed * 1.5;
+          b.y += (dy / dist) * speed * 1.5;
+        }
+      }
+    }
+
+    drawBoard();
+    animFrame = requestAnimationFrame(tick);
+  }
+  animFrame = requestAnimationFrame(tick);
+}
+
+bins = new Array(rows + 1).fill(0);
+window.addEventListener('resize', () => { if (!running) drawBoard(); });
+setTimeout(() => { drawBoard(); adjustInputWidth(); }, 50);
+lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f3514cd8765f811',t:'MTc3NzM2ODk3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
