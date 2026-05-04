@@ -1,1 +1,558 @@
 <!doctype html><html lang="de" class="h-full"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Galton-Brett Simulation</title></head><body><p>Diese Variante wurde extern bereitgestellt. Bitte den vollständigen Export einsetzen.</p></body></html>
+<!doctype html><html lang="de" class="h-full"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Galton-Brett Simulation</title></head><body><p>Diese Variante wurde extern bereitgestellt. Bitte den vollständigen Export einsetzen.</p></body></html>
+<!doctype html>
+<html lang="de" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galton-Brett Simulation</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <style>
+html, body { height: 100%; margin: 0; font-family: 'DM Sans', sans-serif; }
+.mono { font-family: 'Space Mono', monospace; }
+
+.galton-canvas { background: #0a0e1a; border-radius: 16px; position: relative; overflow: hidden; }
+.galton-canvas::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.peg {
+  width: 16px; height: 16px; background: #4f46e5; border-radius: 50%;
+  position: absolute; box-shadow: 0 0 12px rgba(99,102,241,0.7);
+  transition: background 0.15s;
+}
+.peg.hit { background: #a5b4fc; box-shadow: 0 0 20px rgba(165,180,252,1); transform: scale(1.3); }
+
+.ball {
+  width: 10px; height: 10px; border-radius: 50%;
+  position: absolute; z-index: 10; pointer-events: none;
+  background: radial-gradient(circle at 35% 35%, #fbbf24, #f59e0b);
+  box-shadow: 0 0 8px rgba(251,191,36,0.6);
+}
+
+.bin-bar {
+  transition: height 0.3s ease-out;
+  border-radius: 4px 4px 0 0;
+}
+
+.control-btn {
+  padding: 10px 20px; border-radius: 10px; font-weight: 700;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; border: none;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+.control-btn:hover { transform: translateY(-1px); }
+.control-btn:active { transform: translateY(0); }
+
+.info-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 16px;
+}
+
+@keyframes fadeInUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+.fade-in { animation: fadeInUp 0.5s ease-out both; }
+.fade-in-d1 { animation-delay: 0.1s; }
+.fade-in-d2 { animation-delay: 0.2s; }
+.fade-in-d3 { animation-delay: 0.3s; }
+
+.slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: #1e1b4b; outline: none; }
+.slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; border: 2px solid #a5b4fc; }
+
+.tooltip-box {
+  position: absolute; background: #1e1b4b; border: 1px solid #4f46e5;
+  color: #e0e7ff; padding: 8px 12px; border-radius: 8px; font-size: 12px;
+  pointer-events: none; z-index: 50; white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto" style="background:#06080f; color:#e0e7ff;">
+  <div id="app" class="h-full w-full flex flex-col"><!-- Header -->
+   <header class="text-center pt-6 pb-3 px-4 fade-in">
+    <h1 id="mainTitle" class="text-3xl md:text-4xl font-bold tracking-tight" style="color:#a5b4fc;">Galton-Brett</h1>
+    <p id="subtitle" class="mt-1 text-sm opacity-60">Vom Zufall zur Normalverteilung</p>
+   </header><!-- Main content -->
+   <div class="flex-1 flex flex-col lg:flex-row gap-4 px-4 pb-4 max-w-7xl mx-auto w-full"><!-- Left: Canvas -->
+    <div class="flex-1 flex flex-col gap-3 min-w-0 fade-in fade-in-d1">
+     <div class="galton-canvas flex-1 relative" id="canvas" style="min-height:420px;"></div><!-- Histogram below canvas -->
+     <div class="galton-canvas p-3" style="height:140px;" id="histContainer">
+      <div class="flex items-end justify-center gap-1 h-full" id="histogram"></div>
+     </div>
+    </div><!-- Right: Controls & Info -->
+    <div class="w-full lg:w-72 flex flex-col gap-3 flex-shrink-0 fade-in fade-in-d2"><!-- Controls -->
+     <div class="info-card flex flex-col gap-3"><label class="text-xs font-bold uppercase tracking-wider opacity-50">Reihen</label>
+      <div class="flex items-center gap-2"><input type="range" id="rowSlider" min="4" max="14" value="8" class="slider-track flex-1"> <span id="rowVal" class="mono text-sm w-6 text-center">8</span>
+      </div><label class="text-xs font-bold uppercase tracking-wider opacity-50">Geschwindigkeit</label>
+      <div class="flex items-center gap-2"><input type="range" id="speedSlider" min="1" max="5" value="3" class="slider-track flex-1"> <span id="speedVal" class="mono text-sm w-6 text-center">3</span>
+      </div>
+      <div class="flex gap-2 mt-1"><button id="dropOneBtn" class="control-btn flex-1 text-sm" style="background:#4f46e5; color:#fff; box-shadow: 0 4px 12px rgba(79,70,229,0.4);"> +1 Kugel </button> <button id="drop10Btn" class="control-btn flex-1 text-sm" style="background:#4f46e5; color:#fff; box-shadow: 0 4px 12px rgba(79,70,229,0.4);"> +50 </button>
+      </div>
+      <div class="flex gap-2"><button id="drop100Btn" class="control-btn flex-1 text-sm" style="background:#6366f1; color:#fff;"> +500 </button> <button id="resetBtn" class="control-btn flex-1 text-sm" style="background:rgba(255,255,255,0.06); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);"> Reset </button>
+      </div>
+     </div><!-- Stats -->
+     <div class="info-card flex flex-col gap-2"><label class="text-xs font-bold uppercase tracking-wider opacity-50">Statistik</label>
+      <div class="flex justify-between">
+       <div>
+        <div class="text-xs opacity-40">
+         Kugeln
+        </div>
+        <div id="statTotal" class="stat-value mono" style="color:#fbbf24;">
+         0
+        </div>
+       </div>
+       <div>
+        <div class="text-xs opacity-40">
+         Mittelwert
+        </div>
+        <div id="statMean" class="stat-value mono" style="color:#a5b4fc;">
+         –
+        </div>
+       </div>
+       <div>
+        <div class="text-xs opacity-40">
+         Std.Abw.
+        </div>
+        <div id="statStd" class="stat-value mono" style="color:#6ee7b7;">
+         –
+        </div>
+       </div>
+      </div>
+     </div><!-- Explanation -->
+     <div class="info-card fade-in fade-in-d3">
+      <div class="flex items-start gap-2 mb-2">
+       <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline>
+       </svg><span class="text-xs font-bold uppercase tracking-wider opacity-50">So funktioniert's</span>
+      </div>
+      <p id="infoText" class="text-xs leading-relaxed opacity-70">Jede Kugel trifft auf Stifte und geht zufällig nach links oder rechts — wie ein Münzwurf bei jeder Stufe. Bei vielen Kugeln entsteht eine Glockenkurve: die Binomialverteilung.</p>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div id="tooltip" class="tooltip-box" style="display:none;"></div><!-- Learning Activity Modal -->
+  <div id="activityModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center;">
+   <div style="background:#0a0e1a; border:1px solid rgba(99,102,241,0.3); border-radius:16px; padding:28px; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+     <div style="width:40px; height:40px; border-radius:50%; background:rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center;"><span style="font-size:24px;">💡</span>
+     </div>
+     <h2 id="activityTitle" style="font-size:1.25rem; font-weight:700; color:#a5b4fc; margin:0;">Beobachtung</h2>
+    </div>
+    <p id="activityQuestion" style="color:#e0e7ff; font-size:0.95rem; line-height:1.6; margin:0 0 16px 0;"></p>
+    <div id="hintContainer" style="margin:16px 0; display:none;"><button id="showHintBtn" style="background:rgba(165,180,252,0.1); border:1px solid rgba(165,180,252,0.3); color:#a5b4fc; padding:8px 12px; border-radius:8px; font-size:0.85rem; cursor:pointer; width:100%; font-weight:600; transition:all 0.2s;">💭 Hinweis anzeigen</button>
+     <p id="hintText" style="display:none; background:rgba(99,102,241,0.15); border-left:3px solid #6366f1; padding:12px; border-radius:6px; margin-top:12px; font-size:0.9rem; color:#e0e7ff; line-height:1.5;"></p>
+    </div><button id="closeActivityBtn" style="width:100%; background:#6366f1; color:#fff; padding:12px; border-radius:10px; border:none; font-weight:700; cursor:pointer; transition:all 0.2s; margin-top:16px;">Weiter</button>
+   </div>
+  </div>
+  <script>
+// ---- State ----
+let ROWS = 8, SPEED = 3;
+const bins = [];
+let activeBalls = [];
+let pegElements = [];
+let animFrame = null;
+let totalDropped = 0;
+
+// Learning activities triggered at specific drop counts (sorted for checking order)
+const activityTriggers = [1, 10, 50, 100, 200, 500];
+const activities = {
+  1: {
+    title: "Erste Kugel",
+    question: "Beobachte: Die Kugel trifft auf Stifte. Was passiert bei jedem Stift?",
+    hint: "Bei jedem Stift geht die Kugel zufällig nach links oder rechts — genau wie Kopf/Zahl bei einem Münzwurf!"
+  },
+  10: {
+    title: "Muster erkennen",
+    question: "Nach 10 Kugeln — welche Fächer haben die meisten Kugeln?",
+    hint: "Die Kugeln sammeln sich eher in der Mitte. Das ist kein Zufall — es ist die Binomialverteilung!"
+  },
+  50: {
+    title: "Verteilung bildet sich",
+    question: "Nach 50 Kugeln — wie sieht die Form des Histogramms aus?",
+    hint: "Es entsteht eine Glockenkurve — niedrig an den Rändern, hoch in der Mitte. Mathematiker nennen das Normalverteilung!"
+  },
+  100: {
+    title: "Große Zahlen",
+    question: "Nach 100 Kugeln — verändert sich das Muster noch stark oder wird es stabiler?",
+    hint: "Je mehr Kugeln fallen, desto stabiler und glatter wird das Muster. Das ist das Gesetz der großen Zahlen!"
+  },
+  200: {
+    title: "Symmetrie",
+    question: "Nach 200 Kugeln — erkennst du eine Symmetrie im Histogramm?",
+    hint: "Das Histogramm ist spiegelsymmetrisch um die Mitte! Das kommt daher, dass 'links' und 'rechts' genauso wahrscheinlich sind."
+  },
+  500: {
+    title: "Perfektion durch Wiederholung",
+    question: "Nach 500 Kugeln — passt die Form noch zur mathematischen Theorie?",
+    hint: "Mit vielen Wiederholungen kommt die echte Verteilung der theoretischen Kurve immer näher. Das ist das Herz der Wahrscheinlichkeit!"
+  }
+};
+
+let nextActivityIndex = 0;  // Track which activity should come next
+
+const canvas = document.getElementById('canvas');
+const histogram = document.getElementById('histogram');
+const tooltip = document.getElementById('tooltip');
+const activityModal = document.getElementById('activityModal');
+const activityTitle = document.getElementById('activityTitle');
+const activityQuestion = document.getElementById('activityQuestion');
+const hintContainer = document.getElementById('hintContainer');
+const hintText = document.getElementById('hintText');
+const showHintBtn = document.getElementById('showHintBtn');
+const closeActivityBtn = document.getElementById('closeActivityBtn');
+
+let shownActivities = new Set();
+let activityQueue = [];  // Queue for activities to show sequentially
+let activityShowing = false;  // Tracks if a modal is currently displayed
+
+// ---- Layout ----
+function pegX(row, col, w, h) {
+  const cx = w / 2;
+  const xSpacing = Math.min(36, (w - 40) / (ROWS + 1));
+  const ySpacing = (h - 60) / (ROWS + 1);
+  return cx + (col - row / 2) * xSpacing;
+}
+
+function pegY(row, w, h) {
+  const ySpacing = (h - 60) / (ROWS + 1);
+  return 30 + row * ySpacing;
+}
+
+function buildBoard() {
+  canvas.querySelectorAll('.peg').forEach(e => e.remove());
+  pegElements = [];
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+
+  for (let r = 0; r < ROWS; r++) {
+    pegElements[r] = [];
+    for (let c = 0; c <= r; c++) {
+      const peg = document.createElement('div');
+      peg.className = 'peg';
+      const px = pegX(r, c, w, h), py = pegY(r, w, h);
+      peg.style.left = (px - 4) + 'px';
+      peg.style.top = (py - 4) + 'px';
+      canvas.appendChild(peg);
+      pegElements[r][c] = peg;
+    }
+  }
+}
+
+function buildHistogram() {
+  bins.length = 0;
+  for (let i = 0; i <= ROWS; i++) bins.push(0);
+  histogram.innerHTML = '';
+  const numBins = ROWS + 1;
+  
+  for (let i = 0; i < numBins; i++) {
+    const col = document.createElement('div');
+    col.className = 'flex flex-col items-center justify-end h-full';
+    col.style.flex = '1';
+    
+    const bar = document.createElement('div');
+    bar.className = 'bin-bar w-full';
+    bar.style.height = '0px';
+    bar.style.background = 'linear-gradient(180deg, #818cf8, #4f46e5)';
+    bar.dataset.bin = i;
+    
+    const lbl = document.createElement('div');
+    lbl.className = 'mono text-center mt-1';
+    lbl.style.fontSize = '9px';
+    lbl.style.opacity = '0.4';
+    lbl.textContent = i;
+    
+    col.appendChild(bar);
+    col.appendChild(lbl);
+
+    // Tooltip on hover
+    col.addEventListener('mouseenter', (e) => {
+      const count = bins[i];
+      if (totalDropped === 0) return;
+      const pct = (count / totalDropped * 100).toFixed(1);
+      const theory = (binomCoeff(ROWS, i) * Math.pow(0.5, ROWS) * 100).toFixed(1);
+      tooltip.innerHTML = `<strong>Fach ${i}</strong><br>Anzahl: ${count} (${pct}%)<br>Theorie: ${theory}%`;
+      tooltip.style.display = 'block';
+    });
+    
+    col.addEventListener('mousemove', (e) => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 40) + 'px';
+    });
+    
+    col.addEventListener('mouseleave', () => { 
+      tooltip.style.display = 'none'; 
+    });
+
+    histogram.appendChild(col);
+  }
+}
+
+function binomCoeff(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let c = 1;
+  for (let i = 0; i < k; i++) c = c * (n - i) / (i + 1);
+  return c;
+}
+
+function updateHistogram() {
+  const maxCount = Math.max(1, ...bins);
+  const containerH = document.getElementById('histContainer').clientHeight - 30;
+  const bars = histogram.querySelectorAll('.bin-bar');
+  
+  bars.forEach((bar) => {
+    const i = parseInt(bar.dataset.bin);
+    const h = bins[i] / maxCount * containerH;
+    bar.style.height = h + 'px';
+  });
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = totalDropped;
+  
+  if (totalDropped === 0) {
+    document.getElementById('statMean').textContent = '–';
+    document.getElementById('statStd').textContent = '–';
+    return;
+  }
+  
+  let sum = 0, sum2 = 0;
+  for (let i = 0; i <= ROWS; i++) { 
+    sum += bins[i] * i; 
+    sum2 += bins[i] * i * i; 
+  }
+  
+  const mean = sum / totalDropped;
+  const variance = sum2 / totalDropped - mean * mean;
+  
+  document.getElementById('statMean').textContent = mean.toFixed(2);
+  document.getElementById('statStd').textContent = Math.sqrt(Math.max(0, variance)).toFixed(2);
+  
+  // Check if next activity should trigger
+  if (nextActivityIndex < activityTriggers.length) {
+    const nextTrigger = activityTriggers[nextActivityIndex];
+    if (totalDropped >= nextTrigger) {
+      showActivity(nextTrigger);
+      nextActivityIndex++;
+    }
+  }
+}
+
+function showActivity(count) {
+  const activity = activities[count];
+  if (!activity) return;
+  
+  shownActivities.add(count);
+  
+  // Add to queue instead of showing immediately
+  activityQueue.push({ count, activity });
+  
+  // If no activity is currently showing, display the next one
+  if (!activityShowing) {
+    displayNextActivity();
+  }
+}
+
+function displayNextActivity() {
+  if (activityQueue.length === 0) {
+    activityShowing = false;
+    return;
+  }
+  
+  activityShowing = true;
+  const { count, activity } = activityQueue.shift();
+  
+  activityTitle.textContent = activity.title;
+  activityQuestion.textContent = activity.question;
+  hintText.textContent = activity.hint;
+  hintText.style.display = 'none';
+  showHintBtn.textContent = '💭 Hinweis anzeigen';
+  
+  if (activity.hint) {
+    hintContainer.style.display = 'block';
+  } else {
+    hintContainer.style.display = 'none';
+  }
+  
+  activityModal.style.display = 'flex';
+}
+
+function closeActivity() {
+  activityModal.style.display = 'none';
+  hintText.style.display = 'none';
+  showHintBtn.textContent = '💭 Hinweis anzeigen';
+  
+  // Show next activity if there's one in the queue
+  displayNextActivity();
+}
+
+// ---- Ball Animation ----
+function dropBall() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const el = document.createElement('div');
+  el.className = 'ball';
+  canvas.appendChild(el);
+
+  // Kugel-Weg mit realistischen Abprallpunkten
+  const path = [];
+  let col = 0;
+  const startX = w / 2, startY = 6;
+  path.push({ x: startX, y: startY, isImpact: false });
+
+  for (let r = 0; r < ROWS; r++) {
+    const goRight = Math.random() < 0.5 ? 0 : 1;
+    col += goRight;
+    
+    // Abprallpunkt (Stift)
+    const pegX_val = pegX(r, col > r ? r : col, w, h);
+    const pegY_val = pegY(r, w, h);
+    path.push({ x: pegX_val, y: pegY_val, isImpact: true, pegRow: r, pegCol: Math.min(col, r) });
+    
+    // Abprallvektor: stärker nach der Richtung
+    const bounceAngle = goRight ? 35 : -35;
+    const bounceRad = bounceAngle * Math.PI / 180;
+    const bountDistance = 24;
+    const bounceX = pegX_val + Math.cos(bounceRad) * bountDistance;
+    const bounceY = pegY_val + Math.sin(bounceRad) * bountDistance;
+    path.push({ x: bounceX, y: bounceY, isImpact: false });
+    
+    // Fallphase zum nächsten Stift
+    if (r < ROWS - 1) {
+      const nextPegY = pegY(r + 1, w, h);
+      const dropX = pegX(r + 1, col > r ? r : col, w, h);
+      const midY = (bounceY + nextPegY) / 2;
+      path.push({ x: dropX, y: midY, isImpact: false });
+    }
+  }
+
+  const binIdx = col > ROWS ? ROWS : col;
+  const finalX = pegX(ROWS - 1, binIdx, w, h) + (binIdx - ROWS / 2) * 2;
+  path.push({ x: finalX, y: h - 10, isImpact: false });
+
+  activeBalls.push({ 
+    el, 
+    path, 
+    t: 0, 
+    binIdx, 
+    speed: 0.010 + SPEED * 0.007
+  });
+}
+
+function animate() {
+  const toRemove = [];
+  
+  for (let i = activeBalls.length - 1; i >= 0; i--) {
+    const b = activeBalls[i];
+    b.t += b.speed;
+    
+    if (b.t >= 1) {
+      b.el.remove();
+      bins[b.binIdx]++;
+      totalDropped++;
+      toRemove.push(i);
+      continue;
+    }
+    
+    const totalSegs = b.path.length - 1;
+    const rawIdx = b.t * totalSegs;
+    const segIdx = Math.min(Math.floor(rawIdx), totalSegs - 1);
+    const segT = rawIdx - segIdx;
+    const p0 = b.path[segIdx], p1 = b.path[segIdx + 1];
+    const x = p0.x + (p1.x - p0.x) * segT;
+    const y = p0.y + (p1.y - p0.y) * segT;
+    
+    b.el.style.left = (x - 5) + 'px';
+    b.el.style.top = (y - 5) + 'px';
+
+    if (p1.pegRow !== undefined && segT > 0.3 && !b['flashed_' + segIdx]) {
+      b['flashed_' + segIdx] = true;
+      const peg = pegElements[p1.pegRow]?.[p1.pegCol];
+      if (peg) { 
+        peg.classList.add('hit'); 
+        setTimeout(() => peg.classList.remove('hit'), 200); 
+      }
+    }
+  }
+  
+  for (const i of toRemove) activeBalls.splice(i, 1);
+  if (toRemove.length) { 
+    updateHistogram(); 
+    updateStats(); 
+  }
+  
+  animFrame = requestAnimationFrame(animate);
+}
+
+function dropMultiple(n) {
+  let dropped = 0;
+  const interval = Math.max(5, 80 - SPEED * 15);
+  const id = setInterval(() => {
+    const batch = Math.min(Math.ceil(n / 40), n - dropped);
+    for (let i = 0; i < batch; i++) dropBall();
+    dropped += batch;
+    if (dropped >= n) clearInterval(id);
+  }, interval);
+}
+
+function reset() {
+  activeBalls.forEach(b => b.el.remove());
+  activeBalls = [];
+  totalDropped = 0;
+  nextActivityIndex = 0;  // Reset activity tracker
+  activityQueue = [];  // Clear activity queue
+  activityShowing = false;  // Reset showing flag
+  buildBoard();
+  buildHistogram();
+  updateStats();
+  closeActivity();
+}
+
+// ---- Events ----
+document.getElementById('dropOneBtn').addEventListener('click', () => dropBall());
+document.getElementById('drop10Btn').addEventListener('click', () => dropMultiple(50));
+document.getElementById('drop100Btn').addEventListener('click', () => dropMultiple(500));
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+closeActivityBtn.addEventListener('click', closeActivity);
+
+showHintBtn.addEventListener('click', () => {
+  if (hintText.style.display === 'none') {
+    hintText.style.display = 'block';
+    showHintBtn.textContent = '💡 Hinweis verbergen';
+  } else {
+    hintText.style.display = 'none';
+    showHintBtn.textContent = '💭 Hinweis anzeigen';
+  }
+});
+
+document.getElementById('rowSlider').addEventListener('input', (e) => {
+  ROWS = parseInt(e.target.value);
+  document.getElementById('rowVal').textContent = ROWS;
+  reset();
+});
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+  SPEED = parseInt(e.target.value);
+  document.getElementById('speedVal').textContent = SPEED;
+});
+
+// ---- Resize ----
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => { buildBoard(); }, 200);
+});
+
+// ---- Init ----
+buildBoard();
+buildHistogram();
+updateStats();
+animFrame = requestAnimationFrame(animate);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f351385836462b6',t:'MTc3NzM2ODkyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
