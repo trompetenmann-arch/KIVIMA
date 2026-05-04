@@ -442,10 +442,12 @@ const sanitizeVariantButtons = (buttons, allowedSource) => {
 
   buttons.forEach((button) => {
     const source = (button.dataset.variantSrc || "").trim();
-    const isHtmlSource = /\.html?$/i.test(source);
+    const isRemoteSource = /^https?:\/\//i.test(source);
+    const isHtmlSource = /\.html?(?:[#?].*)?$/i.test(source);
+    const isValidSource = isRemoteSource || isHtmlSource;
     const isAllowedSource = typeof allowedSource === "function" ? allowedSource(source) : true;
 
-    if (!source || !isHtmlSource || !isAllowedSource) {
+    if (!source || !isValidSource || !isAllowedSource) {
       button.closest(".variant-tile")?.remove();
       return;
     }
