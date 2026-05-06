@@ -622,39 +622,27 @@ footer .inner {
   max-width: 900px;
 }
 
-.kivima-goals,
-.kivima-perspectives,
-.kivima-outlook,
-.kivima-about-block {
+.kivima-textblock {
   margin-bottom: 2rem;
-}
-
-.goals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.goal-card {
-  border-left: 4px solid #2c5f7c;
-  background: #f5f5f0;
-}
-
-.goal-number {
-  display: block;
-  font-size: 0.82rem;
-  color: #2c5f7c;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.35rem;
-}
-
-.perspective h3 {
-  color: #2c5f7c;
-}
-
-.kivima-outlook {
   background: #fafaf7;
+}
+
+.kivima-textblock .section-title {
+  margin-top: 0;
+}
+
+.kivima-textblock h3 {
+  margin: 1.25rem 0 0.5rem;
+  color: var(--primary-dark);
+}
+
+.kivima-textblock p {
+  margin: 0 0 0.9rem;
+}
+
+.kivima-textblock ul {
+  margin: 0.2rem 0 0.9rem;
+  padding-left: 1.25rem;
 }
 
 .kivi-footer-graphic {
