@@ -611,3 +611,47 @@ footer .inner {
     margin-top: 0.8rem;
   }
 }
+
+.landing-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: -0.1rem;
+}
+
+.kivima-landing {
+  max-width: 900px;
+}
+
+.kivima-textblock {
+  margin-bottom: 2rem;
+  background: #fafaf7;
+}
+
+.kivima-textblock .section-title {
+  margin-top: 0;
+}
+
+.kivima-textblock h3 {
+  margin: 1.25rem 0 0.5rem;
+  color: var(--primary-dark);
+}
+
+.kivima-textblock p {
+  margin: 0 0 0.9rem;
+}
+
+.kivima-textblock ul {
+  margin: 0.2rem 0 0.9rem;
+  padding-left: 1.25rem;
+}
+
+.kivi-footer-graphic {
+  text-align: center;
+  margin: 0.5rem 0 2.2rem;
+}
+
+.kivi-footer-graphic img {
+  width: 96px;
+  height: auto;
+  opacity: 0.95;
+}
