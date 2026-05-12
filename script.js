@@ -26,6 +26,8 @@ const translations = {
     partnerTitle: "Partner & Förderung",
     fundingNote: "Gefördert durch den<br /><a href=\"https://www.uni-bielefeld.de/einrichtungen/zll/hdle/qualitaetsfonds/\" target=\"_blank\" rel=\"noopener noreferrer\">Qualitätsfonds für Lehre</a>.",
     footerText: "<strong>KIVIMA</strong> – Projektseite im Kontext des <strong>teutolab mathematik</strong> der Universität Bielefeld.",
+    footerPrivacy: "Datenschutzerklärung",
+    footerImprint: "Impressum",
 
     matHeroTitle: "Materialien",
     matHeroText: "Auf dieser Unterseite stellen wir aktuelle Dokumente aus dem KIVIMA-Projekt bereit.",
@@ -153,6 +155,8 @@ const translations = {
     partnerTitle: "Socios y financiación",
     fundingNote: "Financiado por el<br /><a href=\"https://www.uni-bielefeld.de/einrichtungen/zll/hdle/qualitaetsfonds/\" target=\"_blank\" rel=\"noopener noreferrer\">Fondo de Calidad para la Enseñanza</a>.",
     footerText: "<strong>KIVIMA</strong> – Página del proyecto en el contexto de <strong>teutolab mathematik</strong> de la Universidad de Bielefeld.",
+    footerPrivacy: "Política de privacidad",
+    footerImprint: "Aviso legal",
 
     matHeroTitle: "Materiales",
     matHeroText: "En esta subpágina ofrecemos documentos actuales del proyecto KIVIMA.",
@@ -281,6 +285,8 @@ const translations = {
     partnerTitle: "Partners & funding",
     fundingNote: "Funded by the<br /><a href=\"https://www.uni-bielefeld.de/einrichtungen/zll/hdle/qualitaetsfonds/\" target=\"_blank\" rel=\"noopener noreferrer\">Teaching Quality Fund</a>.",
     footerText: "<strong>KIVIMA</strong> – Project page in the context of <strong>teutolab mathematik</strong> at Bielefeld University.",
+    footerPrivacy: "Privacy policy",
+    footerImprint: "Legal notice",
 
     matHeroTitle: "Materials",
     matHeroText: "On this subpage we provide current documents from the KIVIMA project.",
