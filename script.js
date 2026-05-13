@@ -744,5 +744,15 @@ initializeSourcePreview({
   openLinkId: "session4SourcePreviewLink",
   resetButtonId: "session4SourcePreviewReset"
 });
+initializeVariantPreview({
+  pickerId: "session4VariantPicker",
+  previewContainerId: "session4VariantPreviewContainer",
+  previewLinkId: "session4VariantPreviewLink",
+  previewSourceLinkId: "session4VariantPreviewSourceLink",
+  previewFrameId: "session4VariantPreviewFrame",
+  relabelVisibleVariants: true,
+  emptyStateText: translations.de.semNoStudentVariants,
+  defaultVariantNumber: 1
+});
 initializeMobileNavigation();
 initializeStickyNavigation();
