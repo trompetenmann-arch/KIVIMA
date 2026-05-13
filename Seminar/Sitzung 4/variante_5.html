@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bewegung - funktionaler Zusammenhang</title>
+<style>
+:root {
+--primary: #1d4ed8;
+--primary-strong: #1e40af;
+--accent: #dc2626;
+--warning: #d97706;
+--bg: #f5f7fb;
+--panel: #ffffff;
+--panel-soft: #eef4ff;
+--text: #172033;
+--muted: #65758b;
+--border: #d9e2ef;
+--track: #dfe7f1;
+--road: #737f8d;
+--shadow: 0 16px 36px rgba(22, 34, 51, 0.10);
+}
+* {
+box-sizing: border-box;
+}
+body {
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+background: linear-gradient(180deg, #eef4ff 0, rgba(238, 244, 255, 0) 290px), var(--bg);
+color: var(--text);
+margin: 0;
+padding: 12px clamp(8px, 1vw, 16px) 22px;
+}
+.page {
+width: min(1720px, 100%);
+margin: 0 auto;
+}
+header {
+display: flex;
+justify-content: space-between;
+gap: 18px;
+align-items: end;
+margin-bottom: 18px;
+}
+h1 {
+margin: 0 0 5px;
+font-size: clamp(1.7rem, 3vw, 2.45rem);
+letter-spacing: 0;
+}
+.subtitle {
+color: var(--muted);
+margin: 0;
+font-size: 1rem;
+}
+.status-pill {
+border: 1px solid var(--border);
+background: rgba(255, 255, 255, 0.78);
+color: var(--muted);
+border-radius: 999px;
+padding: 8px 12px;
+font-size: 0.9rem;
+white-space: nowrap;
+}
+.app-container {
+background: var(--panel);
+padding: clamp(10px, 1vw, 16px);
+border: 1px solid rgba(217, 226, 239, 0.85);
+border-radius: 14px;
+box-shadow: var(--shadow);
+}
+.dashboard {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 8px;
+margin-bottom: 10px;
+}
+.metric {
+background: var(--panel-soft);
+border: 1px solid #dbe7fb;
+padding: 9px 11px;
+border-radius: 8px;
+}
+.metric-label {
+display: block;
+color: var(--muted);
+font-size: 0.82rem;
+font-weight: 650;
+margin-bottom: 5px;
+}
+.metric span:last-child {
+display: block;
+font-size: 1.2rem;
+line-height: 1.05;
+color: var(--primary);
+font-weight: 760;
+}
+.section,
+.chart-panel {
+border: 1px solid var(--border);
+border-radius: 10px;
+overflow: hidden;
+background: white;
+margin-bottom: 12px;
+}
+.observation-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 12px;
+}
+.observation-stack {
+display: grid;
+grid-template-rows: auto;
+gap: 12px;
+}
+.observation-grid .section,
+.observation-grid .chart-panel {
+margin-bottom: 0;
+}
+.section-header,
+.chart-title {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 12px;
+padding: 10px 14px;
+background: #f8fafc;
+border-bottom: 1px solid var(--border);
+color: var(--muted);
+font-size: 0.88rem;
+font-weight: 650;
+}
+.section-copy {
+margin: 0;
+padding: 10px 14px 0;
+color: var(--muted);
+font-size: 0.9rem;
+line-height: 1.45;
+}
+.section-copy + .setup-grid,
+.section-copy + .car-list {
+padding-top: 10px;
+}
+.section-header strong,
+.chart-title span {
+color: var(--text);
+font-size: 0.98rem;
+}
+.setup-grid {
+display: grid;
+grid-template-columns: repeat(5, minmax(0, 1fr));
+gap: 12px;
+padding: 12px;
+}
+.field {
+display: grid;
+gap: 6px;
+color: var(--muted);
+font-size: 0.86rem;
+font-weight: 700;
+}
+.field small {
+min-height: 2.4em;
+color: #7a8799;
+font-weight: 520;
+line-height: 1.25;
+}
+select,
+input[type="number"] {
+width: 100%;
+min-height: 40px;
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 8px 10px;
+background: white;
+color: var(--text);
+font: inherit;
+}
+.track-stage {
+position: relative;
+min-height: 150px;
+background: linear-gradient(180deg, #e9eff7 0, var(--track) 100%);
+overflow: hidden;
+}
+.race-view {
+display: grid;
+grid-template-columns: 150px minmax(0, 1fr) minmax(220px, 0.28fr);
+gap: 10px;
+align-items: stretch;
+}
+.race-view .track-stage {
+min-width: 0;
+}
+.track-tile-list {
+display: grid;
+gap: 8px;
+align-content: start;
+padding: 8px;
+border-right: 1px solid var(--border);
+background: #f8fafc;
+}
+.track-tile {
+display: grid;
+gap: 4px;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: white;
+padding: 6px;
+cursor: pointer;
+color: var(--text);
+text-align: left;
+}
+.track-tile.active {
+border-color: var(--primary);
+box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.16);
+}
+.track-tile svg {
+width: 100%;
+height: 52px;
+display: block;
+background: #e9eff7;
+border-radius: 6px;
+}
+.track-tile span {
+font-size: 0.78rem;
+font-weight: 800;
+line-height: 1.15;
+}
+.straight-stage {
+min-height: 120px;
+}
+.straight-road {
+position: absolute;
+left: 0;
+right: 0;
+top: 42px;
+bottom: 18px;
+background: var(--road);
+border-top: 2px solid rgba(255, 255, 255, 0.72);
+border-bottom: 2px solid rgba(255, 255, 255, 0.72);
+}
+.lane-line {
+position: absolute;
+left: 55px;
+right: 55px;
+height: 2px;
+background: repeating-linear-gradient(90deg, rgba(255,255,255,0.85) 0 20px, transparent 20px 38px);
+}
+.meter-line {
+position: absolute;
+top: 0;
+bottom: 0;
+width: 1px;
+background: rgba(71, 85, 105, 0.35);
+z-index: 2;
+}
+.meter-line.major {
+width: 2px;
+background: rgba(30, 64, 175, 0.55);
+}
+.meter-label {
+position: absolute;
+top: 7px;
+transform: translateX(-50%);
+color: #334155;
+font-size: 0.72rem;
+font-weight: 700;
+white-space: nowrap;
+z-index: 3;
+}
+.start-line {
+position: absolute;
+left: 55px;
+top: 0;
+bottom: 0;
+width: 3px;
+background: #fff;
+box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.15);
+z-index: 3;
+}
+.start-label {
+position: absolute;
+left: 12px;
+bottom: 9px;
+color: #334155;
+font-size: 0.78rem;
+font-weight: 760;
+z-index: 3;
+}
+.layout-svg {
+display: block;
+width: 100%;
+height: clamp(180px, 22vw, 285px);
+background: #e9eff7;
+}
+.layout-track {
+fill: none;
+stroke: var(--road);
+stroke-width: 30;
+stroke-linecap: round;
+stroke-linejoin: round;
+}
+.layout-edge {
+fill: none;
+stroke: rgba(255,255,255,0.78);
+stroke-width: 36;
+stroke-linecap: round;
+stroke-linejoin: round;
+}
+.layout-dash {
+fill: none;
+stroke: rgba(255,255,255,0.88);
+stroke-width: 3;
+stroke-dasharray: 18 18;
+stroke-linecap: round;
+}
+.layout-start {
+stroke: white;
+stroke-width: 5;
+stroke-linecap: round;
+}
+.pit-lane {
+fill: none;
+stroke: #f59e0b;
+stroke-width: 13;
+stroke-linecap: round;
+stroke-linejoin: round;
+stroke-dasharray: 10 8;
+}
+.svg-car {
+filter: drop-shadow(0 3px 5px rgba(15,23,42,0.35));
+}
+.car {
+position: absolute;
+left: 28px;
+width: 52px;
+height: 52px;
+transform: translateX(0);
+transform-origin: center;
+transition: transform 80ms linear;
+z-index: 4;
+}
+.f1-svg {
+width: 100%;
+height: 100%;
+transform: rotate(90deg);
+filter: drop-shadow(0 5px 9px rgba(15,23,42,0.35));
+}
+.controls-panel {
+display: grid;
+grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(170px, 0.55fr);
+gap: 10px;
+align-items: center;
+margin-bottom: 12px;
+padding: 10px;
+border: 1px solid var(--border);
+border-radius: 10px;
+background: #f8fafc;
+}
+.manual-speed-control {
+display: grid;
+grid-template-columns: minmax(120px, auto) 1fr;
+gap: 8px 10px;
+align-items: center;
+min-height: 42px;
+padding: 8px 10px;
+border-radius: 8px;
+border-top: 1px solid var(--border);
+background: #f8fafc;
+color: var(--muted);
+font-size: 0.86rem;
+font-weight: 720;
+}
+.manual-speed-control input {
+min-width: 130px;
+}
+.manual-speed-control small {
+grid-column: 1 / -1;
+color: #7a8799;
+font-weight: 520;
+line-height: 1.25;
+}
+.track-control-panel {
+display: grid;
+grid-template-columns: minmax(0, auto) minmax(250px, 1fr);
+gap: 10px;
+align-items: center;
+border-top: 1px solid var(--border);
+background: #f8fafc;
+padding: 10px;
+}
+.control-group {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+align-items: center;
+}
+.control-help {
+color: var(--muted);
+font-size: 0.82rem;
+line-height: 1.35;
+}
+button {
+min-height: 42px;
+padding: 10px 14px;
+border-radius: 8px;
+border: 1px solid transparent;
+font-weight: 720;
+cursor: pointer;
+background: var(--primary);
+color: white;
+}
+button:hover {
+background: var(--primary-strong);
+}
+button:disabled {
+background: #d6dee9;
+color: #738195;
+cursor: not-allowed;
+}
+#btn-stop {
+background: var(--warning);
+}
+#btn-reset,
+.remove-car {
+background: var(--accent);
+}
+.checkbox-group {
+display: flex;
+align-items: center;
+gap: 7px;
+min-height: 42px;
+padding: 0 10px;
+border-radius: 8px;
+background: #f8fafc;
+border: 1px solid var(--border);
+font-size: 0.86rem;
+color: var(--muted);
+white-space: nowrap;
+}
+.car-list {
+display: grid;
+gap: 10px;
+padding: 12px;
+}
+.car-table-head {
+display: grid;
+grid-template-columns: 18px 74px minmax(160px, 1fr) minmax(150px, 0.8fr) 82px 96px auto;
+gap: 12px;
+padding: 0 10px;
+color: #7a8799;
+font-size: 0.76rem;
+font-weight: 800;
+text-transform: uppercase;
+letter-spacing: 0.02em;
+}
+.car-row {
+display: grid;
+grid-template-columns: 18px 74px minmax(160px, 1fr) minmax(150px, 0.8fr) 82px 96px auto;
+gap: 12px;
+align-items: center;
+padding: 10px;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: #fbfdff;
+}
+.color-swatch {
+width: 18px;
+height: 18px;
+border-radius: 50%;
+box-shadow: inset 0 0 0 2px rgba(255,255,255,0.75), 0 0 0 1px rgba(15,23,42,0.18);
+}
+.car-name {
+font-weight: 760;
+}
+.car-row label {
+display: grid;
+grid-template-columns: auto 1fr;
+gap: 10px;
+align-items: center;
+color: var(--muted);
+font-size: 0.9rem;
+font-weight: 650;
+}
+input[type="range"] {
+width: 100%;
+accent-color: var(--primary);
+}
+.car-distance,
+.car-speed {
+color: var(--muted);
+font-size: 0.9rem;
+font-weight: 700;
+text-align: right;
+white-space: nowrap;
+}
+.quick-guide {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 10px;
+margin-bottom: 18px;
+}
+.connection-panel {
+display: grid;
+grid-template-columns: minmax(150px, 0.8fr) repeat(3, minmax(0, 1fr)) minmax(260px, 1.5fr);
+gap: 8px;
+padding: 10px;
+}
+.connection-card {
+border: 1px solid var(--border);
+border-radius: 8px;
+background: #fbfdff;
+padding: 8px 10px;
+}
+.connection-card label,
+.connection-label {
+display: block;
+color: var(--muted);
+font-size: 0.78rem;
+font-weight: 800;
+margin-bottom: 5px;
+text-transform: uppercase;
+letter-spacing: 0.02em;
+}
+.connection-value {
+color: var(--text);
+font-size: 1rem;
+font-weight: 800;
+}
+.connection-note {
+border-left: 4px solid var(--primary);
+background: #eff6ff;
+color: #1e3a8a;
+border-radius: 8px;
+padding: 10px 12px;
+line-height: 1.45;
+font-size: 0.86rem;
+}
+.leaderboard-list {
+display: grid;
+gap: 6px;
+padding: 10px;
+align-content: start;
+height: 100%;
+}
+.leaderboard-row {
+display: grid;
+grid-template-columns: 34px 1fr 82px;
+gap: 8px;
+align-items: center;
+border: 1px solid var(--border);
+border-radius: 8px;
+background: #fbfdff;
+padding: 7px 9px;
+font-size: 0.88rem;
+}
+.leaderboard-rank {
+font-weight: 850;
+color: var(--text);
+}
+.leaderboard-name {
+display: flex;
+align-items: center;
+gap: 7px;
+font-weight: 750;
+}
+.leaderboard-dot {
+width: 10px;
+height: 10px;
+border-radius: 50%;
+flex: 0 0 auto;
+}
+.leaderboard-status {
+color: var(--muted);
+font-weight: 720;
+text-align: right;
+white-space: nowrap;
+}
+.details-section {
+overflow: visible;
+}
+.details-section summary {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 12px;
+padding: 12px 14px;
+background: #f8fafc;
+border-bottom: 1px solid transparent;
+cursor: pointer;
+color: var(--muted);
+font-size: 0.9rem;
+font-weight: 700;
+}
+.details-section[open] summary {
+border-bottom-color: var(--border);
+}
+.details-title {
+color: var(--text);
+font-size: 0.98rem;
+}
+.car-row.focused {
+border-color: var(--focus-color, var(--primary));
+box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-color, var(--primary)) 22%, transparent);
+}
+.guide-item {
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 11px 12px;
+background: #fbfdff;
+}
+.guide-item strong {
+display: block;
+margin-bottom: 4px;
+font-size: 0.92rem;
+}
+.guide-item span {
+color: var(--muted);
+font-size: 0.86rem;
+line-height: 1.35;
+}
+.remove-car {
+min-height: 34px;
+padding: 6px 10px;
+}
+.chart-panel {
+margin-bottom: 0;
+}
+.chart-title small {
+color: var(--muted);
+font-weight: 650;
+}
+canvas {
+display: block;
+width: 100%;
+height: auto;
+background: white;
+}
+.hint-box {
+margin-top: 14px;
+padding: 12px 16px;
+border-radius: 8px;
+background: #ecfeff;
+border-left: 4px solid #0891b2;
+color: #0e7490;
+display: none;
+line-height: 1.45;
+}
+@media (max-width: 900px) {
+.observation-grid {
+grid-template-columns: 1fr;
+}
+.setup-grid {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.controls-panel {
+grid-template-columns: repeat(3, 1fr);
+}
+.track-control-panel {
+grid-template-columns: 1fr;
+}
+.race-view {
+grid-template-columns: 1fr;
+}
+.track-tile-list {
+grid-template-columns: repeat(3, minmax(0, 1fr));
+border-right: none;
+border-bottom: 1px solid var(--border);
+}
+.control-group {
+grid-column: 1 / -1;
+}
+.control-help {
+grid-column: 1 / -1;
+}
+.car-row,
+.car-table-head {
+grid-template-columns: 18px 1fr 96px auto;
+}
+.car-row label {
+grid-column: 1 / -1;
+}
+.car-table-head span:nth-child(3),
+.car-table-head span:nth-child(4) {
+display: none;
+}
+.quick-guide {
+grid-template-columns: 1fr;
+}
+.connection-panel {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.connection-note {
+grid-column: 1 / -1;
+}
+}
+@media (max-width: 640px) {
+body {
+padding: 18px 10px 28px;
+}
+header {
+display: block;
+}
+.status-pill {
+display: inline-block;
+margin-top: 12px;
+}
+.app-container {
+padding: 14px;
+}
+.dashboard,
+.setup-grid {
+grid-template-columns: repeat(2, 1fr);
+}
+.controls-panel {
+grid-template-columns: 1fr;
+}
+.track-control-panel {
+grid-template-columns: 1fr;
+}
+.race-view {
+grid-template-columns: 1fr;
+}
+.track-tile-list {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.connection-panel {
+grid-template-columns: 1fr;
+}
+.checkbox-group {
+grid-column: 1 / -1;
+}
+}
+</style>
+</head>
+<body>
+<main class="page">
+<header>
+<div>
+<h1>Gleichförmige Bewegung</h1>
+<p class="subtitle">Vergleiche Autos auf einer geraden Strecke oder auf geschlossenen Carrera-ähnlichen Rennstrecken.</p>
+</div>
+<div class="status-pill" id="status-pill">Bereit</div>
+</header>
+<section class="app-container">
+<div class="dashboard" aria-label="Messwerte">
+<div class="metric"><span class="metric-label">Zeit t</span><span id="disp-time">0.0 s</span></div>
+<div class="metric"><span class="metric-label">Autos</span><span id="disp-cars">1</span></div>
+<div class="metric"><span class="metric-label">Führende Strecke</span><span id="disp-lead-dist">0.0 m</span></div>
+<div class="metric"><span class="metric-label">Status</span><span id="disp-winner">-</span></div>
+</div>
+<div class="controls-panel">
+<div class="control-group" aria-label="Ansicht und Autos">
+<button id="btn-add-car">Auto hinzufügen</button>
+<label class="checkbox-group">
+<input type="checkbox" id="chk-grid" checked>
+Raster
+</label>
+<label class="checkbox-group">
+<input type="checkbox" id="chk-hints">
+Hinweise
+</label>
+</div>
+<div class="control-help" id="mode-help">Start zeichnet deine manuelle Fahrt auf. Simulation starten erzeugt ein automatisches Rennen.</div>
+</div>
+<div class="observation-grid">
+<section class="section" aria-label="Funktionaler Zusammenhang">
+<div class="section-header">
+<strong>Bewegung ↔ Graph</strong>
+<span>gleicher Moment</span>
+</div>
+<div class="connection-panel">
+<div class="connection-card">
+<label for="focus-car-select">Fokus-Auto</label>
+<select id="focus-car-select"></select>
+</div>
+<div class="connection-card"><span class="connection-label">Zeit</span><span class="connection-value" id="link-time">0.0 s</span></div>
+<div class="connection-card"><span class="connection-label">Strecke</span><span class="connection-value" id="link-distance">0.0 m</span></div>
+<div class="connection-card"><span class="connection-label">Steigung</span><span class="connection-value" id="link-slope">0.0 m/s</span></div>
+<div class="connection-note" id="link-explanation">Der farbige Punkt im Diagramm gehört zum Auto auf der Strecke.</div>
+</div>
+<span id="link-speed" hidden>0.0 m/s</span>
+</section>
+<section class="section" aria-label="Rennstrecke">
+<div class="section-header">
+<strong>Rennstrecke</strong>
+<span id="track-meta">Gerade Strecke, 100 m</span>
+</div>
+<div class="race-view">
+<div class="track-tile-list" id="track-tile-list" aria-label="Strecken auswählen"></div>
+<div class="track-stage straight-stage" id="track-stage">
+<div id="track-render"></div>
+</div>
+<aside class="leaderboard-panel" aria-label="Anzeigetafel">
+<div class="section-header">
+<strong>Anzeigetafel</strong>
+<span id="leaderboard-mode">live</span>
+</div>
+<div class="leaderboard-list" id="leaderboard-list"></div>
+</aside>
+</div>
+<div class="track-control-panel">
+<div class="control-group" aria-label="Rennsteuerung">
+<button id="btn-start">Start</button>
+<button id="btn-stop" disabled>Stopp</button>
+<button id="btn-reset">Reset</button>
+<button id="btn-race">Simulation starten</button>
+<button id="btn-replay" disabled>Nochmals abspielen</button>
+</div>
+<label class="manual-speed-control" for="focus-speed-slider">
+<span id="focus-speed-label">v Fokus</span>
+<input id="focus-speed-slider" type="range" min="0" max="50" step="1" value="5">
+<small id="focus-speed-help">Direktregler fuer das Fokus-Auto.</small>
+</label>
+</div>
+</section>
+<section class="chart-panel">
+<div class="chart-title">
+<span>Strecke-Zeit-Diagramm</span>
+<small>s(t)</small>
+</div>
+<canvas id="distanceCanvas" width="1060" height="420"></canvas>
+</section>
+</div>
+<details class="section details-section">
+<summary><span class="details-title">Einstellungen</span><span>Strecke, Runden, Autos</span></summary>
+<p class="section-copy">Diese Einstellungen bleiben ausgeblendet, damit Strecke und Graph gemeinsam beobachtet werden können.</p>
+<div class="setup-grid">
+<label class="field">
+Strecke
+<select id="track-select"></select>
+<small>Gerade für Grundidee, Kurse für Rundrennen.</small>
+</label>
+<label class="field">
+Renn-Autos
+<input type="number" id="race-car-count" min="1" max="8" step="1" value="4">
+<small>Startgruppe im Simulationsmodus.</small>
+</label>
+<label class="field">
+Rennrunden
+<input type="number" id="race-laps" min="1" max="8" step="1" value="3">
+<small>Bestimmt Zielstrecke und automatische Achsenskalierung.</small>
+</label>
+</div>
+</details>
+<details class="section details-section">
+<summary><span class="details-title">Autos bearbeiten</span><span>Geschwindigkeit und Fahrer-Stärke</span></summary>
+<p class="section-copy">Öffne diesen Bereich nur zum Einstellen. Beim Beobachten bleiben Strecke und Graph oben frei sichtbar.</p>
+<div class="car-list" id="car-list"></div>
+</details>
+<div class="hint-box" id="hint-box">
+Die Fahrer-Stärke beeinflusst im Simulationsmodus Zieltempo, Beschleunigen, Bremsen und Fehlerstreuung. Im Speedkurs hat jedes Auto pro Rennen eine Pannenwahrscheinlichkeit von etwa 28%; falls sie eintritt, fährt es höchstens einmal in die Box, hält kurz und fährt weiter.
+</div>
+</section>
+</main>
+<script>
+let isRunning = false;
+let mode = "manual";
+let time = 0;
+let axisMaxTime = 10;
+let targetAxisMaxTime = 10;
+let lastTimestamp = 0;
+let animationId = null;
+let nextCarId = 1;
+let lastRaceFrames = null;
+let manualRecordingFrames = [];
+let manualRecordingCarSetup = [];
+let replayStartTimestamp = 0;
+const DEFAULT_STRAIGHT_DISTANCE = 100;
+const MAX_VELOCITY = 50;
+const TRACK_PADDING = 55;
+const LANE_HEIGHT = 58;
+const TRACK_TOP = 42;
+const FRAME_DT = 1 / 30;
+const COLORS = ["#dc2626", "#2563eb", "#059669", "#d97706", "#7c3aed", "#0891b2", "#be123c", "#4f46e5"];
+const DEFAULT_DRIVER_SKILLS = [2, 9, 4, 7, 1, 10, 5, 8];
+const TRACKS = [
+{
+id: "straight",
+name: "Gerade",
+closed: false,
+length: 100,
+label: "Gerade Strecke, 100 m",
+segments: [
+{ from: 0.00, to: 1.00, type: "straight" }
+]
+},
+{
+id: "oval",
+name: "Oval",
+closed: true,
+length: 120,
+label: "Oval mit zwei langen Geraden",
+viewBox: "0 0 760 330",
+path: "M 190 70 L 570 70 A 110 95 0 0 1 570 260 L 190 260 A 110 95 0 0 1 190 70 Z",
+segments: [
+{ from: 0.00, to: 0.32, type: "straight" },
+{ from: 0.32, to: 0.50, type: "curve" },
+{ from: 0.50, to: 0.82, type: "straight" },
+{ from: 0.82, to: 1.00, type: "curve" }
+]
+},
+{
+id: "compact",
+name: "Kompaktkurs",
+closed: true,
+length: 135,
+label: "Kompakter Kurs mit kurzen Geraden und 90-Grad-Kurven",
+viewBox: "0 0 760 330",
+path: "M 160 85 L 510 85 Q 620 85 620 170 Q 620 255 510 255 L 250 255 Q 150 255 150 175 L 150 120 Q 150 85 160 85 Z",
+segments: [
+{ from: 0.00, to: 0.28, type: "straight" },
+{ from: 0.28, to: 0.44, type: "curve" },
+{ from: 0.44, to: 0.65, type: "straight" },
+{ from: 0.65, to: 0.86, type: "curve" },
+{ from: 0.86, to: 1.00, type: "technical" }
+]
+},
+{
+id: "eight",
+name: "Acht mit Überfahrt",
+closed: true,
+length: 150,
+label: "Acht-Form mit Überfahrt wie bei einfachen Action-Sets",
+viewBox: "0 0 760 330",
+path: "M 380 165 C 270 60 125 85 125 165 C 125 245 270 270 380 165 C 490 60 635 85 635 165 C 635 245 490 270 380 165 Z",
+segments: [
+{ from: 0.00, to: 0.18, type: "curve" },
+{ from: 0.18, to: 0.34, type: "technical" },
+{ from: 0.34, to: 0.50, type: "straight" },
+{ from: 0.50, to: 0.68, type: "curve" },
+{ from: 0.68, to: 0.84, type: "technical" },
+{ from: 0.84, to: 1.00, type: "straight" }
+]
+},
+{
+id: "speed",
+name: "Speedkurs",
+closed: true,
+length: 165,
+label: "Lange Gerade, schnelle Kurven und kleine Schikane",
+viewBox: "0 0 760 330",
+path: "M 120 245 L 520 245 Q 650 245 650 155 Q 650 70 535 70 L 330 70 Q 275 70 285 125 Q 295 180 230 180 L 130 180 Q 80 180 80 215 Q 80 245 120 245 Z",
+pitPath: "M 230 224 L 500 224 Q 570 224 590 188",
+pitRange: { from: 0.08, to: 0.23 },
+segments: [
+{ from: 0.00, to: 0.30, type: "straight" },
+{ from: 0.30, to: 0.48, type: "fastCurve" },
+{ from: 0.48, to: 0.66, type: "straight" },
+{ from: 0.66, to: 0.78, type: "technical" },
+{ from: 0.78, to: 0.88, type: "straight" },
+{ from: 0.88, to: 1.00, type: "curve" }
+]
+}
+];
+let selectedTrack = TRACKS[0];
+let cars = [];
+let svgPathEl = null;
+let svgPitPathEl = null;
+let svgCarLayerEl = null;
+let focusCarId = null;
+const trackSelect = document.getElementById("track-select");
+const raceCarCountInput = document.getElementById("race-car-count");
+const raceLapsInput = document.getElementById("race-laps");
+const trackStageEl = document.getElementById("track-stage");
+const trackRenderEl = document.getElementById("track-render");
+const trackMetaEl = document.getElementById("track-meta");
+const trackTileListEl = document.getElementById("track-tile-list");
+const carListEl = document.getElementById("car-list");
+const statusPill = document.getElementById("status-pill");
+const focusCarSelect = document.getElementById("focus-car-select");
+const linkTimeEl = document.getElementById("link-time");
+const linkDistanceEl = document.getElementById("link-distance");
+const linkSpeedEl = document.getElementById("link-speed");
+const linkSlopeEl = document.getElementById("link-slope");
+const linkExplanationEl = document.getElementById("link-explanation");
+const leaderboardListEl = document.getElementById("leaderboard-list");
+const leaderboardModeEl = document.getElementById("leaderboard-mode");
+const dispTime = document.getElementById("disp-time");
+const dispCars = document.getElementById("disp-cars");
+const dispLeadDist = document.getElementById("disp-lead-dist");
+const dispWinner = document.getElementById("disp-winner");
+const btnStart = document.getElementById("btn-start");
+const btnStop = document.getElementById("btn-stop");
+const btnReset = document.getElementById("btn-reset");
+const btnAddCar = document.getElementById("btn-add-car");
+const btnRace = document.getElementById("btn-race");
+const btnReplay = document.getElementById("btn-replay");
+const focusSpeedSlider = document.getElementById("focus-speed-slider");
+const focusSpeedLabel = document.getElementById("focus-speed-label");
+const focusSpeedHelp = document.getElementById("focus-speed-help");
+const chkGrid = document.getElementById("chk-grid");
+const chkHints = document.getElementById("chk-hints");
+const hintBox = document.getElementById("hint-box");
+const distanceCanvas = document.getElementById("distanceCanvas");
+const distanceCtx = distanceCanvas.getContext("2d");
+const distanceMargin = { top: 34, right: 32, bottom: 58, left: 76 };
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+function getColor(index) {
+return COLORS[index % COLORS.length];
+}
+function getDefaultDriverSkill(index) {
+return DEFAULT_DRIVER_SKILLS[index % DEFAULT_DRIVER_SKILLS.length];
+}
+function getTrackLength() {
+return selectedTrack.length || DEFAULT_STRAIGHT_DISTANCE;
+}
+function getRaceDistance() {
+return getTrackLength() * Number(raceLapsInput.value);
+}
+function getAutoAxisMaxTime() {
+const manualMaxVelocity = cars.reduce((max, car) => Math.max(max, car.velocity || 0), 0);
+const typicalVelocity = Math.max(8, manualMaxVelocity, 18);
+return Math.max(10, (getRaceDistance() / typicalVelocity) * 1.35);
+}
+function updateAutoAxis() {
+if (mode !== "race" && mode !== "replay") {
+targetAxisMaxTime = getAutoAxisMaxTime();
+}
+}
+function syncAxisImmediately() {
+axisMaxTime = targetAxisMaxTime;
+}
+function easeAxisScale() {
+const diff = targetAxisMaxTime - axisMaxTime;
+if (Math.abs(diff) < 0.02) {
+axisMaxTime = targetAxisMaxTime;
+return;
+}
+axisMaxTime += diff * 0.12;
+}
+function getGraphDistanceMax() {
+const maxCarDistance = cars.reduce((max, car) => Math.max(max, car.distance), 0);
+const target = mode === "replay" && lastRaceFrames ? lastRaceFrames.raceDistance : getRaceDistance();
+return Math.max(20, Math.ceil(Math.max(maxCarDistance, target) / 20) * 20);
+}
+function carSvg(color) {
+return `
+<svg viewBox="0 0 200 600" class="f1-svg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<rect x="40" y="530" width="120" height="12" rx="2" fill="#222"/>
+<rect x="35" y="532" width="130" height="8" rx="2" fill="${color}"/>
+<rect x="28" y="480" width="28" height="65" rx="6" fill="#111"/>
+<rect x="144" y="480" width="28" height="65" rx="6" fill="#111"/>
+<path d="M70 540 Q72 520 72 480 L128 480 Q128 520 130 540 Z" fill="#991b1b"/>
+<path d="M72 480 Q68 400 70 320 L130 320 Q132 400 128 480 Z" fill="${color}"/>
+<ellipse cx="100" cy="310" rx="18" ry="35" fill="#111827"/>
+<path d="M70 320 Q75 200 85 120 L115 120 Q125 200 130 320 Z" fill="${color}"/>
+<rect x="25" y="50" width="150" height="14" rx="3" fill="#222"/>
+<rect x="20" y="52" width="160" height="10" rx="3" fill="${color}"/>
+<rect x="30" y="160" width="28" height="60" rx="6" fill="#111"/>
+<rect x="144" y="160" width="28" height="60" rx="6" fill="#111"/>
+<rect x="32" y="163" width="24" height="54" rx="5" fill="#333"/>
+<rect x="146" y="163" width="24" height="54" rx="5" fill="#333"/>
+</svg>`;
+}
+function createCar(initialVelocity = 5) {
+const id = nextCarId++;
+const color = getColor(id - 1);
+const driverSkill = getDefaultDriverSkill(id - 1);
+return {
+id,
+name: `Auto ${id}`,
+color,
+velocity: initialVelocity,
+driverSkill,
+raceVelocity: 0,
+finishRank: null,
+pitStatus: "",
+pitProgress: 0,
+distance: 0,
+path: [{ t: 0, s: 0 }],
+carEl: null,
+svgEl: null,
+rowEl: null
+};
+}
+function resetCarState(keepGraph = false) {
+time = 0;
+cars.forEach(car => {
+car.distance = 0;
+car.raceVelocity = 0;
+car.finishRank = null;
+car.pitStatus = "";
+car.pitProgress = 0;
+if (!keepGraph) {
+car.path = [{ t: 0, s: 0 }];
+}
+});
+}
+function populateTrackSelect() {
+trackSelect.innerHTML = "";
+TRACKS.forEach(track => {
+const option = document.createElement("option");
+option.value = track.id;
+option.textContent = track.name;
+trackSelect.appendChild(option);
+});
+}
+function getTrackPreviewSvg(track) {
+if (track.closed) {
+return `
+<svg viewBox="${track.viewBox}" aria-hidden="true">
+<path d="${track.path}" fill="none" stroke="#94a3b8" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"></path>
+${track.pitPath ? `<path d="${track.pitPath}" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="12 8"></path>` : ""}
+<path d="${track.path}" fill="none" stroke="#64748b" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="${track.path}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="18 18"></path>
+</svg>
+`;
+}
+return `
+<svg viewBox="0 0 220 70" aria-hidden="true">
+<rect x="20" y="24" width="180" height="22" rx="8" fill="#64748b"></rect>
+<line x1="35" y1="35" x2="185" y2="35" stroke="#fff" stroke-width="3" stroke-dasharray="14 10"></line>
+<line x1="30" y1="16" x2="30" y2="54" stroke="#fff" stroke-width="4"></line>
+</svg>
+`;
+}
+function renderTrackTiles() {
+trackTileListEl.innerHTML = "";
+TRACKS.forEach(track => {
+const button = document.createElement("button");
+button.type = "button";
+button.className = `track-tile ${track.id === selectedTrack.id ? "active" : ""}`;
+button.setAttribute("aria-label", `${track.name} auswählen`);
+button.innerHTML = `${getTrackPreviewSvg(track)}<span>${track.name}</span>`;
+button.addEventListener("click", () => selectTrack(track.id));
+trackTileListEl.appendChild(button);
+});
+}
+function renderStraightTrack() {
+trackStageEl.classList.add("straight-stage");
+trackRenderEl.innerHTML = `
+<div class="straight-road" id="straight-road"></div>
+<div class="start-label">Start</div>
+<div class="start-line"></div>
+<div id="meter-lines"></div>
+<div id="cars-layer"></div>
+`;
+const meterLinesEl = document.getElementById("meter-lines");
+const stageWidth = Math.max(trackStageEl.clientWidth, 320);
+const usableWidth = Math.max(stageWidth - TRACK_PADDING * 2, 220);
+const minLabelGap = 74;
+const maxLabels = Math.max(2, Math.floor(usableWidth / minLabelGap));
+const labelStep = Math.max(10, Math.ceil((getTrackLength() / maxLabels) / 10) * 10);
+for (let meters = 0; meters <= getTrackLength(); meters += 10) {
+const percent = meters / getTrackLength();
+const left = `calc(${TRACK_PADDING}px + ${percent} * (100% - ${TRACK_PADDING * 2}px))`;
+const showLabel = meters === 0 || meters === getTrackLength() || meters % labelStep === 0;
+const line = document.createElement("div");
+line.className = `meter-line ${showLabel ? "major" : ""}`;
+line.style.left = left;
+meterLinesEl.appendChild(line);
+if (showLabel) {
+const label = document.createElement("div");
+label.className = "meter-label";
+label.style.left = left;
+label.textContent = `${meters} m`;
+meterLinesEl.appendChild(label);
+}
+}
+const carsLayerEl = document.getElementById("cars-layer");
+const roadEl = document.getElementById("straight-road");
+const compactLaneHeight = clamp(Math.floor((Math.min(window.innerHeight * 0.32, 330) - TRACK_TOP - 20) / Math.max(cars.length, 1)), 42, LANE_HEIGHT);
+const height = TRACK_TOP + Math.max(cars.length, 1) * compactLaneHeight + 20;
+trackStageEl.style.height = `${height}px`;
+cars.forEach((car, index) => {
+if (index > 0) {
+const laneLine = document.createElement("div");
+laneLine.className = "lane-line";
+laneLine.style.top = `${TRACK_TOP + index * compactLaneHeight - 4}px`;
+roadEl.appendChild(laneLine);
+}
+const carEl = document.createElement("div");
+carEl.className = "car";
+carEl.style.top = `${TRACK_TOP + index * compactLaneHeight + 3}px`;
+carEl.setAttribute("aria-label", car.name);
+carEl.title = `${car.name} als Fokus waehlen`;
+carEl.addEventListener("click", () => selectFocusCar(car.id));
+carEl.innerHTML = carSvg(car.color);
+carsLayerEl.appendChild(carEl);
+car.carEl = carEl;
+car.svgEl = null;
+});
+}
+function renderClosedTrack() {
+trackStageEl.classList.remove("straight-stage");
+trackStageEl.style.height = "auto";
+trackRenderEl.innerHTML = `
+<svg class="layout-svg" viewBox="${selectedTrack.viewBox}" aria-label="${selectedTrack.name}">
+<path class="layout-edge" d="${selectedTrack.path}"></path>
+${selectedTrack.pitPath ? `<path class="pit-lane" d="${selectedTrack.pitPath}"></path>` : ""}
+<path class="layout-track" d="${selectedTrack.path}"></path>
+<path class="layout-dash" d="${selectedTrack.path}"></path>
+<line class="layout-start" x1="380" y1="140" x2="380" y2="190"></line>
+<g id="svg-car-layer"></g>
+</svg>
+`;
+svgPathEl = trackRenderEl.querySelector(".layout-track");
+svgPitPathEl = trackRenderEl.querySelector(".pit-lane");
+svgCarLayerEl = document.getElementById("svg-car-layer");
+cars.forEach((car, index) => {
+const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+group.classList.add("svg-car");
+group.style.cursor = "pointer";
+group.addEventListener("click", () => selectFocusCar(car.id));
+group.innerHTML = `
+<circle r="9" fill="${car.color}" stroke="#fff" stroke-width="3"></circle>
+<text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${index + 1}</text>
+`;
+svgCarLayerEl.appendChild(group);
+car.svgEl = group;
+car.carEl = null;
+});
+}
+function renderTrack() {
+trackMetaEl.textContent = selectedTrack.label;
+renderTrackTiles();
+svgPitPathEl = null;
+selectedTrack.closed ? renderClosedTrack() : renderStraightTrack();
+}
+function renderCarControls() {
+carListEl.innerHTML = "";
+const head = document.createElement("div");
+head.className = "car-table-head";
+head.innerHTML = `
+<span></span>
+<span>Auto</span>
+<span>Manuelle v</span>
+<span>Fahrer</span>
+<span>aktuelle v</span>
+<span>Strecke</span>
+<span></span>
+`;
+carListEl.appendChild(head);
+cars.forEach(car => {
+const row = document.createElement("div");
+row.className = "car-row";
+if (car.id === focusCarId) {
+row.classList.add("focused");
+row.style.setProperty("--focus-color", car.color);
+}
+row.dataset.carId = String(car.id);
+row.innerHTML = `
+<span class="color-swatch" style="background:${car.color}"></span>
+<span class="car-name">${car.name}</span>
+<label>
+<span>v: <strong class="car-velocity-value">${car.velocity}</strong> m/s</span>
+<input class="velocity-slider" type="range" min="0" max="${MAX_VELOCITY}" value="${car.velocity}" step="1" aria-label="Geschwindigkeit ${car.name}">
+</label>
+<label>
+<span>Fahrer: <strong class="driver-skill-value">${car.driverSkill}</strong>/10</span>
+<input class="driver-skill-slider" type="range" min="1" max="10" value="${car.driverSkill}" step="1" aria-label="Fahrerstärke ${car.name}">
+</label>
+<span class="car-speed">${car.velocity} m/s</span>
+<span class="car-distance">${car.distance.toFixed(1)} m</span>
+<button class="remove-car" type="button" aria-label="${car.name} entfernen">Entfernen</button>
+`;
+const velocitySlider = row.querySelector(".velocity-slider");
+const skillSlider = row.querySelector(".driver-skill-slider");
+velocitySlider.style.accentColor = car.color;
+skillSlider.style.accentColor = car.color;
+velocitySlider.addEventListener("input", event => {
+car.velocity = Number(event.target.value);
+row.querySelector(".car-velocity-value").textContent = car.velocity;
+row.querySelector(".car-speed").textContent = `${car.velocity} m/s`;
+if (mode !== "race" && mode !== "replay") {
+updateDOM();
+drawGraph();
+}
+});
+skillSlider.addEventListener("input", event => {
+car.driverSkill = Number(event.target.value);
+row.querySelector(".driver-skill-value").textContent = car.driverSkill;
+});
+row.querySelector(".remove-car").addEventListener("click", () => removeCar(car.id));
+carListEl.appendChild(row);
+car.rowEl = row;
+});
+}
+function renderFocusSelect() {
+const previousFocus = focusCarId;
+if (focusCarId !== null && !cars.some(car => car.id === focusCarId)) {
+focusCarId = null;
+}
+focusCarSelect.innerHTML = "";
+const noFocusOption = document.createElement("option");
+noFocusOption.value = "none";
+noFocusOption.textContent = "Kein Fokus";
+focusCarSelect.appendChild(noFocusOption);
+cars.forEach(car => {
+const option = document.createElement("option");
+option.value = String(car.id);
+option.textContent = car.name;
+focusCarSelect.appendChild(option);
+});
+if (focusCarId !== null) {
+focusCarSelect.value = String(focusCarId);
+} else {
+focusCarSelect.value = "none";
+}
+return previousFocus !== focusCarId;
+}
+function selectFocusCar(id) {
+focusCarId = id;
+renderFocusSelect();
+renderCarControls();
+updateDOM();
+drawGraph();
+setRunningState(isRunning);
+}
+function syncUI() {
+renderTrack();
+renderFocusSelect();
+renderCarControls();
+updateDOM();
+drawGraph();
+}
+function getTrackX(distance) {
+const trackWidth = trackStageEl.clientWidth - TRACK_PADDING * 2;
+return clamp(distance, 0, getTrackLength()) * (trackWidth / getTrackLength());
+}
+function placeCarOnClosedTrack(car, offsetIndex = 0) {
+if (!svgPathEl || !car.svgEl) return;
+const usePitLane = svgPitPathEl && (car.pitStatus === "pit-entry" || car.pitStatus === "pit-stop");
+const activePath = usePitLane ? svgPitPathEl : svgPathEl;
+const svgLength = activePath.getTotalLength();
+const lapDistance = ((car.distance % getTrackLength()) + getTrackLength()) % getTrackLength();
+const mainPathDistance = (lapDistance / getTrackLength()) * svgLength;
+const pathDistance = usePitLane ? clamp(car.pitProgress || 0, 0, 1) * svgLength : mainPathDistance;
+const point = activePath.getPointAtLength(pathDistance);
+const nextPoint = activePath.getPointAtLength(Math.min(pathDistance + 2, svgLength));
+const angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
+const laneOffset = usePitLane ? 0 : (offsetIndex - (cars.length - 1) / 2) * 5;
+car.svgEl.setAttribute("transform", `translate(${point.x} ${point.y + laneOffset}) rotate(${angle})`);
+}
+function getFocusCar() {
+if (!cars.length || focusCarId === null) return null;
+return cars.find(car => car.id === focusCarId) || cars[0];
+}
+function getDisplaySpeed(car) {
+if (!car) return 0;
+return mode === "race" || mode === "replay" ? car.raceVelocity : car.velocity;
+}
+function updateConnectionPanel() {
+const car = getFocusCar();
+if (!car) {
+linkTimeEl.textContent = `${time.toFixed(1)} s`;
+linkDistanceEl.textContent = "-";
+linkSpeedEl.textContent = "-";
+linkSlopeEl.textContent = "-";
+linkExplanationEl.textContent = "Kein Fokus-Auto gewaehlt. Der Graph zeigt alle Autos ohne Hilfslinien.";
+return;
+}
+const speed = getDisplaySpeed(car);
+linkTimeEl.textContent = `${time.toFixed(1)} s`;
+linkDistanceEl.textContent = `${car.distance.toFixed(1)} m`;
+linkSpeedEl.textContent = `${speed.toFixed(1)} m/s`;
+linkSlopeEl.textContent = `${speed.toFixed(1)} m pro s`;
+linkExplanationEl.innerHTML = `<strong style="color:${car.color}">${car.name}</strong>: Bei <strong>t = ${time.toFixed(1)} s</strong> liegt der Graphpunkt bei <strong>s = ${car.distance.toFixed(1)} m</strong>. Die Steigung zeigt: In 1 Sekunde kommen gerade etwa <strong>${speed.toFixed(1)} m</strong> dazu.`;
+}
+function updateFocusSpeedControl() {
+const car = getFocusCar();
+if (!car) {
+focusSpeedSlider.value = "0";
+focusSpeedSlider.disabled = true;
+focusSpeedLabel.textContent = "v Fokus";
+focusSpeedHelp.textContent = "Waehle ein Fokus-Auto, um dessen Geschwindigkeit direkt zu steuern.";
+return;
+}
+const disabled = isRunning && mode !== "manual-recording";
+const displaySpeed = mode === "replay" || mode === "race" ? car.raceVelocity : car.velocity;
+focusSpeedSlider.value = String(clamp(Math.round(displaySpeed), 0, MAX_VELOCITY));
+focusSpeedSlider.style.accentColor = car.color;
+focusSpeedSlider.disabled = disabled;
+focusSpeedLabel.textContent = `${car.name}: v = ${displaySpeed.toFixed(0)} m/s`;
+focusSpeedHelp.textContent = "Direktregler fuer das Fokus-Auto. Aenderungen waehrend der Fahrt werden aufgezeichnet.";
+}
+function getLeaderboardEntries() {
+const raceLike = mode === "race" || mode === "replay";
+const raceDistance = raceLike && lastRaceFrames ? lastRaceFrames.raceDistance : getRaceDistance();
+return cars
+.map(car => {
+const finished = raceLike && car.finishRank !== null;
+const shownDistance = Math.min(car.distance, raceDistance);
+const lapsDone = Math.min(Number(raceLapsInput.value), Math.floor(shownDistance / getTrackLength()));
+return {
+car,
+finished,
+rank: car.finishRank,
+shownDistance,
+lapsDone
+};
+})
+.sort((a, b) => {
+if (a.finished && b.finished) return a.rank - b.rank;
+if (a.finished) return -1;
+if (b.finished) return 1;
+return b.shownDistance - a.shownDistance;
+});
+}
+function updateLeaderboard() {
+const raceLike = mode === "race" || mode === "replay";
+leaderboardModeEl.textContent = raceLike ? "Rennen" : "nach Strecke";
+leaderboardListEl.innerHTML = "";
+getLeaderboardEntries().forEach((entry, index) => {
+const row = document.createElement("div");
+row.className = "leaderboard-row";
+const rankLabel = entry.finished ? entry.rank : index + 1;
+let status = raceLike ? `R${entry.lapsDone}/${raceLapsInput.value}` : `${entry.shownDistance.toFixed(0)} m`;
+if (entry.finished) {
+status = "Ziel";
+} else if (entry.car.pitStatus === "pit-stop") {
+status = "Box";
+} else if (entry.car.pitStatus === "pit-entry") {
+status = "Box...";
+}
+row.innerHTML = `
+<span class="leaderboard-rank">${rankLabel}.</span>
+<span class="leaderboard-name"><span class="leaderboard-dot" style="background:${entry.car.color}"></span>${entry.car.name}</span>
+<span class="leaderboard-status">${status}</span>
+`;
+leaderboardListEl.appendChild(row);
+});
+}
+function updateDOM() {
+const leadDistance = cars.reduce((max, car) => Math.max(max, car.distance), 0);
+dispTime.textContent = `${time.toFixed(1)} s`;
+dispCars.textContent = String(cars.length);
+dispLeadDist.textContent = `${leadDistance.toFixed(1)} m`;
+cars.forEach((car, index) => {
+const raceLike = mode === "race" || mode === "replay";
+const distanceLimit = mode === "replay" && lastRaceFrames ? lastRaceFrames.raceDistance : getRaceDistance();
+const shownDistance = clamp(car.distance, 0, distanceLimit);
+if (selectedTrack.closed) {
+placeCarOnClosedTrack(car, index);
+} else if (car.carEl) {
+const straightPosition = raceLike && shownDistance < distanceLimit
+? shownDistance % getTrackLength()
+: Math.min(shownDistance, getTrackLength());
+car.carEl.style.transform = `translateX(${getTrackX(straightPosition)}px)`;
+}
+if (car.rowEl) {
+car.rowEl.querySelector(".car-distance").textContent = `${shownDistance.toFixed(1)} m`;
+const speed = mode === "race" || mode === "replay" ? car.raceVelocity : car.velocity;
+car.rowEl.querySelector(".car-speed").textContent = `${speed.toFixed(1)} m/s`;
+const slider = car.rowEl.querySelector(".velocity-slider");
+const velocityValue = car.rowEl.querySelector(".car-velocity-value");
+const skillSlider = car.rowEl.querySelector(".driver-skill-slider");
+const skillValue = car.rowEl.querySelector(".driver-skill-value");
+if (slider && velocityValue) {
+const sliderSpeed = mode === "replay" ? speed : car.velocity;
+slider.value = String(clamp(Math.round(sliderSpeed), 0, MAX_VELOCITY));
+velocityValue.textContent = String(clamp(Math.round(sliderSpeed), 0, MAX_VELOCITY));
+}
+if (skillSlider && skillValue) {
+skillSlider.value = String(clamp(car.driverSkill, 1, 10));
+skillValue.textContent = String(clamp(car.driverSkill, 1, 10));
+}
+}
+});
+updateConnectionPanel();
+updateFocusSpeedControl();
+updateLeaderboard();
+}
+function getChartSize(canvas, margin) {
+return {
+width: canvas.width - margin.left - margin.right,
+height: canvas.height - margin.top - margin.bottom
+};
+}
+function getDistanceCoords(t, s, yMax) {
+const size = getChartSize(distanceCanvas, distanceMargin);
+return {
+x: distanceMargin.left + (t / axisMaxTime) * size.width,
+y: distanceMargin.top + size.height - (s / yMax) * size.height
+};
+}
+function drawAxes(yMax) {
+const size = getChartSize(distanceCanvas, distanceMargin);
+distanceCtx.clearRect(0, 0, distanceCanvas.width, distanceCanvas.height);
+distanceCtx.font = "14px system-ui, sans-serif";
+distanceCtx.lineWidth = 1;
+const timeStep = axisMaxTime <= 15 ? 1 : axisMaxTime <= 40 ? 5 : 10;
+const distStep = yMax <= 140 ? 10 : yMax <= 300 ? 25 : 50;
+if (chkGrid.checked) {
+distanceCtx.strokeStyle = "#e2e8f0";
+distanceCtx.beginPath();
+for (let i = 0; i <= axisMaxTime; i += timeStep) {
+const x = distanceMargin.left + (i / axisMaxTime) * size.width;
+distanceCtx.moveTo(x, distanceMargin.top);
+distanceCtx.lineTo(x, distanceMargin.top + size.height);
+}
+for (let value = 0; value <= yMax; value += distStep) {
+const y = getDistanceCoords(0, value, yMax).y;
+distanceCtx.moveTo(distanceMargin.left, y);
+distanceCtx.lineTo(distanceMargin.left + size.width, y);
+}
+distanceCtx.stroke();
+}
+distanceCtx.strokeStyle = "#172033";
+distanceCtx.lineWidth = 1.5;
+distanceCtx.beginPath();
+distanceCtx.moveTo(distanceMargin.left, distanceMargin.top);
+distanceCtx.lineTo(distanceMargin.left, distanceMargin.top + size.height);
+distanceCtx.lineTo(distanceMargin.left + size.width, distanceMargin.top + size.height);
+distanceCtx.stroke();
+distanceCtx.fillStyle = "#475569";
+distanceCtx.textAlign = "center";
+distanceCtx.textBaseline = "top";
+for (let i = 0; i <= axisMaxTime; i += timeStep) {
+const x = distanceMargin.left + (i / axisMaxTime) * size.width;
+distanceCtx.fillText(String(i), x, distanceMargin.top + size.height + 10);
+}
+distanceCtx.textAlign = "right";
+distanceCtx.textBaseline = "middle";
+for (let value = 0; value <= yMax; value += distStep) {
+const y = getDistanceCoords(0, value, yMax).y;
+distanceCtx.fillText(String(value), distanceMargin.left - 10, y);
+}
+distanceCtx.fillStyle = "#172033";
+distanceCtx.font = "700 15px system-ui, sans-serif";
+distanceCtx.textAlign = "center";
+distanceCtx.textBaseline = "bottom";
+distanceCtx.fillText("Zeit t in s", distanceMargin.left + size.width / 2, distanceCanvas.height - 8);
+distanceCtx.save();
+distanceCtx.translate(18, distanceMargin.top + size.height / 2);
+distanceCtx.rotate(-Math.PI / 2);
+distanceCtx.fillText("Strecke s in m", 0, 0);
+distanceCtx.restore();
+}
+function drawGraph() {
+easeAxisScale();
+const yMax = getGraphDistanceMax();
+drawAxes(yMax);
+cars.forEach(car => {
+distanceCtx.strokeStyle = car.color;
+distanceCtx.lineWidth = 3;
+distanceCtx.beginPath();
+car.path.forEach((point, index) => {
+const coords = getDistanceCoords(point.t, point.s, yMax);
+if (index === 0) distanceCtx.moveTo(coords.x, coords.y);
+else distanceCtx.lineTo(coords.x, coords.y);
+});
+distanceCtx.stroke();
+const current = getDistanceCoords(time, car.distance, yMax);
+distanceCtx.fillStyle = car.color;
+distanceCtx.beginPath();
+distanceCtx.arc(current.x, current.y, 5, 0, Math.PI * 2);
+distanceCtx.fill();
+});
+drawFocusAid(yMax);
+}
+function drawFocusAid(yMax) {
+const car = getFocusCar();
+if (!car) return;
+const current = getDistanceCoords(time, car.distance, yMax);
+const axisY = distanceCanvas.height - distanceMargin.bottom;
+const axisX = distanceMargin.left;
+const speed = getDisplaySpeed(car);
+distanceCtx.save();
+distanceCtx.setLineDash([7, 5]);
+distanceCtx.strokeStyle = car.color;
+distanceCtx.lineWidth = 1.6;
+distanceCtx.beginPath();
+distanceCtx.moveTo(current.x, current.y);
+distanceCtx.lineTo(current.x, axisY);
+distanceCtx.moveTo(current.x, current.y);
+distanceCtx.lineTo(axisX, current.y);
+distanceCtx.stroke();
+distanceCtx.setLineDash([]);
+distanceCtx.fillStyle = car.color;
+distanceCtx.beginPath();
+distanceCtx.arc(current.x, current.y, 8, 0, Math.PI * 2);
+distanceCtx.fill();
+distanceCtx.lineWidth = 3;
+distanceCtx.strokeStyle = "#fff";
+distanceCtx.stroke();
+distanceCtx.font = "700 13px system-ui, sans-serif";
+distanceCtx.fillStyle = "#172033";
+distanceCtx.textAlign = "left";
+distanceCtx.textBaseline = "bottom";
+distanceCtx.fillText(`(${time.toFixed(1)} s | ${car.distance.toFixed(1)} m)`, Math.min(current.x + 10, distanceCanvas.width - 150), Math.max(current.y - 8, 18));
+if (time > 0.15 && speed > 0.05) {
+const triangleDt = Math.min(1, time, axisMaxTime / 6);
+const triangleDs = speed * triangleDt;
+const p1 = getDistanceCoords(time - triangleDt, Math.max(0, car.distance - triangleDs), yMax);
+const p2 = getDistanceCoords(time, Math.max(0, car.distance - triangleDs), yMax);
+const p3 = current;
+distanceCtx.strokeStyle = car.color;
+distanceCtx.lineWidth = 2;
+distanceCtx.beginPath();
+distanceCtx.moveTo(p1.x, p1.y);
+distanceCtx.lineTo(p2.x, p2.y);
+distanceCtx.lineTo(p3.x, p3.y);
+distanceCtx.stroke();
+distanceCtx.fillStyle = "rgba(29, 78, 216, 0.08)";
+distanceCtx.beginPath();
+distanceCtx.moveTo(p1.x, p1.y);
+distanceCtx.lineTo(p2.x, p2.y);
+distanceCtx.lineTo(p3.x, p3.y);
+distanceCtx.closePath();
+distanceCtx.fill();
+distanceCtx.fillStyle = car.color;
+distanceCtx.textAlign = "center";
+distanceCtx.textBaseline = "top";
+distanceCtx.fillText(`Δt = ${triangleDt.toFixed(1)} s`, (p1.x + p2.x) / 2, p2.y + 6);
+distanceCtx.save();
+distanceCtx.translate(p2.x + 10, (p2.y + p3.y) / 2);
+distanceCtx.rotate(-Math.PI / 2);
+distanceCtx.fillText(`Δs ≈ ${triangleDs.toFixed(1)} m`, 0, 0);
+distanceCtx.restore();
+}
+distanceCtx.restore();
+}
+function setRunningState(running) {
+isRunning = running;
+btnStart.disabled = running;
+btnStop.disabled = !running;
+btnAddCar.disabled = running || cars.length >= COLORS.length;
+btnRace.disabled = running;
+btnReplay.disabled = running || !lastRaceFrames;
+trackSelect.disabled = running;
+raceCarCountInput.disabled = running;
+raceLapsInput.disabled = running;
+document.querySelectorAll(".remove-car").forEach(button => {
+button.disabled = running || cars.length <= 1;
+});
+document.querySelectorAll(".velocity-slider").forEach(slider => {
+slider.disabled = running && mode !== "manual-recording";
+});
+document.querySelectorAll(".driver-skill-slider").forEach(slider => {
+slider.disabled = running;
+});
+updateFocusSpeedControl();
+}
+function stopSimulation(status = "Pausiert") {
+if (isRunning && mode === "manual-recording" && manualRecordingFrames.length) {
+saveManualRecording();
+}
+setRunningState(false);
+statusPill.textContent = status;
+cancelAnimationFrame(animationId);
+}
+function getCarSetup() {
+return cars.map(car => ({
+id: car.id,
+name: car.name,
+color: car.color,
+velocity: car.velocity,
+driverSkill: car.driverSkill
+}));
+}
+function getRunSettings(kind) {
+return {
+kind,
+trackId: selectedTrack.id,
+axisMaxTime,
+targetAxisMaxTime,
+raceCarCount: Number(raceCarCountInput.value),
+raceLaps: Number(raceLapsInput.value),
+focusCarId,
+grid: chkGrid.checked,
+hints: chkHints.checked
+};
+}
+function applyRunSettings(settings) {
+if (!settings) return;
+const track = TRACKS.find(item => item.id === settings.trackId);
+if (track) {
+selectedTrack = track;
+trackSelect.value = track.id;
+}
+axisMaxTime = clamp(Number(settings.axisMaxTime) || axisMaxTime, 5, 120);
+targetAxisMaxTime = clamp(Number(settings.targetAxisMaxTime) || axisMaxTime, 5, 120);
+raceCarCountInput.value = clamp(Number(settings.raceCarCount) || cars.length || 1, 1, COLORS.length);
+raceLapsInput.value = clamp(Number(settings.raceLaps) || 1, 1, 8);
+focusCarId = Number(settings.focusCarId) || focusCarId;
+chkGrid.checked = settings.grid !== false;
+chkHints.checked = Boolean(settings.hints);
+hintBox.style.display = chkHints.checked ? "block" : "none";
+}
+function saveManualRecording() {
+const endTime = manualRecordingFrames.length ? manualRecordingFrames[manualRecordingFrames.length - 1].t : axisMaxTime;
+const savedAxisMaxTime = Math.max(axisMaxTime, endTime * 1.08);
+lastRaceFrames = {
+kind: "manual",
+settings: getRunSettings("manual"),
+trackId: selectedTrack.id,
+axisMaxTime: savedAxisMaxTime,
+targetAxisMaxTime: savedAxisMaxTime,
+raceDistance: cars.reduce((max, car) => Math.max(max, car.distance), getTrackLength()),
+winnerId: null,
+finishOrder: [],
+carSetup: manualRecordingCarSetup.length ? manualRecordingCarSetup : getCarSetup(),
+frames: manualRecordingFrames.map(frame => ({
+t: frame.t,
+cars: frame.cars.map(car => ({ ...car }))
+}))
+};
+btnReplay.disabled = false;
+}
+function manualStep(timestamp) {
+if (!isRunning) return;
+if (!lastTimestamp) lastTimestamp = timestamp;
+const dt = (timestamp - lastTimestamp) / 1000;
+lastTimestamp = timestamp;
+time += dt;
+cars.forEach(car => {
+const limit = getRaceDistance();
+car.distance = Math.min(limit, car.distance + car.velocity * dt);
+car.path.push({ t: time, s: car.distance });
+});
+manualRecordingFrames.push({
+t: time,
+cars: cars.map(car => ({
+id: car.id,
+s: car.distance,
+v: car.velocity
+}))
+});
+if (time >= axisMaxTime || cars.every(car => car.distance >= getRaceDistance())) {
+time = Math.min(time, axisMaxTime);
+stopSimulation("Fertig");
+}
+updateDOM();
+drawGraph();
+if (isRunning) animationId = requestAnimationFrame(manualStep);
+}
+function startSimulation() {
+if (isRunning) return;
+mode = "manual-recording";
+resetCarState();
+updateAutoAxis();
+syncAxisImmediately();
+manualRecordingFrames = [{
+t: 0,
+cars: cars.map(car => ({ id: car.id, s: 0, v: car.velocity }))
+}];
+manualRecordingCarSetup = getCarSetup();
+dispWinner.textContent = "-";
+lastTimestamp = 0;
+setRunningState(true);
+statusPill.textContent = "Manuelle Aufzeichnung läuft";
+animationId = requestAnimationFrame(manualStep);
+}
+function resetSimulation() {
+stopSimulation("Bereit");
+mode = "manual";
+resetCarState();
+updateAutoAxis();
+syncAxisImmediately();
+dispWinner.textContent = "-";
+updateDOM();
+drawGraph();
+}
+function addCar() {
+if (cars.length >= COLORS.length) return;
+const baseVelocity = cars.length ? Math.min(MAX_VELOCITY, cars[cars.length - 1].velocity + 5) : 5;
+cars.push(createCar(baseVelocity));
+raceCarCountInput.value = cars.length;
+syncUI();
+setRunningState(false);
+}
+function removeCar(id) {
+if (cars.length <= 1 || isRunning) return;
+cars = cars.filter(car => car.id !== id);
+raceCarCountInput.value = cars.length;
+syncUI();
+setRunningState(false);
+}
+function ensureRaceCarCount() {
+const count = clamp(Number(raceCarCountInput.value), 1, COLORS.length);
+const changed = cars.length !== count;
+raceCarCountInput.value = count;
+while (cars.length < count) cars.push(createCar(5 + cars.length * 3));
+while (cars.length > count) cars.pop();
+cars.forEach((car, index) => {
+if (!Number.isFinite(car.driverSkill)) {
+car.driverSkill = getDefaultDriverSkill(index);
+}
+});
+return changed;
+}
+function getSegmentType(progress) {
+const normalized = ((progress % 1) + 1) % 1;
+const segment = selectedTrack.segments.find(item => normalized >= item.from && normalized < item.to);
+return segment ? segment.type : "straight";
+}
+function getTargetSpeed(segmentType, winnerBoost, jitter) {
+const base = {
+straight: 25,
+fastCurve: 21,
+curve: 15,
+technical: 10
+}[segmentType] || 18;
+return clamp(base * winnerBoost + jitter, 6, MAX_VELOCITY);
+}
+function generateRaceFrames() {
+const raceDistance = getRaceDistance();
+const winnerIndex = Math.floor(Math.random() * cars.length);
+const carSetup = getCarSetup();
+const states = cars.map((car, index) => ({
+id: car.id,
+distance: 0,
+velocity: 0,
+finishRank: null,
+pitState: "none",
+pitTimer: 0,
+pitDone: false,
+pitProgress: 0,
+pitPlanned: selectedTrack.id === "speed" && Math.random() < 0.28,
+pitTriggerLap: 1 + Math.floor(Math.random() * Math.max(1, Number(raceLapsInput.value))),
+driverSkill: clamp(car.driverSkill || getDefaultDriverSkill(index), 1, 10),
+raceLuck: index === winnerIndex ? 1.08 : 0.94 + Math.random() * 0.1,
+jitterPhase: Math.random() * Math.PI * 2
+}));
+const frames = [];
+const finishOrder = [];
+let raceTime = 0;
+let finished = false;
+while (!finished && frames.length < 36000) {
+raceTime += FRAME_DT;
+states.forEach((state, index) => {
+if (state.finishRank !== null) {
+state.velocity = 0;
+state.distance = raceDistance;
+return;
+}
+const progress = (state.distance % getTrackLength()) / getTrackLength();
+const currentLap = Math.floor(state.distance / getTrackLength()) + 1;
+if (
+selectedTrack.id === "speed" &&
+selectedTrack.pitRange &&
+state.pitPlanned &&
+!state.pitDone &&
+state.pitState === "none" &&
+currentLap >= state.pitTriggerLap &&
+progress >= selectedTrack.pitRange.from &&
+progress <= selectedTrack.pitRange.to
+) {
+state.pitState = "entry";
+state.pitProgress = 0;
+state.pitTimer = 1.4 + Math.random() * 2.4;
+}
+const segment = getSegmentType(progress);
+const lookAhead = getSegmentType(progress + 0.045);
+const skillFactor = 0.76 + state.driverSkill * 0.052;
+const errorAmount = (11 - state.driverSkill) / 10;
+const jitter = Math.sin(raceTime * 2.3 + state.jitterPhase) * (0.25 + errorAmount * 1.25);
+const targetSegment = lookAhead === "technical" || lookAhead === "curve" ? lookAhead : segment;
+let target = getTargetSpeed(targetSegment, skillFactor * state.raceLuck, jitter);
+if (state.pitState === "entry") {
+target = 4;
+state.pitProgress = Math.min(0.48, state.pitProgress + FRAME_DT / 1.35);
+if (state.pitProgress >= 0.48) {
+state.pitState = "stop";
+state.velocity = 0;
+target = 0;
+}
+} else if (state.pitState === "stop") {
+target = 0;
+state.velocity = 0;
+state.pitProgress = 0.5;
+state.pitTimer -= FRAME_DT;
+if (state.pitTimer <= 0) {
+state.pitState = "exit";
+}
+} else if (state.pitState === "exit") {
+target = Math.min(target, 12);
+state.pitProgress = Math.min(1, state.pitProgress + FRAME_DT / 1.55);
+if (state.pitProgress >= 1) {
+state.pitState = "none";
+state.pitDone = true;
+}
+}
+const accel = target > state.velocity ? 5.6 + state.driverSkill * 0.35 : -8.8 - state.driverSkill * 0.45;
+state.velocity = clamp(state.velocity + accel * FRAME_DT, 0, MAX_VELOCITY);
+state.distance = Math.min(raceDistance, state.distance + state.velocity * FRAME_DT);
+if (index === winnerIndex && state.distance > raceDistance * 0.82) {
+state.velocity = Math.min(MAX_VELOCITY, state.velocity + 0.035);
+}
+if (state.distance >= raceDistance && state.finishRank === null) {
+state.finishRank = finishOrder.length + 1;
+finishOrder.push(state.id);
+state.distance = raceDistance;
+state.velocity = 0;
+}
+});
+finished = states.every(state => state.finishRank !== null);
+frames.push({
+t: raceTime,
+cars: states.map(state => ({
+id: state.id,
+s: state.distance,
+v: state.velocity,
+rank: state.finishRank,
+pit: state.pitState === "stop" ? "pit-stop" : state.pitState === "entry" || state.pitState === "exit" ? "pit-entry" : "",
+pitProgress: state.pitProgress
+}))
+});
+}
+const winnerId = finishOrder[0] || states.reduce((best, state) => state.distance > best.distance ? state : best, states[0]).id;
+const endTime = frames.length ? frames[frames.length - 1].t : axisMaxTime;
+const graphAxisMaxTime = Math.max(axisMaxTime, endTime * 1.08);
+return {
+kind: "simulation",
+settings: getRunSettings("simulation"),
+trackId: selectedTrack.id,
+axisMaxTime: graphAxisMaxTime,
+targetAxisMaxTime: graphAxisMaxTime,
+raceDistance,
+winnerId,
+finishOrder,
+carSetup,
+frames
+};
+}
+function applyRaceFrame(frame) {
+time = frame.t;
+frame.cars.forEach(frameCar => {
+const car = cars.find(item => item.id === frameCar.id);
+if (!car) return;
+car.distance = frameCar.s;
+car.raceVelocity = frameCar.v;
+car.finishRank = frameCar.rank ?? null;
+car.pitStatus = frameCar.pit || "";
+car.pitProgress = frameCar.pitProgress || 0;
+car.path.push({ t: frame.t, s: frameCar.s });
+});
+updateDOM();
+drawGraph();
+}
+function startGeneratedRace() {
+if (isRunning) return;
+mode = "race";
+ensureRaceCarCount();
+resetCarState();
+syncUI();
+lastRaceFrames = generateRaceFrames();
+axisMaxTime = lastRaceFrames.axisMaxTime;
+targetAxisMaxTime = lastRaceFrames.targetAxisMaxTime || lastRaceFrames.axisMaxTime;
+btnReplay.disabled = true;
+playStoredRace(lastRaceFrames, "Rennen läuft");
+}
+function replayRace() {
+if (!lastRaceFrames || isRunning) return;
+applyRunSettings(lastRaceFrames.settings || lastRaceFrames);
+axisMaxTime = lastRaceFrames.axisMaxTime;
+targetAxisMaxTime = lastRaceFrames.targetAxisMaxTime || lastRaceFrames.axisMaxTime;
+cars = lastRaceFrames.carSetup.map(savedCar => ({
+id: savedCar.id,
+name: savedCar.name,
+color: savedCar.color,
+velocity: savedCar.velocity,
+driverSkill: savedCar.driverSkill || 5,
+raceVelocity: 0,
+finishRank: null,
+pitStatus: "",
+pitProgress: 0,
+distance: 0,
+path: [{ t: 0, s: 0 }],
+carEl: null,
+svgEl: null,
+rowEl: null
+}));
+if (focusCarId !== null && !cars.some(car => car.id === focusCarId)) {
+focusCarId = null;
+}
+nextCarId = Math.max(...cars.map(car => car.id)) + 1;
+mode = "replay";
+resetCarState();
+syncUI();
+playStoredRace(lastRaceFrames, "Wiederholung läuft");
+}
+function playStoredRace(raceData, label) {
+cars.forEach(car => {
+car.path = [{ t: 0, s: 0 }];
+});
+replayStartTimestamp = 0;
+setRunningState(true);
+statusPill.textContent = label;
+dispWinner.textContent = "-";
+function replayStep(timestamp) {
+if (!isRunning) return;
+if (!replayStartTimestamp) replayStartTimestamp = timestamp;
+const elapsed = (timestamp - replayStartTimestamp) / 1000;
+const frame = raceData.frames.find(item => item.t >= elapsed) || raceData.frames[raceData.frames.length - 1];
+applyRaceFrame(frame);
+if (frame === raceData.frames[raceData.frames.length - 1]) {
+const winner = cars.find(car => car.id === raceData.winnerId);
+dispWinner.textContent = winner ? winner.name : "Aufzeichnung";
+stopSimulation(raceData.kind === "manual" ? "Wiedergabe beendet" : "Rennen beendet");
+btnReplay.disabled = false;
+return;
+}
+animationId = requestAnimationFrame(replayStep);
+}
+animationId = requestAnimationFrame(replayStep);
+}
+function handleTrackChange() {
+selectTrack(trackSelect.value);
+}
+function selectTrack(trackId) {
+selectedTrack = TRACKS.find(track => track.id === trackId) || TRACKS[0];
+trackSelect.value = selectedTrack.id;
+mode = "manual";
+resetCarState();
+updateAutoAxis();
+syncAxisImmediately();
+dispWinner.textContent = "-";
+syncUI();
+setRunningState(false);
+}
+function syncRaceCarCountSetting() {
+if (isRunning) return;
+ensureRaceCarCount();
+resetCarState();
+updateAutoAxis();
+syncAxisImmediately();
+syncUI();
+setRunningState(false);
+}
+populateTrackSelect();
+cars.push(createCar(5));
+updateAutoAxis();
+syncAxisImmediately();
+syncUI();
+setRunningState(false);
+btnStart.addEventListener("click", startSimulation);
+btnStop.addEventListener("click", () => stopSimulation("Pausiert"));
+btnReset.addEventListener("click", resetSimulation);
+btnAddCar.addEventListener("click", addCar);
+btnRace.addEventListener("click", startGeneratedRace);
+btnReplay.addEventListener("click", replayRace);
+focusSpeedSlider.addEventListener("input", event => {
+const car = getFocusCar();
+if (!car || (isRunning && mode !== "manual-recording")) return;
+car.velocity = Number(event.target.value);
+if (car.rowEl) {
+car.rowEl.querySelector(".velocity-slider").value = String(car.velocity);
+car.rowEl.querySelector(".car-velocity-value").textContent = String(car.velocity);
+car.rowEl.querySelector(".car-speed").textContent = `${car.velocity} m/s`;
+}
+updateAutoAxis();
+updateDOM();
+drawGraph();
+});
+focusCarSelect.addEventListener("change", event => {
+focusCarId = event.target.value === "none" ? null : Number(event.target.value);
+renderCarControls();
+updateDOM();
+drawGraph();
+setRunningState(isRunning);
+});
+trackSelect.addEventListener("change", handleTrackChange);
+raceCarCountInput.addEventListener("change", () => {
+raceCarCountInput.value = clamp(Number(raceCarCountInput.value) || 1, 1, COLORS.length);
+syncRaceCarCountSetting();
+});
+raceLapsInput.addEventListener("change", () => {
+raceLapsInput.value = clamp(Number(raceLapsInput.value) || 1, 1, 8);
+resetCarState();
+updateAutoAxis();
+syncAxisImmediately();
+updateDOM();
+drawGraph();
+});
+chkGrid.addEventListener("change", drawGraph);
+chkHints.addEventListener("change", event => {
+hintBox.style.display = event.target.checked ? "block" : "none";
+});
+window.addEventListener("resize", () => {
+renderTrack();
+updateDOM();
+});
+</script>
+</body>
+</html>
