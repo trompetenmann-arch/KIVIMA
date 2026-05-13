@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lernumgebung: Virusverbreitung als Exponentialfunktion</title>
+<style>
+:root {
+--blue: #2563eb;
+--blue-dark: #1e40af;
+--purple: #7c3aed;
+--green: #16a34a;
+--orange: #f97316;
+--red: #dc2626;
+--yellow: #facc15;
+--bg: #f4f7fb;
+--card: #ffffff;
+--text: #1f2937;
+--muted: #6b7280;
+--border: #d7e0ee;
+}
+* { box-sizing: border-box; }
+body {
+margin: 0;
+font-family: Arial, Helvetica, sans-serif;
+background: var(--bg);
+color: var(--text);
+line-height: 1.55;
+}
+header {
+background: linear-gradient(135deg, #172554, #2563eb, #7c3aed);
+color: white;
+padding: 36px 18px;
+text-align: center;
+}
+header h1 {
+margin: 0;
+font-size: clamp(28px, 5vw, 46px);
+}
+header p {
+max-width: 950px;
+margin: 12px auto 0;
+font-size: 18px;
+opacity: 0.95;
+}
+nav {
+position: sticky;
+top: 0;
+z-index: 20;
+background: white;
+border-bottom: 1px solid var(--border);
+padding: 10px;
+text-align: center;
+box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+nav a {
+display: inline-block;
+text-decoration: none;
+color: var(--blue-dark);
+background: #eff6ff;
+border: 1px solid #dbeafe;
+padding: 9px 13px;
+margin: 4px;
+border-radius: 999px;
+font-weight: bold;
+font-size: 14px;
+}
+nav a:hover { background: #dbeafe; }
+main {
+max-width: 1240px;
+margin: 24px auto;
+padding: 0 16px 48px;
+}
+section {
+background: var(--card);
+border: 1px solid var(--border);
+border-radius: 22px;
+padding: 26px;
+margin: 26px 0;
+box-shadow: 0 8px 25px rgba(15, 23, 42, 0.08);
+}
+h2 {
+color: var(--blue-dark);
+font-size: 28px;
+margin-top: 0;
+}
+h3 {
+color: #111827;
+margin-bottom: 8px;
+}
+.lead {
+background: #eff6ff;
+border-left: 7px solid var(--blue);
+border-radius: 14px;
+padding: 16px;
+font-size: 18px;
+}
+.grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+gap: 18px;
+align-items: start;
+}
+.two {
+display: grid;
+grid-template-columns: 0.95fr 1.05fr;
+gap: 22px;
+align-items: start;
+}
+@media (max-width: 900px) {
+.two { grid-template-columns: 1fr; }
+}
+.card {
+background: #f8fafc;
+border: 1px solid var(--border);
+border-radius: 18px;
+padding: 18px;
+}
+.boxBlue, .boxGreen, .boxOrange, .boxRed, .boxPurple {
+border-radius: 14px;
+padding: 14px;
+margin: 14px 0;
+}
+.boxBlue { background: #eff6ff; border-left: 7px solid var(--blue); }
+.boxGreen { background: #f0fdf4; border-left: 7px solid var(--green); }
+.boxOrange { background: #fff7ed; border-left: 7px solid var(--orange); }
+.boxRed { background: #fef2f2; border-left: 7px solid var(--red); }
+.boxPurple { background: #faf5ff; border-left: 7px solid var(--purple); }
+label {
+display: block;
+font-weight: bold;
+margin-top: 14px;
+}
+input[type="range"] {
+width: 100%;
+accent-color: var(--blue);
+}
+button {
+border: none;
+background: var(--blue);
+color: white;
+border-radius: 12px;
+padding: 11px 15px;
+font-weight: bold;
+font-size: 15px;
+cursor: pointer;
+margin: 5px 5px 5px 0;
+}
+button:hover { background: var(--blue-dark); }
+button.green { background: var(--green); }
+button.orange { background: var(--orange); }
+button.red { background: var(--red); }
+button.purple { background: var(--purple); }
+button.gray { background: #475569; }
+.formula {
+background: white;
+border: 2px solid #dbeafe;
+border-radius: 16px;
+padding: 14px;
+font-size: 24px;
+font-weight: bold;
+text-align: center;
+color: var(--blue-dark);
+margin: 12px 0;
+}
+.smallFormula {
+background: #ffffff;
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 10px;
+font-size: 18px;
+text-align: center;
+font-weight: bold;
+}
+canvas {
+width: 100%;
+max-width: 100%;
+background: white;
+border: 2px solid var(--border);
+border-radius: 18px;
+}
+.tableWrap {
+overflow-x: auto;
+margin-top: 12px;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+overflow: hidden;
+border-radius: 12px;
+background: white;
+}
+th, td {
+border: 1px solid var(--border);
+padding: 9px;
+text-align: center;
+}
+th {
+background: #eff6ff;
+color: var(--blue-dark);
+}
+.schoolScene {
+height: 360px;
+border: 2px solid var(--border);
+border-radius: 18px;
+background:
+linear-gradient(90deg, rgba(255,255,255,.78), rgba(255,255,255,.78)),
+repeating-linear-gradient(45deg, #dbeafe, #dbeafe 18px, #eff6ff 18px, #eff6ff 36px);
+position: relative;
+overflow: hidden;
+margin-top: 12px;
+}
+.student {
+position: absolute;
+width: 34px;
+height: 34px;
+border-radius: 50%;
+background: #d1d5db;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 19px;
+border: 2px solid white;
+box-shadow: 0 2px 7px rgba(0,0,0,.18);
+transition: transform .25s, background .25s, opacity .25s;
+}
+.student.infected {
+background: #f87171;
+transform: scale(1.12);
+}
+.student.new {
+background: #fb923c;
+transform: scale(1.22);
+}
+.legend {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+margin-top: 10px;
+font-size: 14px;
+}
+.legendItem {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+background: white;
+border: 1px solid var(--border);
+border-radius: 999px;
+padding: 6px 10px;
+}
+.dot {
+width: 14px;
+height: 14px;
+border-radius: 50%;
+display: inline-block;
+}
+.grayDot { background: #d1d5db; }
+.redDot { background: #f87171; }
+.orangeDot { background: #fb923c; }
+.flow {
+display: flex;
+gap: 10px;
+align-items: stretch;
+justify-content: center;
+flex-wrap: wrap;
+margin: 18px 0;
+}
+.flowBox {
+flex: 1;
+min-width: 150px;
+background: white;
+border: 2px solid #bfdbfe;
+border-radius: 16px;
+padding: 14px;
+text-align: center;
+}
+.flowBox strong {
+display: block;
+color: var(--blue-dark);
+margin-bottom: 6px;
+}
+.arrow {
+display: flex;
+align-items: center;
+font-size: 28px;
+font-weight: bold;
+color: var(--blue);
+}
+.mini {
+color: var(--muted);
+font-size: 14px;
+}
+details {
+background: white;
+border: 1px solid var(--border);
+border-radius: 14px;
+padding: 12px;
+margin: 10px 0;
+}
+summary {
+cursor: pointer;
+font-weight: bold;
+color: var(--blue-dark);
+}
+.task {
+background: #ffffff;
+border: 1px solid var(--border);
+border-radius: 16px;
+padding: 16px;
+margin: 14px 0;
+}
+.task h3 { margin-top: 0; }
+.feedback {
+display: none;
+padding: 12px;
+border-radius: 12px;
+margin-top: 10px;
+background: #f0fdf4;
+border-left: 6px solid var(--green);
+}
+.wrong {
+background: #fef2f2;
+border-left-color: var(--red);
+}
+.printNote {
+background: #f8fafc;
+border: 1px dashed #94a3b8;
+border-radius: 14px;
+padding: 14px;
+margin-top: 12px;
+}
+</style>
+</head>
+<body>
+<header>
+<h1>Exponentialfunktionen verstehen</h1>
+<p>
+Konkretes Alltagsbeispiel: Ein Virus verbreitet sich in einer Schule.
+Die Lernumgebung verbindet Situation, Funktion, Tabelle, Graph und dynamische Simulation.
+</p>
+</header>
+<nav>
+<a href="#lernziele">Lernziele</a>
+<a href="#situation">Situation</a>
+<a href="#simulation">Simulation</a>
+<a href="#vergleich">Linear vs. exponentiell</a>
+<a href="#auftraege">Arbeitsaufträge</a>
+<a href="#hilfen">Hilfen</a>
+<a href="#check">Check</a>
+</nav>
+<main>
+<section id="lernziele">
+<h2>1. Angestrebte Lernziele</h2>
+<div class="grid">
+<div class="card">
+<h3>Fachliche Lernziele</h3>
+<ul>
+<li>Du erkennst eine Funktion als eindeutige Zuordnung.</li>
+<li>Du erklärst die Bedeutung von Eingabe x und Ausgabe f(x).</li>
+<li>Du deutest eine Exponentialfunktion in einem Sachzusammenhang.</li>
+<li>Du unterscheidest lineares und exponentielles Wachstum.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Prozessbezogene Lernziele</h3>
+<ul>
+<li>Du verbindest Situation, Tabelle, Graph und Funktionsgleichung.</li>
+<li>Du beschreibst dynamische Veränderung: Was passiert von Tag zu Tag?</li>
+<li>Du erklärst, welcher Parameter welchen Einfluss hat.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Verständnisziel</h3>
+<p>
+Du sollst verstehen: Eine Funktion ist nicht nur eine Formel.
+Sie beschreibt einen Prozess. Der Graph zeigt viele Zustände dieses Prozesses gleichzeitig.
+</p>
+</div>
+</div>
+</section>
+<section id="situation">
+<h2>2. Das konkrete Szenario: Virus in einer Schule</h2>
+<p class="lead">
+In einer Schule ist zu Beginn eine Person infiziert.
+Wir betrachten ein vereinfachtes mathematisches Modell:
+Pro Tag steckt jede infizierte Person im Durchschnitt so viele weitere Personen an,
+dass sich die Gesamtzahl der Infizierten mit einem festen Faktor vervielfacht.
+</p>
+<div class="boxRed">
+<strong>Wichtig:</strong>
+Das ist ein vereinfachtes Lernmodell für Mathematik.
+In der Realität hängen Infektionen von vielen weiteren Faktoren ab, zum Beispiel Kontakten,
+Schutzmaßnahmen, Immunität und Zufall.
+</div>
+<div class="two">
+<div class="card">
+<h3>Unser Grundmodell</h3>
+<p>
+Zu Beginn ist <strong>1 Person</strong> infiziert.
+Jeden Tag verdoppelt sich die Anzahl der Infizierten.
+</p>
+<div class="formula">
+f(x) = 1 · 2<sup>x</sup>
+</div>
+<p>
+<strong>x</strong> = Anzahl der Tage<br>
+<strong>f(x)</strong> = Anzahl der infizierten Personen<br>
+<strong>1</strong> = Startwert<br>
+<strong>2</strong> = Wachstumsfaktor / Infektionsfaktor
+</p>
+</div>
+<div class="card">
+<h3>Was bedeutet der Faktor?</h3>
+<div class="boxOrange">
+Der Faktor <strong>2</strong> bedeutet:
+Von einem Tag zum nächsten wird die Anzahl der Infizierten mit 2 multipliziert.
+</div>
+<div class="smallFormula">
+Tag 0: 1<br>
+Tag 1: 1 · 2 = 2<br>
+Tag 2: 1 · 2 · 2 = 4<br>
+Tag 3: 1 · 2 · 2 · 2 = 8
+</div>
+<p>
+Der Exponent x sagt, <strong>wie oft</strong> der Faktor angewendet wird.
+</p>
+</div>
+</div>
+</section>
+<section id="simulation">
+<h2>3. Interaktive Simulation: Parameter verändern die Funktion</h2>
+<p>
+Verändere die Regler. Achte genau darauf:
+Der Startwert und der Infektionsfaktor verändern nicht nur einen einzelnen Wert,
+sondern die ganze Funktion, also auch Tabelle, Graph und Simulation.
+</p>
+<div class="two">
+<div class="card">
+<label for="startValue">Startwert a: <span id="startLabel">1</span> infizierte Person(en)</label>
+<input type="range" id="startValue" min="1" max="10" step="1" value="1">
+<label for="factorValue">Infektionsfaktor b pro Tag: <span id="factorLabel">2</span></label>
+<input type="range" id="factorValue" min="1.1" max="3" step="0.1" value="2">
+<label for="dayValue">Tag x: <span id="dayLabel">5</span></label>
+<input type="range" id="dayValue" min="0" max="10" step="1" value="5">
+<div class="formula" id="dynamicFormula">
+f(x) = 1 · 2<sup>x</sup>
+</div>
+<div class="boxBlue" id="parameterMeaning"></div>
+<div class="flow">
+<div class="flowBox">
+<strong>Eingabe</strong>
+<span id="inputMeaning">x = 5 Tage</span>
+</div>
+<div class="arrow">➜</div>
+<div class="flowBox">
+<strong>Regel</strong>
+<span id="ruleMeaning">1 · 2⁵</span>
+</div>
+<div class="arrow">➜</div>
+<div class="flowBox">
+<strong>Ausgabe</strong>
+<span id="outputMeaning">32 Infizierte</span>
+</div>
+</div>
+<button class="green" onclick="startAnimation()">Animation starten</button>
+<button class="gray" onclick="pauseAnimation()">Pause</button>
+<button class="orange" onclick="resetAnimation()">Zurücksetzen</button>
+<div class="boxGreen" id="interpretation"></div>
+</div>
+<div class="card">
+<h3>Schulsituation als Bild</h3>
+<div class="schoolScene" id="schoolScene"></div>
+<div class="legend">
+<span class="legendItem"><span class="dot grayDot"></span> nicht infiziert</span>
+<span class="legendItem"><span class="dot redDot"></span> bereits infiziert</span>
+<span class="legendItem"><span class="dot orangeDot"></span> neu infiziert</span>
+</div>
+<p class="mini">
+Hinweis: Die Szene zeigt maximal 120 Personen, damit sie übersichtlich bleibt.
+Die berechneten Werte können größer sein.
+</p>
+</div>
+</div>
+<div class="two" style="margin-top:22px;">
+<div class="card">
+<h3>Graph der Funktion</h3>
+<canvas id="graph" width="620" height="420"></canvas>
+</div>
+<div class="card">
+<h3>Wertetabelle</h3>
+<div class="tableWrap">
+<table id="valueTable"></table>
+</div>
+<div class="boxOrange">
+<strong>Beobachtung:</strong>
+Bei exponentiellem Wachstum wird nicht immer derselbe Betrag addiert.
+Stattdessen wird von Schritt zu Schritt mit demselben Faktor multipliziert.
+</div>
+</div>
+</div>
+</section>
+<section id="vergleich">
+<h2>4. Vergleich: Lineares und exponentielles Wachstum</h2>
+<p>
+Wir vergleichen zwei vereinfachte Modelle zur Virusverbreitung in der Schule.
+</p>
+<div class="grid">
+<div class="card">
+<h3>Lineares Modell</h3>
+<p>
+Jeden Tag kommen gleich viele neue infizierte Personen dazu.
+</p>
+<div class="formula">
+g(x) = 1 + 5x
+</div>
+<p>
+Bedeutung: Am Anfang ist 1 Person infiziert.
+Pro Tag kommen genau 5 Infizierte dazu.
+</p>
+</div>
+<div class="card">
+<h3>Exponentielles Modell</h3>
+<p>
+Die Anzahl wird jeden Tag mit demselben Faktor multipliziert.
+</p>
+<div class="formula">
+f(x) = 1 · 2<sup>x</sup>
+</div>
+<p>
+Bedeutung: Am Anfang ist 1 Person infiziert.
+Pro Tag verdoppelt sich die Anzahl.
+</p>
+</div>
+</div>
+<div class="two" style="margin-top:22px;">
+<div class="card">
+<label for="compareDay">Vergleichstag x: <span id="compareDayLabel">5</span></label>
+<input type="range" id="compareDay" min="0" max="10" step="1" value="5">
+<div class="boxBlue" id="compareText"></div>
+<div class="boxRed">
+<strong>Typischer Denkfehler:</strong>
+„Exponentiell“ bedeutet nicht, dass immer gleich viel dazu kommt.
+Es bedeutet: Der aktuelle Wert wird immer wieder mit demselben Faktor multipliziert.
+</div>
+</div>
+<div class="card">
+<canvas id="compareGraph" width="620" height="420"></canvas>
+<div class="tableWrap">
+<table id="compareTable"></table>
+</div>
+</div>
+</div>
+</section>
+<section id="auftraege">
+<h2>5. Konkrete Arbeitsaufträge für Schülerinnen und Schüler</h2>
+<div class="task">
+<h3>Arbeitsauftrag 1: Das Modell verstehen</h3>
+<p>
+Lies die Situation zur Virusverbreitung in der Schule. Erkläre in eigenen Worten:
+</p>
+<ol>
+<li>Was bedeutet x?</li>
+<li>Was bedeutet f(x)?</li>
+<li>Was bedeutet der Infektionsfaktor 2?</li>
+</ol>
+<details>
+<summary>Hilfestellung anzeigen</summary>
+<p>
+x ist die Anzahl der Tage. f(x) ist die Anzahl der infizierten Personen.
+Der Faktor 2 bedeutet: Von Tag zu Tag wird die Anzahl verdoppelt.
+</p>
+</details>
+</div>
+<div class="task">
+<h3>Arbeitsauftrag 2: Werte untersuchen</h3>
+<p>
+Stelle den Startwert auf 1 und den Infektionsfaktor auf 2.
+Bewege den Tag-Regler von 0 bis 10.
+</p>
+<ol>
+<li>Notiere die Werte für Tag 0 bis Tag 6.</li>
+<li>Beschreibe, wie die Werte entstehen.</li>
+<li>Erkläre, warum die Werte immer schneller größer werden.</li>
+</ol>
+<details>
+<summary>Hilfestellung anzeigen</summary>
+<p>
+Jeder neue Wert entsteht aus dem vorherigen Wert:
+vorheriger Wert · 2 = neuer Wert.
+</p>
+</details>
+</div>
+<div class="task">
+<h3>Arbeitsauftrag 3: Parameter verändern</h3>
+<p>
+Verändere den Startwert und den Infektionsfaktor.
+</p>
+<ol>
+<li>Was passiert, wenn der Startwert größer wird?</li>
+<li>Was passiert, wenn der Infektionsfaktor größer wird?</li>
+<li>Welcher Regler verändert vor allem die Steilheit der Kurve?</li>
+</ol>
+<details>
+<summary>Hilfestellung anzeigen</summary>
+<p>
+Der Startwert verändert, wo die Funktion beginnt.
+Der Infektionsfaktor verändert, wie stark die Funktion wächst.
+</p>
+</details>
+</div>
+<div class="task">
+<h3>Arbeitsauftrag 4: Linear oder exponentiell?</h3>
+<p>
+Vergleiche die Funktionen g(x) = 1 + 5x und f(x) = 1 · 2ˣ.
+</p>
+<ol>
+<li>Welche Funktion ist am Anfang größer?</li>
+<li>Welche Funktion wächst später schneller?</li>
+<li>Wie erkennt man den Unterschied am Graphen?</li>
+</ol>
+<details>
+<summary>Hilfestellung anzeigen</summary>
+<p>
+Linear: gleichmäßige Steigung. Exponentiell: die Kurve wird immer steiler.
+</p>
+</details>
+</div>
+<div class="task">
+<h3>Arbeitsauftrag 5: Modell kritisch betrachten</h3>
+<p>
+Erkläre, warum dieses Modell eine Vereinfachung ist.
+</p>
+<ol>
+<li>Welche Dinge aus der Realität berücksichtigt das Modell nicht?</li>
+<li>Warum kann ein exponentielles Modell nicht unbegrenzt realistisch bleiben?</li>
+</ol>
+<details>
+<summary>Hilfestellung anzeigen</summary>
+<p>
+In einer echten Schule gibt es nur begrenzt viele Personen.
+Außerdem hängt eine Infektion von Kontakten, Schutzmaßnahmen und Zufall ab.
+</p>
+</details>
+</div>
+</section>
+<section id="hilfen">
+<h2>6. Leitfragen und Hilfestellungen</h2>
+<div class="grid">
+<div class="card">
+<h3>Leitfragen</h3>
+<ul>
+<li>Was ist die Eingabe?</li>
+<li>Was ist die Ausgabe?</li>
+<li>Was passiert von einem Tag zum nächsten?</li>
+<li>Wird addiert oder multipliziert?</li>
+<li>Was verändert der Startwert?</li>
+<li>Was verändert der Infektionsfaktor?</li>
+<li>Warum wird der Graph immer steiler?</li>
+</ul>
+</div>
+<div class="card">
+<h3>Hilfen für schwächere SuS</h3>
+<ol>
+<li>Schreibe die ersten Werte als Zahlenkette auf.</li>
+<li>Markiere, wie aus einem Wert der nächste entsteht.</li>
+<li>Vergleiche: + gleicher Betrag oder · gleicher Faktor?</li>
+<li>Nutze die Animation: Jeder Tag ist ein neuer Zustand.</li>
+</ol>
+</div>
+<div class="card">
+<h3>Vertiefung für starke SuS</h3>
+<ol>
+<li>Finde einen Faktor, sodass nach 6 Tagen mehr als 100 Personen infiziert sind.</li>
+<li>Vergleiche Faktoren 1,5 und 2,5.</li>
+<li>Erkläre, warum kleine Änderungen am Faktor große Auswirkungen haben.</li>
+<li>Erkläre, warum das Modell ab einer bestimmten Anzahl von Personen unrealistisch wird.</li>
+</ol>
+</div>
+</div>
+<div class="printNote">
+<strong>Hinweis für Lehrkräfte:</strong>
+Die Lernumgebung eignet sich für Einzelarbeit, Partnerarbeit oder eine gemeinsame Erarbeitung am Smartboard.
+Besonders wichtig ist die sprachliche Sicherung: „nicht plus, sondern mal“.
+</div>
+</section>
+<section id="check">
+<h2>7. Selbstcheck mit Feedback</h2>
+<div class="task">
+<h3>Frage 1</h3>
+<p>Was bedeutet der Faktor 2 in f(x) = 1 · 2ˣ?</p>
+<button onclick="showFeedback('f1', true)">Die Anzahl verdoppelt sich pro Tag.</button>
+<button onclick="showFeedback('f1', false)">Jeden Tag kommen genau 2 Personen dazu.</button>
+<div id="f1" class="feedback"></div>
+</div>
+<div class="task">
+<h3>Frage 2</h3>
+<p>Was verändert der Startwert a in f(x) = a · bˣ?</p>
+<button onclick="showFeedback('f2', true)">Er legt fest, mit welchem Wert der Prozess beginnt.</button>
+<button onclick="showFeedback('f2', false)">Er legt fest, wie oft multipliziert wird.</button>
+<div id="f2" class="feedback"></div>
+</div>
+<div class="task">
+<h3>Frage 3</h3>
+<p>Woran erkennt man exponentielles Wachstum im Graphen?</p>
+<button onclick="showFeedback('f3', true)">Die Kurve wird nach rechts immer steiler.</button>
+<button onclick="showFeedback('f3', false)">Der Graph ist immer eine Gerade.</button>
+<div id="f3" class="feedback"></div>
+</div>
+<div class="boxPurple">
+<strong>Abschlussgedanke:</strong>
+Der Funktionsbegriff wird greifbar, wenn man die Ebenen verbindet:
+Situation → Regel → Tabelle → Graph → dynamische Veränderung.
+</div>
+</section>
+</main>
+<script>
+const startValue = document.getElementById("startValue");
+const factorValue = document.getElementById("factorValue");
+const dayValue = document.getElementById("dayValue");
+const compareDay = document.getElementById("compareDay");
+let animationInterval = null;
+function fmt(n, digits = 1) {
+n = Number(n);
+if (Math.abs(n - Math.round(n)) < 0.00001) {
+return String(Math.round(n));
+}
+return n.toFixed(digits).replace(".", ",");
+}
+function expFunction(x, a, b) {
+return a * Math.pow(b, x);
+}
+function linearFunction(x) {
+return 1 + 5 * x;
+}
+function drawAxes(ctx, w, h, xMin, xMax, yMin, yMax, xLabel, yLabel) {
+ctx.clearRect(0, 0, w, h);
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, 0, w, h);
+const pad = 52;
+const sx = (w - 2 * pad) / (xMax - xMin);
+const sy = (h - 2 * pad) / (yMax - yMin);
+const cx = x => pad + (x - xMin) * sx;
+const cy = y => h - pad - (y - yMin) * sy;
+ctx.strokeStyle = "#e5e7eb";
+ctx.lineWidth = 1;
+ctx.font = "12px Arial";
+ctx.fillStyle = "#64748b";
+for (let i = 0; i <= 10; i++) {
+let x = xMin + i * (xMax - xMin) / 10;
+ctx.beginPath();
+ctx.moveTo(cx(x), pad);
+ctx.lineTo(cx(x), h - pad);
+ctx.stroke();
+ctx.fillText(fmt(x, 0), cx(x) - 5, h - pad + 18);
+}
+for (let i = 0; i <= 8; i++) {
+let y = yMin + i * (yMax - yMin) / 8;
+ctx.beginPath();
+ctx.moveTo(pad, cy(y));
+ctx.lineTo(w - pad, cy(y));
+ctx.stroke();
+ctx.fillText(fmt(y, 0), 8, cy(y) + 4);
+}
+ctx.strokeStyle = "#111827";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(pad, h - pad);
+ctx.lineTo(w - pad, h - pad);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(pad, pad);
+ctx.lineTo(pad, h - pad);
+ctx.stroke();
+ctx.fillStyle = "#111827";
+ctx.font = "14px Arial";
+ctx.fillText(xLabel + " →", w - 115, h - 14);
+ctx.fillText(yLabel, 10, 22);
+return { cx, cy };
+}
+function updateAll() {
+const a = Number(startValue.value);
+const b = Number(factorValue.value);
+const x = Number(dayValue.value);
+const y = expFunction(x, a, b);
+document.getElementById("startLabel").textContent = fmt(a, 0);
+document.getElementById("factorLabel").textContent = fmt(b, 1);
+document.getElementById("dayLabel").textContent = fmt(x, 0);
+document.getElementById("dynamicFormula").innerHTML =
+"f(x) = " + fmt(a, 0) + " · " + fmt(b, 1) + "<sup>x</sup>";
+document.getElementById("parameterMeaning").innerHTML =
+"<strong>Parameterbedeutung:</strong><br>" +
+"<strong>a = " + fmt(a, 0) + "</strong>: So viele Personen sind am Anfang infiziert.<br>" +
+"<strong>b = " + fmt(b, 1) + "</strong>: Von Tag zu Tag wird die Anzahl ungefähr mit diesem Faktor multipliziert.<br>" +
+"<strong>x = " + x + "</strong>: So viele Tage sind vergangen.";
+document.getElementById("inputMeaning").textContent = "x = " + x + " Tage";
+document.getElementById("ruleMeaning").innerHTML = fmt(a, 0) + " · " + fmt(b, 1) + "<sup>" + x + "</sup>";
+document.getElementById("outputMeaning").textContent = fmt(y, 1) + " Infizierte";
+document.getElementById("interpretation").innerHTML =
+"Nach <strong>" + x + " Tagen</strong> sind im Modell ungefähr <strong>" + fmt(y, 1) +
+" Personen</strong> infiziert. Der Graphpunkt zeigt genau dieses Wertepaar: (" +
+x + " | " + fmt(y, 1) + ").";
+drawSchoolScene(a, b, x);
+drawGraph(a, b, x);
+buildTable(a, b);
+}
+function drawSchoolScene(a, b, x) {
+const scene = document.getElementById("schoolScene");
+scene.innerHTML = "";
+const totalStudents = 120;
+const infected = Math.min(totalStudents, Math.round(expFunction(x, a, b)));
+const previous = x === 0 ? 0 : Math.min(totalStudents, Math.round(expFunction(x - 1, a, b)));
+for (let i = 0; i < totalStudents; i++) {
+const student = document.createElement("div");
+student.className = "student";
+if (i < previous) {
+student.classList.add("infected");
+} else if (i < infected) {
+student.classList.add("new");
+}
+student.textContent = i < infected ? "🤒" : "🙂";
+const cols = 15;
+const row = Math.floor(i / cols);
+const col = i % cols;
+const left = 4 + col * 6.3;
+const top = 8 + row * 10.8;
+student.style.left = left + "%";
+student.style.top = top + "%";
+scene.appendChild(student);
+}
+}
+function drawGraph(a, b, selectedX) {
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+const maxX = 10;
+const maxY = Math.max(20, expFunction(maxX, a, b) * 1.1);
+const selectedY = expFunction(selectedX, a, b);
+const { cx, cy } = drawAxes(ctx, canvas.width, canvas.height, 0, maxX, 0, maxY, "Tage", "Infizierte");
+ctx.strokeStyle = "#7c3aed";
+ctx.lineWidth = 4;
+ctx.beginPath();
+for (let x = 0; x <= maxX; x += 0.02) {
+const y = expFunction(x, a, b);
+if (x === 0) ctx.moveTo(cx(x), cy(y));
+else ctx.lineTo(cx(x), cy(y));
+}
+ctx.stroke();
+ctx.fillStyle = "#dc2626";
+ctx.beginPath();
+ctx.arc(cx(selectedX), cy(selectedY), 8, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = "#dc2626";
+ctx.font = "14px Arial";
+ctx.fillText("(" + selectedX + " | " + fmt(selectedY, 1) + ")", cx(selectedX) + 10, cy(selectedY) - 10);
+}
+function buildTable(a, b) {
+const table = document.getElementById("valueTable");
+let html = "<tr><th>Tag x</th>";
+for (let x = 0; x <= 10; x++) {
+html += "<th>" + x + "</th>";
+}
+html += "</tr><tr><th>Infizierte f(x)</th>";
+for (let x = 0; x <= 10; x++) {
+html += "<td>" + fmt(expFunction(x, a, b), 1) + "</td>";
+}
+html += "</tr><tr><th>Entstehung</th>";
+for (let x = 0; x <= 10; x++) {
+if (x === 0) {
+html += "<td>Start</td>";
+} else {
+html += "<td>· " + fmt(b, 1) + "</td>";
+}
+}
+html += "</tr>";
+table.innerHTML = html;
+}
+function startAnimation() {
+pauseAnimation();
+dayValue.value = 0;
+updateAll();
+animationInterval = setInterval(() => {
+let x = Number(dayValue.value);
+if (x >= 10) {
+pauseAnimation();
+return;
+}
+dayValue.value = x + 1;
+updateAll();
+}, 900);
+}
+function pauseAnimation() {
+if (animationInterval) {
+clearInterval(animationInterval);
+animationInterval = null;
+}
+}
+function resetAnimation() {
+pauseAnimation();
+dayValue.value = 0;
+updateAll();
+}
+function updateCompare() {
+const x = Number(compareDay.value);
+const linear = linearFunction(x);
+const exp = expFunction(x, 1, 2);
+document.getElementById("compareDayLabel").textContent = x;
+document.getElementById("compareText").innerHTML =
+"<strong>Am Tag " + x + ":</strong><br>" +
+"Lineares Modell: g(" + x + ") = 1 + 5 · " + x + " = <strong>" + fmt(linear, 0) + "</strong><br>" +
+"Exponentielles Modell: f(" + x + ") = 1 · 2<sup>" + x + "</sup> = <strong>" + fmt(exp, 0) + "</strong><br><br>" +
+"Linear bedeutet: jeden Tag +5. Exponentiell bedeutet: jeden Tag ·2.";
+drawCompareGraph(x);
+buildCompareTable();
+}
+function drawCompareGraph(selectedX) {
+const canvas = document.getElementById("compareGraph");
+const ctx = canvas.getContext("2d");
+const maxX = 10;
+const maxY = Math.max(linearFunction(maxX), expFunction(maxX, 1, 2)) * 1.1;
+const { cx, cy } = drawAxes(ctx, canvas.width, canvas.height, 0, maxX, 0, maxY, "Tage", "Infizierte");
+ctx.strokeStyle = "#2563eb";
+ctx.lineWidth = 4;
+ctx.beginPath();
+for (let x = 0; x <= maxX; x += 0.02) {
+const y = linearFunction(x);
+if (x === 0) ctx.moveTo(cx(x), cy(y));
+else ctx.lineTo(cx(x), cy(y));
+}
+ctx.stroke();
+ctx.strokeStyle = "#7c3aed";
+ctx.lineWidth = 4;
+ctx.beginPath();
+for (let x = 0; x <= maxX; x += 0.02) {
+const y = expFunction(x, 1, 2);
+if (x === 0) ctx.moveTo(cx(x), cy(y));
+else ctx.lineTo(cx(x), cy(y));
+}
+ctx.stroke();
+ctx.fillStyle = "#2563eb";
+ctx.fillRect(70, 22, 16, 10);
+ctx.fillStyle = "#111827";
+ctx.fillText("linear: g(x) = 1 + 5x", 92, 32);
+ctx.fillStyle = "#7c3aed";
+ctx.fillRect(260, 22, 16, 10);
+ctx.fillStyle = "#111827";
+ctx.fillText("exponentiell: f(x) = 1 · 2ˣ", 282, 32);
+ctx.fillStyle = "#dc2626";
+ctx.beginPath();
+ctx.arc(cx(selectedX), cy(linearFunction(selectedX)), 7, 0, Math.PI * 2);
+ctx.fill();
+ctx.beginPath();
+ctx.arc(cx(selectedX), cy(expFunction(selectedX, 1, 2)), 7, 0, Math.PI * 2);
+ctx.fill();
+}
+function buildCompareTable() {
+const table = document.getElementById("compareTable");
+let html = "<tr><th>Tag x</th>";
+for (let x = 0; x <= 10; x++) {
+html += "<th>" + x + "</th>";
+}
+html += "</tr><tr><th>g(x) = 1 + 5x</th>";
+for (let x = 0; x <= 10; x++) {
+html += "<td>" + fmt(linearFunction(x), 0) + "</td>";
+}
+html += "</tr><tr><th>f(x) = 1 · 2ˣ</th>";
+for (let x = 0; x <= 10; x++) {
+html += "<td>" + fmt(expFunction(x, 1, 2), 0) + "</td>";
+}
+html += "</tr>";
+table.innerHTML = html;
+}
+function showFeedback(id, correct) {
+const box = document.getElementById(id);
+box.style.display = "block";
+if (correct) {
+box.className = "feedback";
+box.innerHTML = "<strong>Richtig.</strong> Genau so wird der Zusammenhang im Modell gedeutet.";
+} else {
+box.className = "feedback wrong";
+box.innerHTML = "<strong>Noch nicht.</strong> Achte auf den Unterschied: Bei exponentiellem Wachstum wird multipliziert, nicht immer gleich viel addiert.";
+}
+}
+startValue.addEventListener("input", updateAll);
+factorValue.addEventListener("input", updateAll);
+dayValue.addEventListener("input", updateAll);
+compareDay.addEventListener("input", updateCompare);
+updateAll();
+updateCompare();
+</script>
+</body>
+</html>
