@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funktions-Lernumgebung</title>
+<style>
+body{
+margin:0;
+overflow:hidden;
+font-family:Arial,sans-serif;
+background:white;
+}
+canvas{
+position:absolute;
+top:0;
+left:0;
+z-index:0;
+}
+.container{
+position:relative;
+z-index:1;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+.button-panel{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+.function-button{
+background:rgba(255,255,255,0.6);
+backdrop-filter:blur(4px);
+border-radius:10px;
+padding:15px;
+width:220px;
+text-align:center;
+cursor:pointer;
+transition:0.2s;
+border:2px solid transparent;
+}
+.linear{
+border-color:green;
+color:green;
+}
+.quadratic{
+border-color:goldenrod;
+color:goldenrod;
+}
+.exponential{
+border-color:red;
+color:red;
+}
+.function-button:hover{
+transform:scale(1.05);
+box-shadow:0 0 15px currentColor;
+}
+.function-title{
+font-weight:bold;
+}
+.function-formula{
+font-style:italic;
+}
+.detail-view{
+position:absolute;
+z-index:2;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:none;
+flex-direction:column;
+}
+.top-bar{
+position:relative;
+padding:20px;
+}
+.back-button{
+position:absolute;
+left:20px;
+font-size:34px;
+font-weight:bold;
+cursor:pointer;
+}
+.title-area{
+width:100%;
+text-align:center;
+}
+.title-box{
+display:inline-block;
+padding:12px 24px;
+border-radius:12px;
+background:rgba(255,255,255,0.85);
+font-weight:bold;
+font-size:24px;
+}
+.center-controls{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:20px;
+flex-wrap:wrap;
+}
+.control-box{
+background:rgba(255,255,255,0.75);
+padding:18px;
+border-radius:12px;
+font-size:20px;
+}
+.control-box input{
+width:90px;
+font-size:18px;
+}
+.visualize-btn{
+position:absolute;
+right:30px;
+bottom:30px;
+padding:16px 26px;
+border-radius:12px;
+background:rgba(255,0,0,0.2);
+color:white;
+font-weight:bold;
+font-size:18px;
+transition:0.3s;
+pointer-events:none;
+opacity:0.4;
+z-index:5;
+}
+.visualize-btn.active{
+background:red;
+opacity:1;
+box-shadow:0 0 15px red;
+cursor:pointer;
+pointer-events:auto;
+}
+.graph-view{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:none;
+z-index:4;
+}
+.graph-back{
+position:absolute;
+top:20px;
+left:20px;
+font-size:34px;
+font-weight:bold;
+cursor:pointer;
+z-index:10;
+}
+.scene-button{
+position:absolute;
+left:75%;
+top:75%;
+transform:translate(-50%,-50%);
+color:white;
+border-radius:12px;
+padding:14px 22px;
+font-weight:bold;
+cursor:pointer;
+z-index:10;
+backdrop-filter:blur(4px);
+display:none;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="container" id="mainMenu">
+<div class="button-panel">
+<div class="function-button linear"
+onclick="openView('linear')"
+onmouseover="setHighlight('linear')"
+onmouseout="setHighlight(null)">
+<div class="function-title">
+Lineare Funktion
+</div>
+<div class="function-formula">
+f(x)=ax+b
+</div>
+</div>
+<div class="function-button quadratic"
+onclick="openView('quadratic')"
+onmouseover="setHighlight('quadratic')"
+onmouseout="setHighlight(null)">
+<div class="function-title">
+Quadratische Funktion
+</div>
+<div class="function-formula">
+f(x)=ax²+bx+c
+</div>
+</div>
+<div class="function-button exponential"
+onclick="openView('exponential')"
+onmouseover="setHighlight('exponential')"
+onmouseout="setHighlight(null)">
+<div class="function-title">
+Exponentialfunktion
+</div>
+<div class="function-formula">
+f(x)=a·bˣ
+</div>
+</div>
+</div>
+</div>
+<div class="detail-view" id="detailView">
+<div class="top-bar">
+<div class="back-button" onclick="goBack()">
+←
+</div>
+<div class="title-area" id="functionTitle"></div>
+</div>
+<div class="center-controls" id="controls"></div>
+</div>
+<div class="visualize-btn" id="visualizeBtn" style="display:none;">
+Graph veranschaulichen
+</div>
+<div class="graph-view" id="graphView">
+<div class="graph-back" onclick="closeGraphView()">
+←
+</div>
+</div>
+<div class="scene-button" id="sceneButton"></div>
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const visualizeBtn = document.getElementById("visualizeBtn");
+const sceneButton = document.getElementById("sceneButton");
+let highlight = null;
+let currentFunction = null;
+let animationId = null;
+let values = {
+a:0,
+b:0,
+c:0
+};
+let fillAnimation = false;
+let fillLevel = 0;
+let driveAnimation = false;
+let carProgress = 0;
+let plantAnimation = false;
+let plantProgress = 0;
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+draw();
+}
+window.addEventListener("resize", resize);
+resize();
+function setHighlight(type){
+highlight = type;
+draw();
+}
+function openView(func){
+currentFunction = func;
+resetValues();
+document.getElementById("mainMenu").style.display = "none";
+document.getElementById("detailView").style.display = "flex";
+visualizeBtn.style.display = "block";
+setupUI(func);
+checkInputs();
+draw();
+}
+function goBack(){
+currentFunction = null;
+stopAnimations();
+visualizeBtn.style.display = "none";
+document.getElementById("mainMenu").style.display = "flex";
+document.getElementById("detailView").style.display = "none";
+draw();
+}
+function resetValues(){
+values = {
+a:0,
+b:0,
+c:0
+};
+}
+function setupUI(func){
+const title = document.getElementById("functionTitle");
+const controls = document.getElementById("controls");
+controls.innerHTML = "";
+if(func === "linear"){
+title.innerHTML =
+"<div class='title-box' style='color:green'>Lineare Funktion<br>f(x)=ax+b</div>";
+addInput("a");
+addInput("b");
+}
+if(func === "quadratic"){
+title.innerHTML =
+"<div class='title-box' style='color:goldenrod'>Quadratische Funktion<br>f(x)=ax²+bx+c</div>";
+addInput("a");
+addInput("b");
+addInput("c");
+}
+if(func === "exponential"){
+title.innerHTML =
+"<div class='title-box' style='color:red'>Exponentialfunktion<br>f(x)=a·bˣ</div>";
+addInput("a");
+addInput("b");
+}
+}
+function addInput(param){
+const box = document.createElement("div");
+box.className = "control-box";
+const input = document.createElement("input");
+input.type = "number";
+input.oninput = () => {
+values[param] = parseFloat(input.value);
+checkInputs();
+if(currentFunction){
+draw();
+}
+};
+box.innerHTML = param + " = ";
+box.appendChild(input);
+document.getElementById("controls").appendChild(box);
+}
+function activateButton(callback){
+visualizeBtn.classList.add("active");
+visualizeBtn.onclick = callback;
+}
+function checkInputs(){
+visualizeBtn.classList.remove("active");
+if(
+currentFunction === "linear" &&
+!isNaN(values.a) &&
+!isNaN(values.b)
+){
+activateButton(openLinearGraph);
+}
+if(
+currentFunction === "quadratic" &&
+!isNaN(values.a) &&
+!isNaN(values.b) &&
+!isNaN(values.c)
+){
+activateButton(openQuadraticGraph);
+}
+if(
+currentFunction === "exponential" &&
+!isNaN(values.a) &&
+!isNaN(values.b) &&
+values.b > 0
+){
+activateButton(openExponentialGraph);
+}
+}
+function stopAnimations(){
+fillAnimation = false;
+driveAnimation = false;
+plantAnimation = false;
+if(animationId){
+cancelAnimationFrame(animationId);
+}
+sceneButton.style.display = "none";
+}
+function drawGrid(){
+const w = canvas.width;
+const h = canvas.height;
+const offset = 40;
+const step = 40;
+ctx.strokeStyle = "#ddd";
+ctx.lineWidth = 1;
+for(let x = offset; x < w; x += step){
+ctx.beginPath();
+ctx.moveTo(x,0);
+ctx.lineTo(x,h-offset);
+ctx.stroke();
+}
+for(let y = h-offset; y > 0; y -= step){
+ctx.beginPath();
+ctx.moveTo(offset,y);
+ctx.lineTo(w,y);
+ctx.stroke();
+}
+ctx.strokeStyle = "#888";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(offset,h-offset);
+ctx.lineTo(w,h-offset);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(offset,0);
+ctx.lineTo(offset,h-offset);
+ctx.stroke();
+drawAxesLabels(offset,w,h);
+}
+function drawAxesLabels(offset,w,h){
+ctx.fillStyle = "black";
+ctx.font = "12px Arial";
+for(let x = 0; x < (w-offset)/40; x++){
+ctx.fillText(
+x,
+offset + x*40 - 3,
+h - offset + 15
+);
+}
+for(let y = 0; y < (h-offset)/40; y++){
+ctx.fillText(
+y,
+offset - 20,
+h - offset - y*40 + 3
+);
+}
+}
+function drawFunction(func,baseColor,highlightColor){
+const w = canvas.width;
+const h = canvas.height;
+const offset = 40;
+ctx.beginPath();
+ctx.lineWidth =
+highlight === func ? 4 : 2;
+ctx.strokeStyle =
+highlight === func
+? highlightColor
+: baseColor;
+for(let px = offset; px < w; px++){
+let x =
+(px - offset) / 40;
+let y = 0;
+if(func === "linear"){
+if(currentFunction){
+y = values.a * x + values.b;
+}else{
+y = x;
+}
+}
+if(func === "quadratic"){
+if(currentFunction){
+y = values.a * x * x + values.b * x + values.c;
+}else{
+y = 0.5 * x * x;
+}
+}
+if(func === "exponential"){
+if(currentFunction){
+if(values.b <= 0){
+continue;
+}
+y = values.a * Math.pow(values.b,x);
+}else{
+y = Math.pow(1.2,x) + 3;
+}
+if(y > 1000){
+break;
+}
+}
+let py =
+(h-offset) - y*40;
+if(px === offset){
+ctx.moveTo(px,py);
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+}
+function draw(){
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+drawGrid();
+if(!currentFunction){
+drawFunction(
+"linear",
+"green",
+"#00ff00"
+);
+drawFunction(
+"quadratic",
+"goldenrod",
+"yellow"
+);
+drawFunction(
+"exponential",
+"red",
+"#ff4d4d"
+);
+}else{
+drawFunction(
+currentFunction,
+"black",
+"black"
+);
+}
+}
+function openLinearGraph(){
+stopAnimations();
+visualizeBtn.style.display = "none";
+document
+.getElementById("detailView")
+.style.display = "none";
+document
+.getElementById("graphView")
+.style.display = "block";
+fillLevel = Math.max(0, values.b);
+setupSceneButton(
+"Glas füllen",
+"rgba(0,120,255,0.45)",
+startGlassAnimation
+);
+drawLinearGraphScene();
+}
+function startGlassAnimation(){
+if(fillAnimation) return;
+fillAnimation = true;
+animateGlass();
+}
+function drawLinearGraphScene(){
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+drawGrid();
+drawLinearGraph();
+drawGlass();
+}
+let linearProgress = 0;
+function openLinearGraph(){
+stopAnimations();
+visualizeBtn.style.display = "none";
+document
+.getElementById("detailView")
+.style.display = "none";
+document
+.getElementById("graphView")
+.style.display = "block";
+linearProgress = 0;
+fillLevel = Math.max(
+0,
+values.a * linearProgress + values.b
+);
+setupSceneButton(
+"Glas füllen",
+"rgba(0,120,255,0.45)",
+startGlassAnimation
+);
+drawLinearGraphScene();
+}
+function startGlassAnimation(){
+if(fillAnimation) return;
+fillAnimation = true;
+animateGlass();
+}
+function drawLinearGraphScene(){
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+drawGrid();
+drawLinearGraph();
+drawGlass();
+}
+function drawLinearGraph(){
+const w = canvas.width;
+const h = canvas.height;
+const offset = 40;
+// Gesamter Graph
+ctx.beginPath();
+ctx.strokeStyle = "green";
+ctx.lineWidth = 3;
+for(let px = offset; px < w; px++){
+let x = (px-offset)/40;
+let y =
+values.a * x + values.b;
+let py =
+(h-offset) - y*40;
+if(px === offset){
+ctx.moveTo(px,py);
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+// Animierter Teil
+ctx.beginPath();
+ctx.strokeStyle = "blue";
+ctx.lineWidth = 5;
+let started = false;
+for(let x = 0; x <= linearProgress; x += 0.01){
+let y =
+values.a * x + values.b;
+let px =
+offset + x*40;
+let py =
+(h-offset) - y*40;
+if(!started){
+ctx.moveTo(px,py);
+started = true;
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+}
+function drawGlass(){
+const h = canvas.height;
+const offset = 40;
+const scale = 40;
+const x =
+offset + 22 * scale;
+const y =
+h - offset - 17 * scale;
+const width =
+8 * scale;
+const height =
+17 * scale;
+ctx.strokeStyle = "black";
+ctx.lineWidth = 2;
+// Oberer Rand
+ctx.beginPath();
+ctx.ellipse(
+x + width/2,
+y,
+width/2,
+14,
+0,
+0,
+Math.PI * 2
+);
+ctx.stroke();
+// Seiten
+ctx.beginPath();
+ctx.moveTo(x,y);
+ctx.lineTo(x,y+height);
+ctx.lineTo(x+width,y+height);
+ctx.lineTo(x+width,y);
+ctx.stroke();
+// Unterer Rand
+ctx.beginPath();
+ctx.ellipse(
+x + width/2,
+y + height,
+width/2,
+14,
+0,
+0,
+Math.PI
+);
+ctx.stroke();
+// Wasserhöhe exakt vom Graph
+const waterHeight =
+Math.max(0, fillLevel * scale);
+const waterTop =
+y + height - waterHeight;
+ctx.fillStyle =
+"rgba(0,120,255,0.45)";
+// Wasserkörper
+ctx.fillRect(
+x,
+waterTop,
+width,
+waterHeight
+);
+// Unterer Halbkreis blau
+ctx.beginPath();
+ctx.ellipse(
+x + width/2,
+y + height,
+width/2,
+14,
+0,
+0,
+Math.PI
+);
+ctx.fill();
+// Wasseroberfläche
+ctx.beginPath();
+ctx.ellipse(
+x + width/2,
+waterTop,
+width/2,
+14,
+0,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
+function animateGlass(){
+// 1 x-Einheit = 2 Sekunden
+linearProgress += 1 / 120;
+// Wasser folgt dem aktuellen y-Wert
+fillLevel =
+values.a * linearProgress +
+values.b;
+fillLevel = Math.max(0, fillLevel);
+// Glasbegrenzung
+if(fillLevel >= 17){
+fillLevel = 17;
+fillAnimation = false;
+}
+drawLinearGraphScene();
+if(fillAnimation){
+animationId = requestAnimationFrame(
+animateGlass
+);
+}
+}
+function openQuadraticGraph(){
+stopAnimations();
+visualizeBtn.style.display = "none";
+document
+.getElementById("detailView")
+.style.display = "none";
+document
+.getElementById("graphView")
+.style.display = "block";
+carProgress = 0;
+setupSceneButton(
+"Losfahren",
+"rgba(255,140,0,0.45)",
+startDriveAnimation
+);
+drawQuadraticScene();
+}
+function startDriveAnimation(){
+if(driveAnimation) return;
+driveAnimation = true;
+animateDrive();
+}
+function drawQuadraticScene(){
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+drawGrid();
+drawQuadraticGraph();
+drawRaceTrack();
+drawFinishLine();
+drawCar();
+}
+function drawQuadraticGraph(){
+const w = canvas.width;
+const h = canvas.height;
+const offset = 40;
+ctx.beginPath();
+ctx.strokeStyle = "goldenrod";
+ctx.lineWidth = 3;
+for(let px = offset; px < w; px++){
+let x =
+(px-offset)/40;
+let y =
+values.a * x * x +
+values.b * x +
+values.c;
+let py =
+(h-offset) - y*40;
+if(px === offset){
+ctx.moveTo(px,py);
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+ctx.beginPath();
+ctx.strokeStyle = "red";
+ctx.lineWidth = 5;
+let started = false;
+for(let x = 0; x <= carProgress; x += 0.01){
+let y =
+values.a * x * x +
+values.b * x +
+values.c;
+let px =
+offset + x*40;
+let py =
+(h-offset) - y*40;
+if(!started){
+ctx.moveTo(px,py);
+started = true;
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+}
+function drawRaceTrack(){
+const h = canvas.height;
+const offset = 40;
+const scale = 40;
+const x =
+offset + 25 * scale;
+const y =
+h - offset - 19 * scale;
+const width =
+4 * scale;
+const height =
+19 * scale;
+ctx.fillStyle = "#444";
+ctx.fillRect(
+x,
+y,
+width,
+height
+);
+ctx.strokeStyle = "white";
+ctx.lineWidth = 2;
+for(let i = 0; i < 19; i++){
+ctx.beginPath();
+ctx.moveTo(
+x + width/2,
+y + i*40
+);
+ctx.lineTo(
+x + width/2,
+y + i*40 + 20
+);
+ctx.stroke();
+}
+}
+function drawFinishLine(){
+const h = canvas.height;
+const offset = 40;
+const scale = 40;
+const x =
+offset + 25 * scale;
+const y =
+h - offset - 17 * scale;
+for(let row = 0; row < 2; row++){
+for(let col = 0; col < 8; col++){
+ctx.fillStyle =
+(row + col) % 2 === 0
+? "white"
+: "black";
+ctx.fillRect(
+x + col*20,
+y + row*20,
+20,
+20
+);
+}
+}
+}
+function drawCar(){
+const h = canvas.height;
+const offset = 40;
+const scale = 40;
+const trackX = offset + 25 * scale;
+let graphY =
+values.c +
+(values.a * carProgress * carProgress +
+values.b * carProgress);
+graphY = Math.max(0, Math.min(17, graphY));
+const carY = h - offset - (graphY * 40) - 110;
+// ===== KAROSSERIE (Cartoon Top-Down) =====
+ctx.fillStyle = "#e53935";
+ctx.beginPath();
+ctx.moveTo(trackX + 45, carY + 110); // hinten links
+ctx.lineTo(trackX + 40, carY + 70);
+ctx.lineTo(trackX + 60, carY + 35); // hinten Dach
+ctx.lineTo(trackX + 100, carY + 35); // vorne Dach
+ctx.lineTo(trackX + 120, carY + 70);
+ctx.lineTo(trackX + 115, carY + 110);
+ctx.closePath();
+ctx.fill();
+// ===== MITTELDACH / GLAS =====
+ctx.fillStyle = "rgba(180,220,255,0.85)";
+ctx.beginPath();
+ctx.moveTo(trackX + 65, carY + 45);
+ctx.lineTo(trackX + 95, carY + 45);
+ctx.lineTo(trackX + 105, carY + 70);
+ctx.lineTo(trackX + 55, carY + 70);
+ctx.closePath();
+ctx.fill();
+// ===== FRONT (Richtung "oben") =====
+ctx.fillStyle = "#c62828";
+ctx.beginPath();
+ctx.moveTo(trackX + 60, carY + 35);
+ctx.lineTo(trackX + 100, carY + 35);
+ctx.lineTo(trackX + 95, carY + 20);
+ctx.lineTo(trackX + 65, carY + 20);
+ctx.closePath();
+ctx.fill();
+// ===== SCHEINWERFER =====
+ctx.fillStyle = "yellow";
+ctx.fillRect(trackX + 65, carY + 22, 6, 10);
+ctx.fillRect(trackX + 89, carY + 22, 6, 10);
+// ===== RÄDER =====
+function wheel(x, y){
+ctx.fillStyle = "#111";
+ctx.beginPath();
+ctx.arc(x, y, 14, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = "#555";
+ctx.beginPath();
+ctx.arc(x, y, 6, 0, Math.PI * 2);
+ctx.fill();
+}
+// hinten
+wheel(trackX + 47, carY + 110);
+wheel(trackX + 113, carY + 110);
+// vorne
+wheel(trackX + 47, carY + 55);
+wheel(trackX + 113, carY + 55);
+}
+function animateDrive(){
+carProgress += 1 / 120;
+if(carProgress >= 17){
+carProgress = 17;
+driveAnimation = false;
+}
+drawQuadraticScene();
+if(driveAnimation){
+animationId = requestAnimationFrame(
+animateDrive
+);
+}
+}
+function openExponentialGraph(){
+stopAnimations();
+visualizeBtn.style.display = "none";
+document
+.getElementById("detailView")
+.style.display = "none";
+document
+.getElementById("graphView")
+.style.display = "block";
+plantProgress = 0;
+setupSceneButton(
+"Pflanze wachsen lassen",
+"rgba(0,180,0,0.45)",
+startPlantAnimation
+);
+drawExponentialScene();
+}
+function startPlantAnimation(){
+if(plantAnimation) return;
+plantAnimation = true;
+animatePlant();
+}
+function drawExponentialScene(){
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+drawGrid();
+drawExponentialGraph();
+drawPlant();
+}
+function drawExponentialGraph(){
+const w = canvas.width;
+const h = canvas.height;
+const offset = 40;
+ctx.beginPath();
+ctx.strokeStyle = "red";
+ctx.lineWidth = 3;
+for(let px = offset; px < w; px++){
+let x =
+(px-offset)/40;
+let y =
+values.a * Math.pow(values.b,x);
+if(y > 1000){
+break;
+}
+let py =
+(h-offset) - y*40;
+if(px === offset){
+ctx.moveTo(px,py);
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+ctx.beginPath();
+ctx.strokeStyle = "green";
+ctx.lineWidth = 5;
+let started = false;
+for(let x = 0; x <= plantProgress; x += 0.01){
+let y =
+values.a * Math.pow(values.b,x);
+let px =
+offset + x*40;
+let py =
+(h-offset) - y*40;
+if(!started){
+ctx.moveTo(px,py);
+started = true;
+}else{
+ctx.lineTo(px,py);
+}
+}
+ctx.stroke();
+}
+function drawPlant(){
+const h = canvas.height;
+const offset = 40;
+const scale = 40;
+const x =
+offset + 26.5 * scale;
+const groundY =
+h - offset;
+let graphY =
+values.a * Math.pow(
+values.b,
+plantProgress
+);
+graphY =
+Math.max(
+0,
+Math.min(17,graphY)
+);
+const plantHeight =
+graphY * 40;
+ctx.strokeStyle = "green";
+ctx.lineWidth = 8;
+ctx.beginPath();
+ctx.moveTo(
+x,
+groundY
+);
+ctx.lineTo(
+x,
+groundY - plantHeight
+);
+ctx.stroke();
+for(let i = 1; i <= graphY; i += 2){
+const leafY =
+groundY - i*40;
+ctx.fillStyle = "green";
+ctx.beginPath();
+ctx.ellipse(
+x - 18,
+leafY,
+18,
+8,
+-0.6,
+0,
+Math.PI * 2
+);
+ctx.fill();
+ctx.beginPath();
+ctx.ellipse(
+x + 18,
+leafY - 10,
+18,
+8,
+0.6,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
+ctx.fillStyle = "limegreen";
+ctx.beginPath();
+ctx.arc(
+x,
+groundY - plantHeight,
+20,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
+function animatePlant(){
+plantProgress += 1 / 120;
+let currentY =
+values.a * Math.pow(
+values.b,
+plantProgress
+);
+if(currentY >= 17){
+plantAnimation = false;
+}
+drawExponentialScene();
+if(plantAnimation){
+animationId = requestAnimationFrame(
+animatePlant
+);
+}
+}
+function setupSceneButton(text,color,callback){
+sceneButton.innerText = text;
+sceneButton.style.background = color;
+sceneButton.style.display = "block";
+sceneButton.onclick = callback;
+}
+function closeGraphView(){
+stopAnimations();
+visualizeBtn.style.display = "block";
+document
+.getElementById("graphView")
+.style.display = "none";
+document
+.getElementById("detailView")
+.style.display = "flex";
+draw();
+}
+</script>
+</body>
+</html>
