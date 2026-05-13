@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wie sich ein Gefäß füllt</title>
+  <style>
+    :root{
+      --bg-1:#eef5ff;
+      --bg-2:#e7effb;
+      --border:#d8e4f1;
+      --grid:rgba(75,105,140,.10);
+
+      --text:#17324a;
+      --muted:#6f8398;
+      --title:#234968;
+
+      --blue-1:#a6d9ff;
+      --blue-2:#67b4ff;
+      --blue-3:#2f87eb;
+      --blue-4:#1f67ca;
+
+      --violet:#7c5cff;
+      --pink:#ef5d76;
+      --green:#18a463;
+
+      --shadow-xl:0 24px 64px rgba(31,62,100,.14);
+      --shadow-md:0 8px 18px rgba(31,62,100,.08);
+      --radius-xl:24px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 420px at 8% 0%, rgba(124,92,255,.08), transparent 60%),
+        radial-gradient(900px 420px at 100% 0%, rgba(47,135,235,.08), transparent 60%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    .app{
+      max-width:1540px;
+      margin:18px auto;
+      background:rgba(255,255,255,.48);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,.78);
+      box-shadow:var(--shadow-xl);
+      border-radius:var(--radius-xl);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:18px 22px 14px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(248,251,255,.95));
+    }
+
+    .titleBlock h1{
+      margin:0;
+      font-size:26px;
+      font-weight:900;
+      color:var(--title);
+      letter-spacing:.2px;
+    }
+
+    .activityBar{
+      margin-top:18px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .activityBtn{
+      border:none;
+      background:linear-gradient(180deg, #ffffff, #f4f8ff);
+      border:1px solid #dbe6f3;
+      color:#3a5876;
+      padding:10px 16px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:15px;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(35,73,104,.05);
+      transition:.14s ease;
+    }
+
+    .activityBtn:hover{ transform:translateY(-1px); }
+
+    .activityBtn.active{
+      background:linear-gradient(180deg, #5b95ff, #307ee8);
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 12px 24px rgba(48,126,232,.28);
+    }
+
+    .topWrap{
+      position:relative;
+      overflow-x:auto;
+      background:linear-gradient(180deg, rgba(255,255,255,.46), rgba(247,250,255,.96));
+    }
+
+    .top{
+      min-width:1240px;
+      display:grid;
+      grid-template-columns:530px 1fr;
+      align-items:stretch;
+    }
+
+    .panel{
+      position:relative;
+      min-height:700px;
+      background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(249,252,255,.97));
+    }
+
+    .panel + .panel{
+      border-left:1px solid var(--border);
+    }
+
+    .panelTitle{
+      position:absolute;
+      top:18px;
+      left:22px;
+      font-size:15px;
+      font-weight:900;
+      color:var(--title);
+      z-index:4;
+    }
+
+    .panelInner{
+      height:700px;
+      padding:56px 18px 18px;
+      position:relative;
+    }
+
+    svg, canvas{
+      display:block;
+      width:100%;
+      height:100%;
+    }
+
+    #overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:4;
+    }
+
+    #drawCanvas{
+      position:absolute;
+      inset:56px 18px 18px 18px;
+      width:calc(100% - 36px);
+      height:calc(100% - 74px);
+      display:none;
+      z-index:6;
+      border-radius:18px;
+      cursor:crosshair;
+      touch-action:none;
+      -webkit-user-select:none;
+      user-select:none;
+    }
+
+    .drawTools{
+      display:none;
+      position:absolute;
+      right:18px;
+      top:14px;
+      z-index:8;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .drawTools.show{ display:flex; }
+
+    .miniBtn{
+      border:none;
+      border-radius:999px;
+      padding:8px 12px;
+      background:linear-gradient(180deg, #ffffff, #f4f8ff);
+      border:1px solid #dbe6f3;
+      color:#315171;
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(35,73,104,.05);
+    }
+
+    .miniBtn.primary{
+      background:linear-gradient(180deg, #5b95ff, #307ee8);
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .miniBtn.warn{
+      background:linear-gradient(180deg, #ff8aa0, #eb5b71);
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .miniBtn.success{
+      background:linear-gradient(180deg, #39c785, #18985d);
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-top:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.90), rgba(247,250,255,.99));
+    }
+
+    .controls.hidden{
+      display:none;
+    }
+
+    .controlBlock{
+      padding:28px 32px;
+    }
+
+    .controlBlock + .controlBlock{
+      border-left:1px solid var(--border);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin:18px 0;
+    }
+
+    .row label{
+      min-width:235px;
+      font-size:16px;
+      font-weight:900;
+      color:var(--text);
+    }
+
+    .value{
+      min-width:108px;
+      color:var(--muted);
+      font-weight:900;
+      font-size:15px;
+      min-height:22px;
+    }
+
+    .value.hiddenValue{
+      visibility:hidden;
+    }
+
+    input[type="range"]{
+      width:300px;
+      accent-color:var(--blue-3);
+    }
+
+    input[type="number"], select{
+      width:180px;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid #cedae8;
+      background:#fff;
+      font-size:16px;
+      color:var(--text);
+      box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
+      outline:none;
+    }
+
+    input[type="number"]{
+      width:115px;
+      font-size:18px;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    button.action{
+      border:none;
+      border-radius:16px;
+      padding:12px 24px;
+      color:#fff;
+      cursor:pointer;
+      font-size:16px;
+      font-weight:900;
+      transition:transform .12s ease;
+      box-shadow:var(--shadow-md);
+    }
+
+    button.action:hover{ transform:translateY(-1px); }
+
+    .btnBlue{ background:linear-gradient(180deg, #5aafff, #2a81e8); }
+    .btnGray{ background:linear-gradient(180deg, #9aa7b4, #778493); }
+    .btnRed{ background:linear-gradient(180deg, #ff8aa0, #eb5b71); }
+
+    .checks{
+      display:flex;
+      gap:24px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .checks label{
+      min-width:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:16px;
+      font-weight:900;
+      color:var(--text);
+    }
+
+    .info{
+      margin-top:16px;
+      font-size:17px;
+      color:var(--blue-4);
+      font-weight:900;
+      min-height:24px;
+    }
+
+    .info2{
+      margin-top:8px;
+      font-size:19px;
+      font-weight:900;
+      color:var(--title);
+      min-height:28px;
+    }
+
+    .challengeBox{
+      margin-top:16px;
+      padding:14px 16px;
+      border-radius:18px;
+      background:linear-gradient(180deg, #f7fbff, #eef5ff);
+      border:1px solid #dce8f5;
+      color:#294d70;
+      font-weight:800;
+      display:none;
+      min-height:96px;
+    }
+
+    .challengeBox.show{
+      display:block;
+    }
+
+    .score{
+      margin-top:8px;
+      font-size:19px;
+      font-weight:900;
+      color:var(--green);
+      min-height:24px;
+    }
+
+    .footerAuthor{
+      text-align:center;
+      padding:12px 20px 18px;
+      color:#3f5b76;
+      font-weight:900;
+      font-size:15px;
+      background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.45));
+      border-top:1px solid rgba(217,229,242,.7);
+    }
+
+    .footerAuthor span{
+      color:#1d4772;
+    }
+
+    @media (max-width:980px){
+      .controls{ grid-template-columns:1fr; }
+      .controlBlock + .controlBlock{
+        border-left:none;
+        border-top:1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="titleBlock">
+        <h1>Wie sich ein Gefäß füllt</h1>
+      </div>
+
+      <div class="activityBar">
+        <button class="activityBtn active" data-shape="cylinder">Aufgabe 1</button>
+        <button class="activityBtn" data-shape="cone">Aufgabe 2</button>
+        <button class="activityBtn" data-shape="round">Aufgabe 3</button>
+        <button class="activityBtn" data-shape="frustum">Aufgabe 4</button>
+        <button class="activityBtn" data-shape="custom">Aufgabe 5</button>
+        <button class="activityBtn" data-shape="reconstruct">Aufgabe 6</button>
+      </div>
+    </div>
+
+    <div class="topWrap" id="topWrap">
+      <svg id="overlay"></svg>
+
+      <div class="top">
+        <section class="panel">
+          <div class="panelTitle">Gefäß und Lineal</div>
+          <div class="drawTools" id="drawTools">
+            <button class="miniBtn" id="drawModeBtn">Zeichnen</button>
+            <button class="miniBtn warn" id="clearDrawBtn">Löschen</button>
+            <button class="miniBtn primary" id="fitDrawBtn">Gefäß übernehmen</button>
+            <button class="miniBtn success" id="compareBtn">Vergleichen</button>
+            <button class="miniBtn primary" id="showSolutionBtn">Richtiges Gefäß zeigen</button>
+            <button class="miniBtn primary" id="newChallengeBtn">Neue Aufgabe</button>
+          </div>
+          <div class="panelInner">
+            <svg id="leftSvg" viewBox="0 0 520 640"></svg>
+            <canvas id="drawCanvas"></canvas>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panelTitle">Diagramm</div>
+          <div class="panelInner">
+            <svg id="rightSvg" viewBox="0 0 800 640" preserveAspectRatio="none"></svg>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="controls" id="controls">
+      <div class="controlBlock">
+        <div class="row">
+          <label for="widthSlider">Radius des Gefäßes</label>
+          <input id="widthSlider" type="range" min="2.2" max="5.5" step="0.1" value="3.0">
+          <span class="value" id="widthValue">3.0 cm</span>
+        </div>
+
+        <div class="row">
+          <label for="heightSlider">Maximale Höhe des Gefäßes</label>
+          <input id="heightSlider" type="range" min="6" max="18" step="0.5" value="10.5">
+          <span class="value" id="heightMaxValue">10.5 cm</span>
+        </div>
+
+        <div class="row">
+          <label for="initialHeight">Anfangshöhe</label>
+          <input id="initialHeight" type="number" min="0" max="18" step="0.1" value="0">
+          <span class="value" id="initialHeightUnit">cm</span>
+        </div>
+
+        <div class="info" id="timeInfo"></div>
+        <div class="info2" id="heightInfo"></div>
+
+        <div class="challengeBox" id="challengeBox">
+          <div id="challengeText"></div>
+          <div class="score" id="scoreText"></div>
+        </div>
+      </div>
+
+      <div class="controlBlock">
+        <div class="btnRow">
+          <button class="action btnBlue" id="startBtn">Start</button>
+          <button class="action btnGray" id="pauseBtn">Pause</button>
+          <button class="action btnRed" id="resetBtn">Neu starten</button>
+        </div>
+
+        <div class="row">
+          <label for="flowSlider">Zufluss Q</label>
+          <input id="flowSlider" type="range" min="1" max="100" step="1" value="10">
+          <span class="value" id="flowValue">10 mL/s</span>
+        </div>
+
+        <div class="row">
+          <label for="speedSlider">Animationsgeschwindigkeit</label>
+          <input id="speedSlider" type="range" min="0.25" max="4" step="0.25" value="1">
+          <span class="value" id="speedValue">1.00×</span>
+        </div>
+
+        <div class="row">
+          <label for="graphMode">Darstellung im Diagramm</label>
+          <select id="graphMode">
+            <option value="timeHeight">Wasserhöhe und Zeit</option>
+            <option value="volumeHeight">Inhalt und Höhe</option>
+          </select>
+        </div>
+
+        <div class="checks">
+          <label><input id="showPoints" type="checkbox" checked> Punkte</label>
+          <label><input id="showLine" type="checkbox" checked> Kurve</label>
+          <label><input id="showGuides" type="checkbox" checked> Hilfslinien</label>
+          <label><input id="showNumbers" type="checkbox"> Zahlen anzeigen</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="footerAuthor">
+      © <span>Nicolás Alarcón-Relmucao</span> · Alle Rechte vorbehalten
+    </div>
+  </div>
+
+  <script>
+    const SVG_NS = "http://www.w3.org/2000/svg";
+
+    const SHAPES = {
+      cylinder: {
+        profile(h, H, w){ return w; },
+        decoration: "none"
+      },
+      cone: {
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          return w * (0.12 + 0.88 * u);
+        },
+        decoration: "stem"
+      },
+      round: {
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const bulb = 0.28 + 0.82 * Math.sin(Math.PI * u) ** 0.9;
+          const taper = 0.88 - 0.16 * u;
+          return w * Math.max(0.22, bulb * taper);
+        },
+        decoration: "stem"
+      },
+      frustum: {
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          return w * (1.00 - 0.38 * u);
+        },
+        decoration: "stem"
+      },
+      custom: {
+        profile(h, H, w){ return w; },
+        decoration: "none"
+      },
+      reconstruct: {
+        profile(h, H, w){ return w; },
+        decoration: "none"
+      }
+    };
+
+    const CHALLENGES = [
+      {
+        name: "",
+        H: 10.5,
+        width: 3.1,
+        profile(h, H, w){ return w; }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.1,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          return w * (0.20 + 0.80 * u);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.3,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          return w * (1.00 - 0.42 * u);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.0,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const bulb = 0.36 + 0.78 * Math.sin(Math.PI * u) ** 0.95;
+          return w * Math.max(0.22, bulb);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.0,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const neck = 0.55 + 0.30 * Math.sin(Math.PI * u) - 0.22 * u;
+          return w * Math.max(0.18, neck);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.2,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const belly = 0.30 + 0.95 * Math.sin(Math.PI * u) ** 1.4;
+          const topTaper = 1.00 - 0.28 * u;
+          return w * Math.max(0.18, belly * topTaper);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.3,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          if (u < 0.30) return w * (1.10 - 0.15 * (u / 0.30));
+          if (u < 0.75) return w * 0.95;
+          return w * (0.95 - 0.45 * ((u - 0.75) / 0.25));
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.0,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const waist = 0.95 - 0.48 * Math.sin(Math.PI * u) ** 2;
+          return w * Math.max(0.22, waist);
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.1,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          if (u < 0.45) return w * (0.55 + 0.10 * (u / 0.45));
+          return w * (0.65 + 0.55 * ((u - 0.45) / 0.55));
+        }
+      },
+      {
+        name: "",
+        H: 10.5,
+        width: 3.1,
+        profile(h, H, w){
+          const u = h / Math.max(H, 0.0001);
+          const baseCurve = 0.22 + 0.95 * Math.sqrt(u);
+          const topSoft = 1.00 - 0.10 * u;
+          return w * Math.max(0.18, baseCurve * topSoft);
+        }
+      }
+    ];
+
+    const state = {
+      shape: "cylinder",
+      graphMode: "timeHeight",
+      t: 0,
+      h: 0,
+      h0: 0,
+      H: 10.5,
+      width: 3.0,
+      Q: 10,
+      animSpeed: 1.0,
+      running: false,
+      history: [{ t: 0, h: 0 }],
+      rafId: null,
+      lastTs: null,
+      pointAccum: 0,
+      showNumbers: false,
+
+      customProfileReady: false,
+      customRadiiBaseCm: [],
+      customRadiiCm: [],
+      customWidthCm: null,
+      customBaseMaxRadiusCm: null,
+      customVisualMaxRadiusCm: null,
+
+      draw: {
+        enabled: false,
+        isDrawing: false,
+        points: []
+      },
+
+      challenge: {
+        index: 0,
+        profile: null,
+        score: null,
+        showSolution: false
+      }
+    };
+
+    const UI = {
+      overlay: document.getElementById("overlay"),
+      topWrap: document.getElementById("topWrap"),
+      leftSvg: document.getElementById("leftSvg"),
+      rightSvg: document.getElementById("rightSvg"),
+
+      drawCanvas: document.getElementById("drawCanvas"),
+      drawTools: document.getElementById("drawTools"),
+      drawModeBtn: document.getElementById("drawModeBtn"),
+      clearDrawBtn: document.getElementById("clearDrawBtn"),
+      fitDrawBtn: document.getElementById("fitDrawBtn"),
+      compareBtn: document.getElementById("compareBtn"),
+      showSolutionBtn: document.getElementById("showSolutionBtn"),
+      newChallengeBtn: document.getElementById("newChallengeBtn"),
+
+      controls: document.getElementById("controls"),
+
+      widthSlider: document.getElementById("widthSlider"),
+      heightSlider: document.getElementById("heightSlider"),
+      initialHeight: document.getElementById("initialHeight"),
+      flowSlider: document.getElementById("flowSlider"),
+      speedSlider: document.getElementById("speedSlider"),
+      graphMode: document.getElementById("graphMode"),
+
+      widthValue: document.getElementById("widthValue"),
+      heightMaxValue: document.getElementById("heightMaxValue"),
+      flowValue: document.getElementById("flowValue"),
+      speedValue: document.getElementById("speedValue"),
+      initialHeightUnit: document.getElementById("initialHeightUnit"),
+
+      timeInfo: document.getElementById("timeInfo"),
+      heightInfo: document.getElementById("heightInfo"),
+
+      challengeBox: document.getElementById("challengeBox"),
+      challengeText: document.getElementById("challengeText"),
+      scoreText: document.getElementById("scoreText"),
+
+      showPoints: document.getElementById("showPoints"),
+      showLine: document.getElementById("showLine"),
+      showGuides: document.getElementById("showGuides"),
+      showNumbers: document.getElementById("showNumbers"),
+
+      startBtn: document.getElementById("startBtn"),
+      pauseBtn: document.getElementById("pauseBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+
+      activityBtns: [...document.querySelectorAll(".activityBtn")]
+    };
+
+    const LEFT = {
+      svgW: 520,
+      svgH: 640,
+      innerTop: 70,
+      innerBottom: 560,
+      centerX: 200,
+      rulerX: 350,
+      rulerW: 92
+    };
+
+    const RIGHT = {
+      svgW: 800,
+      svgH: 640,
+      plotLeft: 96,
+      plotRight: 28,
+      plotTop: 70,
+      plotBottom: 560
+    };
+
+    const drawCtx = UI.drawCanvas.getContext("2d");
+
+    function S(tag, attrs = {}, text = ""){
+      const el = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      if (text) el.textContent = text;
+      return el;
+    }
+
+    function clear(el){
+      while (el.firstChild) el.removeChild(el.firstChild);
+    }
+
+    function clamp(v, a, b){
+      return Math.max(a, Math.min(b, v));
+    }
+
+    function formatSmart(v){
+      if (Math.abs(v) >= 100) return v.toFixed(1);
+      if (Math.abs(v) >= 10) return v.toFixed(1);
+      return v.toFixed(2);
+    }
+
+    function smoothArray(arr, passes = 3){
+      let out = arr.slice();
+      for (let p = 0; p < passes; p++) {
+        const copy = out.slice();
+        for (let i = 1; i < out.length - 1; i++) {
+          out[i] = 0.25 * copy[i - 1] + 0.5 * copy[i] + 0.25 * copy[i + 1];
+        }
+      }
+      return out;
+    }
+
+    function yFromH(h){
+      const H = Math.max(state.H, 0.0001);
+      const usable = LEFT.innerBottom - LEFT.innerTop;
+      return LEFT.innerBottom - (h / H) * usable;
+    }
+
+    function chartYFromH(h){
+      const H = Math.max(state.H, 0.0001);
+      const usable = RIGHT.plotBottom - RIGHT.plotTop;
+      return RIGHT.plotBottom - (h / H) * usable;
+    }
+
+    function majorStepY(){
+      if (state.H > 16) return 3;
+      if (state.H > 12) return 2;
+      return 1;
+    }
+    function majorStepY(){
+      if (state.H > 16) return 3;
+      if (state.H > 12) return 2;
+      return 1;
+    }
+
+    function isUserDrawMode(){
+      return state.shape === "custom" || state.shape === "reconstruct";
+    }
+
+    function activeProfile(h, H, w){
+      if (state.shape === "reconstruct" && state.challenge.profile) {
+        return state.challenge.profile(h, H, w);
+      }
+      return SHAPES[state.shape].profile(h, H, w);
+    }
+
+    function rebuildCustomProfileFromWidth(){
+      if (!state.customProfileReady || !state.customRadiiBaseCm.length || !state.customBaseMaxRadiusCm) return;
+      const scale = state.width / state.customBaseMaxRadiusCm;
+      state.customRadiiCm = state.customRadiiBaseCm.map(r => Math.max(0.08, r * scale));
+      state.customWidthCm = Math.max(...state.customRadiiCm);
+    }
+
+    function customRadiusCm(h){
+      if (!state.customRadiiCm.length) return Math.max(0.2, state.width);
+      const u = clamp(h / Math.max(state.H, 0.0001), 0, 1);
+      const idx = u * (state.customRadiiCm.length - 1);
+      const i0 = Math.floor(idx);
+      const i1 = Math.min(state.customRadiiCm.length - 1, i0 + 1);
+      const a = idx - i0;
+      return (1 - a) * state.customRadiiCm[i0] + a * state.customRadiiCm[i1];
+    }
+
+    function sampleShapeRadiusCm(h){
+      if ((state.shape === "custom" || state.shape === "reconstruct") && state.customProfileReady) {
+        return customRadiusCm(h);
+      }
+      return activeProfile(h, state.H, state.width);
+    }
+
+    function targetRadiusCm(h){
+      if (state.challenge.profile) {
+        return state.challenge.profile(h, state.H, state.width);
+      }
+      return sampleShapeRadiusCm(h);
+    }
+
+    function areaAtH(h){
+      const r = Math.max(0.08, sampleShapeRadiusCm(h));
+      return Math.PI * r * r;
+    }
+
+    function targetAreaAtH(h){
+      const r = Math.max(0.08, targetRadiusCm(h));
+      return Math.PI * r * r;
+    }
+
+    function integrateVolumeUntilHeight(h, areaFn){
+      if (h <= 0) return 0;
+      const steps = 2400;
+      const dh = h / steps;
+      let volume = 0;
+      for (let i = 0; i < steps; i++) {
+        const hMid = (i + 0.5) * dh;
+        volume += areaFn(hMid) * dh;
+      }
+      return volume;
+    }
+
+    function volumeAtHeight(h){
+      return integrateVolumeUntilHeight(h, areaAtH);
+    }
+
+    function targetVolumeAtHeight(h){
+      return integrateVolumeUntilHeight(h, targetAreaAtH);
+    }
+
+    function totalVolume(){
+      return volumeAtHeight(state.H);
+    }
+
+    function targetTotalVolume(){
+      return targetVolumeAtHeight(state.H);
+    }
+
+    function estimateFillTime(){
+      return Math.max(0, (totalVolume() - volumeAtHeight(state.h0)) / Math.max(state.Q, 0.0001));
+    }
+
+    function targetEstimateFillTime(){
+      return Math.max(0, targetTotalVolume() / Math.max(state.Q, 0.0001));
+    }
+
+    function challengeFillHistory(){
+      if (!state.challenge.profile) return [];
+      const history = [];
+      let t = 0;
+      let h = 0;
+      const dt = 0.01;
+      history.push({ t:0, h:0 });
+
+      while (h < state.H - 1e-8 && t < 400) {
+        for (let i = 0; i < 8; i++) {
+          const A = targetAreaAtH(h);
+          h = Math.min(state.H, h + (state.Q / Math.max(A, 0.0001)) * (dt / 8));
+          t += dt / 8;
+        }
+        history.push({ t, h });
+      }
+      return history;
+    }
+
+    function timeAxisMaxExact(){
+      if (state.shape === "reconstruct") {
+        return Math.max(targetEstimateFillTime(), 1);
+      }
+      return Math.max(estimateFillTime(), 1);
+    }
+
+    function volumeAxisMaxExact(){
+      if (state.shape === "reconstruct") {
+        return Math.max(targetTotalVolume(), 1);
+      }
+      return Math.max(totalVolume(), 1);
+    }
+
+    function nextMultiple(value, step){
+      return Math.max(step, Math.ceil(value / step) * step);
+    }
+
+    function graphXMax(){
+      if (state.graphMode === "timeHeight") {
+        return nextMultiple(timeAxisMaxExact(), 1);
+      }
+      return nextMultiple(volumeAxisMaxExact(), 50);
+    }
+
+    function getXTicks(){
+      const xMax = graphXMax();
+      const step = state.graphMode === "timeHeight" ? 1 : 50;
+      const ticks = [];
+      for (let v = 0; v <= xMax + 1e-9; v += step) ticks.push(v);
+      return ticks;
+    }
+
+    function graphXFromValue(xValue){
+      const xMax = Math.max(graphXMax(), 0.0001);
+      const usable = RIGHT.svgW - RIGHT.plotLeft - RIGHT.plotRight;
+      return RIGHT.plotLeft + (xValue / xMax) * usable;
+    }
+
+    function graphXValueFromPoint(p){
+      return state.graphMode === "timeHeight" ? p.t : volumeAtHeight(p.h);
+    }
+
+    function vesselRadiusPx(h){
+      let maxPx = 92;
+      let maxCm = 5.5;
+
+      if ((state.shape === "custom" || state.shape === "reconstruct") && state.customProfileReady) {
+        maxPx = 128;
+        maxCm = Math.max(state.customVisualMaxRadiusCm || state.customWidthCm || 0.5, 0.5);
+      }
+      return sampleShapeRadiusCm(h) / maxCm * maxPx;
+    }
+
+    function targetRadiusPx(h){
+      let maxPx = 128;
+      let maxCm = Math.max(state.customVisualMaxRadiusCm || state.width || 0.5, 0.5);
+      return targetRadiusCm(h) / maxCm * maxPx;
+    }
+
+    function pointsForWall(samples = 80){
+      const left = [];
+      const right = [];
+      for (let i = 0; i <= samples; i++) {
+        const h = state.H * (i / samples);
+        const y = yFromH(h);
+        const r = vesselRadiusPx(h);
+        left.push([LEFT.centerX - r, y]);
+        right.push([LEFT.centerX + r, y]);
+      }
+      return { left, right };
+    }
+
+    function pointsForTargetWall(samples = 80){
+      const left = [];
+      const right = [];
+      for (let i = 0; i <= samples; i++) {
+        const h = state.H * (i / samples);
+        const y = yFromH(h);
+        const r = targetRadiusPx(h);
+        left.push([LEFT.centerX - r, y]);
+        right.push([LEFT.centerX + r, y]);
+      }
+      return { left, right };
+    }
+
+    function pathFromPoints(leftPts, rightPts){
+      const all = [];
+      all.push(`M ${leftPts[leftPts.length - 1][0]} ${leftPts[leftPts.length - 1][1]}`);
+      for (let i = leftPts.length - 2; i >= 0; i--) {
+        all.push(`L ${leftPts[i][0]} ${leftPts[i][1]}`);
+      }
+      for (let i = 0; i < rightPts.length; i++) {
+        all.push(`L ${rightPts[i][0]} ${rightPts[i][1]}`);
+      }
+      all.push("Z");
+      return all.join(" ");
+    }
+
+    function waterPolygonUpToHeight(hFill, samples = 80){
+      const left = [];
+      const right = [];
+      for (let i = 0; i <= samples; i++) {
+        const h = hFill * (i / samples);
+        const y = yFromH(h);
+        const r = vesselRadiusPx(h);
+        left.push([LEFT.centerX - r, y]);
+        right.push([LEFT.centerX + r, y]);
+      }
+      return { left, right };
+    }
+
+    function makeDefs(svg){
+      const defs = S("defs");
+
+      const glassFill = S("linearGradient", { id: "glassFill", x1: "0", y1: "0", x2: "1", y2: "0" });
+      glassFill.appendChild(S("stop", { offset: "0%", "stop-color": "rgba(255,255,255,.84)" }));
+      glassFill.appendChild(S("stop", { offset: "12%", "stop-color": "rgba(255,255,255,.22)" }));
+      glassFill.appendChild(S("stop", { offset: "48%", "stop-color": "rgba(255,255,255,.05)" }));
+      glassFill.appendChild(S("stop", { offset: "84%", "stop-color": "rgba(255,255,255,.14)" }));
+      glassFill.appendChild(S("stop", { offset: "100%", "stop-color": "rgba(255,255,255,.38)" }));
+      defs.appendChild(glassFill);
+
+      const shineLeft = S("linearGradient", { id: "shineLeft", x1: "0", y1: "0", x2: "0", y2: "1" });
+      shineLeft.appendChild(S("stop", { offset: "0%", "stop-color": "rgba(255,255,255,.78)" }));
+      shineLeft.appendChild(S("stop", { offset: "100%", "stop-color": "rgba(255,255,255,0)" }));
+      defs.appendChild(shineLeft);
+
+      const waterFill = S("linearGradient", { id: "waterFill", x1: "0", y1: "0", x2: "0", y2: "1" });
+      waterFill.appendChild(S("stop", { offset: "0%", "stop-color": "#bfe4ff" }));
+      waterFill.appendChild(S("stop", { offset: "20%", "stop-color": "#79bbff" }));
+      waterFill.appendChild(S("stop", { offset: "100%", "stop-color": "#2f87eb" }));
+      defs.appendChild(waterFill);
+
+      const waterShine = S("linearGradient", { id: "waterShine", x1: "0", y1: "0", x2: "1", y2: "0" });
+      waterShine.appendChild(S("stop", { offset: "0%", "stop-color": "rgba(255,255,255,.32)" }));
+      waterShine.appendChild(S("stop", { offset: "100%", "stop-color": "rgba(255,255,255,0)" }));
+      defs.appendChild(waterShine);
+
+      const surfaceFill = S("linearGradient", { id: "surfaceFill", x1: "0", y1: "0", x2: "0", y2: "1" });
+      surfaceFill.appendChild(S("stop", { offset: "0%", "stop-color": "rgba(156,214,255,.96)" }));
+      surfaceFill.appendChild(S("stop", { offset: "100%", "stop-color": "rgba(56,129,220,.72)" }));
+      defs.appendChild(surfaceFill);
+
+      const rulerFill = S("linearGradient", { id: "rulerFill", x1: "0", y1: "0", x2: "0", y2: "1" });
+      rulerFill.appendChild(S("stop", { offset: "0%", "stop-color": "#ffffff" }));
+      rulerFill.appendChild(S("stop", { offset: "100%", "stop-color": "#f5f9fd" }));
+      defs.appendChild(rulerFill);
+
+      const graphCardFill = S("linearGradient", { id: "graphCardFill", x1: "0", y1: "0", x2: "0", y2: "1" });
+      graphCardFill.appendChild(S("stop", { offset: "0%", "stop-color": "rgba(255,255,255,.94)" }));
+      graphCardFill.appendChild(S("stop", { offset: "100%", "stop-color": "rgba(248,251,255,.90)" }));
+      defs.appendChild(graphCardFill);
+
+      svg.appendChild(defs);
+    }
+
+    function drawStemDecoration(svg){
+      if (SHAPES[state.shape].decoration !== "stem") return;
+
+      const bowlBottomY = yFromH(0);
+      const stemTopY = bowlBottomY + 3;
+      const stemBottomY = 592;
+
+      svg.appendChild(S("line", {
+        x1: LEFT.centerX, x2: LEFT.centerX,
+        y1: stemTopY, y2: stemBottomY - 24,
+        stroke: "#50677c", "stroke-width": "4",
+        "stroke-linecap": "round", opacity: ".85"
+      }));
+
+      svg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: stemBottomY - 8,
+        rx: 48, ry: 9,
+        fill: "rgba(255,255,255,.55)",
+        stroke: "#50677c", "stroke-width": "3",
+        opacity: ".9"
+      }));
+    }
+
+    function drawRuler(svg){
+      const x = LEFT.rulerX;
+      const w = LEFT.rulerW;
+
+      svg.appendChild(S("rect", {
+        x, y: LEFT.innerTop - 10, width: w, height: (LEFT.innerBottom - LEFT.innerTop) + 20,
+        rx: 18, fill: "url(#rulerFill)",
+        stroke: "#d2dfeb", "stroke-width": "1.5"
+      }));
+
+      const maj = majorStepY();
+      const min = maj / 2;
+
+      for (let v = 0; v <= state.H + 0.0001; v += min) {
+        const y = yFromH(v);
+        const isMajor = Math.abs((v / maj) - Math.round(v / maj)) < 0.001;
+
+        svg.appendChild(S("line", {
+          x1: x + 16, x2: x + (isMajor ? 42 : 28),
+          y1: y, y2: y,
+          stroke: isMajor ? "#536a7f" : "#9bb0c4",
+          "stroke-width": isMajor ? "2.1" : "1.2",
+          "stroke-linecap": "round"
+        }));
+
+        if (isMajor && state.showNumbers) {
+          svg.appendChild(S("text", {
+            x: x + 49, y: y + 5,
+            fill: "#334b61", "font-size": "16",
+            "font-weight": "900"
+          }, Number.isInteger(v) ? String(v) : v.toFixed(1)));
+        }
+      }
+    }
+
+    function drawHeightChip(svg){
+      if (!state.showNumbers) return;
+
+      const y = 602;
+      const x = 112;
+      const text = `h = ${state.h.toFixed(1)} cm`;
+
+      svg.appendChild(S("rect", {
+        x, y, width: 132, height: 42, rx: 21,
+        fill: "rgba(242,248,255,.98)", stroke: "#d6e8fb"
+      }));
+
+      svg.appendChild(S("text", {
+        x: x + 20, y: y + 27,
+        fill: "#1f67ca", "font-size": "17",
+        "font-weight": "900"
+      }, text));
+    }
+
+    function drawChallengeEmptyStage(){
+      clear(UI.leftSvg);
+      makeDefs(UI.leftSvg);
+      drawRuler(UI.leftSvg);
+      drawHeightChip(UI.leftSvg);
+
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: 590, rx: 70, ry: 12,
+        fill: "rgba(98,126,157,.08)"
+      }));
+
+      UI.leftSvg.appendChild(S("rect", {
+        x: 34, y: 74, width: 300, height: 84, rx: 16,
+        fill: "rgba(255,255,255,.82)",
+        stroke: "#dbe7f5", "stroke-width": "1.2"
+      }));
+
+      UI.leftSvg.appendChild(S("text", {
+        x: 48, y: 100, fill: "#58718b",
+        "font-size": "14", "font-weight": "800"
+      }, "Schau dir rechts das Zieldiagramm an."));
+
+      UI.leftSvg.appendChild(S("text", {
+        x: 48, y: 121, fill: "#58718b",
+        "font-size": "14", "font-weight": "800"
+      }, "Zeichne das passende Gefäß und klicke auf „Vergleichen“."));
+    }
+
+    function drawEmptyUserStage(){
+      if (state.shape === "reconstruct") {
+        drawChallengeEmptyStage();
+        return;
+      }
+
+      clear(UI.leftSvg);
+      makeDefs(UI.leftSvg);
+      drawRuler(UI.leftSvg);
+      drawHeightChip(UI.leftSvg);
+
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: 590, rx: 70, ry: 12,
+        fill: "rgba(98,126,157,.08)"
+      }));
+
+      UI.leftSvg.appendChild(S("rect", {
+        x: 34, y: 74, width: 290, height: 70, rx: 16,
+        fill: "rgba(255,255,255,.82)",
+        stroke: "#dbe7f5", "stroke-width": "1.2"
+      }));
+
+      UI.leftSvg.appendChild(S("text", {
+        x: 48, y: 100,
+        fill: "#58718b", "font-size": "14",
+        "font-weight": "800"
+      }, "Zeichne nur die rechte Hälfte des Gefäßes."));
+
+      UI.leftSvg.appendChild(S("text", {
+        x: 48, y: 121,
+        fill: "#6d5ef5", "font-size": "13",
+        "font-weight": "900"
+      }, "Danach klicke auf „Gefäß übernehmen“."));
+    }
+
+    function drawCorrectTargetOutline(svg){
+      const target = pointsForTargetWall(80);
+      const targetPath = pathFromPoints(target.left, target.right);
+
+      svg.appendChild(S("path", {
+        d: targetPath,
+        fill: "none",
+        stroke: "rgba(24,164,99,.95)",
+        "stroke-width": "3.2",
+        "stroke-dasharray": "9 6",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      }));
+    }
+
+    function drawLeft(){
+      if (isUserDrawMode() && !state.customProfileReady) {
+        drawEmptyUserStage();
+        return;
+      }
+
+      clear(UI.leftSvg);
+      makeDefs(UI.leftSvg);
+
+      const walls = pointsForWall(80);
+      const wallPath = pathFromPoints(walls.left, walls.right);
+
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: 590, rx: 78, ry: 14,
+        fill: "rgba(98,126,157,.10)"
+      }));
+
+      drawStemDecoration(UI.leftSvg);
+
+      UI.leftSvg.appendChild(S("path", {
+        d: wallPath, fill: "url(#glassFill)",
+        stroke: "#b5c4d2", "stroke-width": "3"
+      }));
+
+      UI.leftSvg.appendChild(S("path", {
+        d: wallPath, fill: "none",
+        stroke: "rgba(255,255,255,.52)",
+        "stroke-width": "1.2",
+        transform: "translate(0,-1)"
+      }));
+
+      const topR = vesselRadiusPx(state.H);
+      const topY = yFromH(state.H);
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: topY,
+        rx: Math.max(10, topR - 6), ry: 10,
+        fill: "rgba(255,255,255,.28)",
+        stroke: "#b4bec9", "stroke-width": "2"
+      }));
+
+      UI.leftSvg.appendChild(S("rect", {
+        x: LEFT.centerX - topR + 18, y: topY + 18,
+        width: 16, height: 380, rx: 999,
+        fill: "url(#shineLeft)", opacity: ".72"
+      }));
+
+      if (state.shape === "reconstruct" && state.challenge.showSolution) {
+        drawCorrectTargetOutline(UI.leftSvg);
+      }
+
+      const water = waterPolygonUpToHeight(state.h, 80);
+      const waterPath = pathFromPoints(water.left, water.right);
+
+      UI.leftSvg.appendChild(S("path", {
+        d: waterPath, fill: "url(#waterFill)", stroke: "none"
+      }));
+
+      UI.leftSvg.appendChild(S("path", {
+        d: waterPath, fill: "url(#waterShine)",
+        opacity: ".55", transform: "translate(-8,0)"
+      }));
+
+      const waterTopR = vesselRadiusPx(state.h);
+      const waterTopY = yFromH(state.h);
+
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: waterTopY,
+        rx: Math.max(8, waterTopR), ry: 11,
+        fill: "url(#surfaceFill)",
+        stroke: "rgba(53,125,210,.46)", "stroke-width": "1.5"
+      }));
+
+      UI.leftSvg.appendChild(S("ellipse", {
+        cx: LEFT.centerX, cy: waterTopY - 2,
+        rx: Math.max(10, waterTopR * 0.72), ry: 4.5,
+        fill: "rgba(255,255,255,.28)"
+      }));
+
+      drawRuler(UI.leftSvg);
+      drawHeightChip(UI.leftSvg);
+    }
+
+    function drawGrid(){
+      const xTicks = getXTicks();
+
+      xTicks.forEach(xVal => {
+        UI.rightSvg.appendChild(S("line", {
+          x1: graphXFromValue(xVal), x2: graphXFromValue(xVal),
+          y1: RIGHT.plotTop, y2: RIGHT.plotBottom,
+          stroke: "rgba(75,105,140,.10)", "stroke-width": "1"
+        }));
+      });
+
+      for (let v = 0; v <= state.H + 0.0001; v += state.H / 10) {
+        UI.rightSvg.appendChild(S("line", {
+          x1: RIGHT.plotLeft, x2: RIGHT.svgW - RIGHT.plotRight,
+          y1: chartYFromH(v), y2: chartYFromH(v),
+          stroke: "rgba(75,105,140,.10)", "stroke-width": "1"
+        }));
+      }
+    }
+
+    function drawPointCoordinates(cx, cy, xValue, yValue){
+      if (!state.showNumbers) return;
+      if (state.running) return;
+
+      const text = `(${formatSmart(xValue)}, ${formatSmart(yValue)})`;
+      const boxWidth = Math.max(120, 12 + text.length * 7.2);
+      const boxHeight = 34;
+
+      let boxX = cx + 12;
+      let boxY = cy - 42;
+
+      if (boxX + boxWidth > RIGHT.svgW - RIGHT.plotRight) {
+        boxX = cx - boxWidth - 12;
+      }
+      if (boxY < RIGHT.plotTop) {
+        boxY = cy + 12;
+      }
+
+      UI.rightSvg.appendChild(S("rect", {
+        x: boxX,
+        y: boxY,
+        width: boxWidth,
+        height: boxHeight,
+        rx: 10,
+        fill: "rgba(255,255,255,.97)",
+        stroke: "#cfe0f2",
+        "stroke-width": "1.2"
+      }));
+
+      UI.rightSvg.appendChild(S("text", {
+        x: boxX + 10,
+        y: boxY + 22,
+        fill: "#23476b",
+        "font-size": "13",
+        "font-weight": "800"
+      }, text));
+    }
+
+    function drawRight(){
+      clear(UI.rightSvg);
+      makeDefs(UI.rightSvg);
+
+      UI.rightSvg.appendChild(S("rect", {
+        x: RIGHT.plotLeft - 16, y: RIGHT.plotTop - 16,
+        width: RIGHT.svgW - RIGHT.plotLeft - RIGHT.plotRight + 32,
+        height: RIGHT.plotBottom - RIGHT.plotTop + 32,
+        rx: 22, fill: "url(#graphCardFill)",
+        stroke: "#dbe7f1", "stroke-width": "1.2"
+      }));
+
+      if (UI.showGuides.checked) drawGrid();
+
+      UI.rightSvg.appendChild(S("line", {
+        x1: RIGHT.plotLeft, x2: RIGHT.plotLeft,
+        y1: RIGHT.plotTop, y2: RIGHT.plotBottom,
+        stroke: "#34516f", "stroke-width": "2.3"
+      }));
+
+      UI.rightSvg.appendChild(S("line", {
+        x1: RIGHT.plotLeft, x2: RIGHT.svgW - RIGHT.plotRight,
+        y1: RIGHT.plotBottom, y2: RIGHT.plotBottom,
+        stroke: "#34516f", "stroke-width": "2.3"
+      }));
+
+      UI.rightSvg.appendChild(S("text", {
+        x: RIGHT.plotLeft - 8, y: RIGHT.plotTop - 18,
+        fill: "#23476b", "font-size": "18",
+        "font-weight": "900"
+      }, "Höhe in cm"));
+
+      const xAxisLabel = state.graphMode === "timeHeight" ? "Zeit in s" : "Inhalt in mL";
+      UI.rightSvg.appendChild(S("text", {
+        x: RIGHT.svgW - RIGHT.plotRight - 2,
+        y: RIGHT.plotBottom + 46,
+        fill: "#23476b", "font-size": "18",
+        "font-weight": "900", "text-anchor": "end"
+      }, xAxisLabel));
+
+      if (state.showNumbers) {
+        const xTicks = getXTicks();
+        xTicks.forEach(xVal => {
+          UI.rightSvg.appendChild(S("text", {
+            x: graphXFromValue(xVal),
+            y: RIGHT.plotBottom + 30,
+            fill: "#556e85", "font-size": "14",
+            "text-anchor": "middle", "font-weight": "700"
+          }, String(xVal)));
+        });
+
+        const yStep = majorStepY();
+        for (let v = 0; v <= state.H + 0.0001; v += yStep) {
+          UI.rightSvg.appendChild(S("text", {
+            x: RIGHT.plotLeft - 16,
+            y: chartYFromH(v) + 5,
+            fill: "#556e85", "font-size": "15",
+            "text-anchor": "end", "font-weight": "800"
+          }, Number.isInteger(v) ? String(v) : v.toFixed(1)));
+        }
+      }
+
+      let series = state.history;
+      if (state.shape === "reconstruct") {
+        series = challengeFillHistory();
+      }
+
+      if (series.length > 0 && UI.showLine.checked) {
+        const d = series.map((p, i) => {
+          const xv = state.shape === "reconstruct"
+            ? (state.graphMode === "timeHeight" ? p.t : targetVolumeAtHeight(p.h))
+            : graphXValueFromPoint(p);
+
+          const x = graphXFromValue(xv);
+          const y = chartYFromH(p.h);
+          return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+        }).join(" ");
+
+        UI.rightSvg.appendChild(S("path", {
+          d,
+          fill: "none",
+          stroke: state.shape === "reconstruct" ? "#7c5cff" : "#2f87eb",
+          "stroke-width": "4.2",
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        }));
+      }
+
+      if (series.length > 0 && UI.showPoints.checked && state.shape !== "reconstruct") {
+        series.forEach(p => {
+          UI.rightSvg.appendChild(S("circle", {
+            cx: graphXFromValue(graphXValueFromPoint(p)),
+            cy: chartYFromH(p.h),
+            r: "3.2",
+            fill: "#2f87eb"
+          }));
+        });
+      }
+
+      const last = state.shape === "reconstruct" ? null : state.history[state.history.length - 1];
+      if (last) {
+        const xValue = graphXValueFromPoint(last);
+        const yValue = last.h;
+        const cx = graphXFromValue(xValue);
+        const cy = chartYFromH(yValue);
+
+        if (UI.showGuides.checked) {
+          UI.rightSvg.appendChild(S("line", {
+            x1: RIGHT.plotLeft, x2: cx,
+            y1: cy, y2: cy,
+            stroke: "rgba(47,135,235,.30)",
+            "stroke-width": "2.1",
+            "stroke-dasharray": "7 6"
+          }));
+
+          UI.rightSvg.appendChild(S("line", {
+            x1: cx, x2: cx,
+            y1: cy, y2: RIGHT.plotBottom,
+            stroke: "rgba(124,92,255,.28)",
+            "stroke-width": "2.1",
+            "stroke-dasharray": "7 6"
+          }));
+
+          UI.rightSvg.appendChild(S("circle", {
+            cx, cy: RIGHT.plotBottom, r: "4.4",
+            fill: "#7c5cff"
+          }));
+        }
+
+        UI.rightSvg.appendChild(S("circle", {
+          cx, cy, r: "9",
+          fill: "rgba(47,135,235,.16)"
+        }));
+
+        UI.rightSvg.appendChild(S("circle", {
+          cx, cy, r: "5.4",
+          fill: "#2f87eb"
+        }));
+
+        drawPointCoordinates(cx, cy, xValue, yValue);
+      }
+    }
+
+    function leftScreenPointFromWaterLevel() {
+      const wrapRect = UI.topWrap.getBoundingClientRect();
+      const leftSvgRect = UI.leftSvg.getBoundingClientRect();
+
+      const xSvg = LEFT.centerX + vesselRadiusPx(state.h);
+      const ySvg = yFromH(state.h);
+
+      const x = leftSvgRect.left - wrapRect.left + (xSvg / LEFT.svgW) * leftSvgRect.width;
+      const y = leftSvgRect.top - wrapRect.top + (ySvg / LEFT.svgH) * leftSvgRect.height;
+
+      return { x, y };
+    }
+
+    function rightScreenPointFromGraph() {
+      const wrapRect = UI.topWrap.getBoundingClientRect();
+      const rightSvgRect = UI.rightSvg.getBoundingClientRect();
+
+      const xSvg = graphXFromValue(
+        state.graphMode === "timeHeight" ? state.t : volumeAtHeight(state.h)
+      );
+      const ySvg = chartYFromH(state.h);
+
+      const x = rightSvgRect.left - wrapRect.left + (xSvg / RIGHT.svgW) * rightSvgRect.width;
+      const y = rightSvgRect.top - wrapRect.top + (ySvg / RIGHT.svgH) * rightSvgRect.height;
+
+      return { x, y };
+    }
+
+    function drawOverlayGuide(){
+      clear(UI.overlay);
+      if (!UI.showGuides.checked) return;
+      if (state.shape === "reconstruct") return;
+
+      const wrapRect = UI.topWrap.getBoundingClientRect();
+      UI.overlay.setAttribute("width", wrapRect.width);
+      UI.overlay.setAttribute("height", wrapRect.height);
+      UI.overlay.style.width = wrapRect.width + "px";
+      UI.overlay.style.height = wrapRect.height + "px";
+
+      const leftPt = leftScreenPointFromWaterLevel();
+      const rightPt = rightScreenPointFromGraph();
+      const y = rightPt.y;
+
+      UI.overlay.appendChild(S("line", {
+        x1: leftPt.x, y1: y,
+        x2: rightPt.x, y2: y,
+        stroke: "rgba(47,135,235,.70)",
+        "stroke-width": "2.7",
+        "stroke-dasharray": "8 6",
+        "stroke-linecap": "round"
+      }));
+    }
+
+    function resizeDrawCanvas() {
+      const rect = UI.drawCanvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      UI.drawCanvas.width = Math.round(rect.width * dpr);
+      UI.drawCanvas.height = Math.round(rect.height * dpr);
+
+      drawCtx.setTransform(1, 0, 0, 1, 0, 0);
+      drawCtx.scale(dpr, dpr);
+
+      redrawCanvas();
+    }
+
+    function canvasPointerPos(evt){
+      const rect = UI.drawCanvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    function redrawCanvas(){
+      const ctx = drawCtx;
+      const rect = UI.drawCanvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      if (!isUserDrawMode()) return;
+      if (state.customProfileReady) return;
+
+      const drawLeft = 40;
+      const drawTop = 50;
+      const drawWidth = 250;
+      const drawHeight = rect.height - 110;
+      const axisX = drawLeft + drawWidth / 2;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(124,92,255,0.16)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([7,7]);
+      ctx.strokeRect(drawLeft, drawTop, drawWidth, drawHeight);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(80,110,140,0.22)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([5,6]);
+      ctx.beginPath();
+      ctx.moveTo(axisX, drawTop);
+      ctx.lineTo(axisX, drawTop + drawHeight);
+      ctx.stroke();
+      ctx.restore();
+
+      if (state.draw.points.length > 1) {
+        ctx.save();
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#2f87eb";
+        ctx.lineWidth = 4;
+
+        ctx.beginPath();
+        ctx.moveTo(state.draw.points[0].x, state.draw.points[0].y);
+        for (let i = 1; i < state.draw.points.length; i++) {
+          ctx.lineTo(state.draw.points[i].x, state.draw.points[i].y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(47,135,235,0.28)";
+        ctx.beginPath();
+        ctx.moveTo(2 * axisX - state.draw.points[0].x, state.draw.points[0].y);
+        for (let i = 1; i < state.draw.points.length; i++) {
+          ctx.lineTo(2 * axisX - state.draw.points[i].x, state.draw.points[i].y);
+        }
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    function toggleValueVisibility(el, show){
+      el.classList.toggle("hiddenValue", !show);
+    }
+
+    function updateDrawUI(){
+      const show = isUserDrawMode();
+      UI.drawTools.classList.toggle("show", show);
+      UI.drawCanvas.style.display = show ? "block" : "none";
+      UI.drawCanvas.style.pointerEvents = show && state.draw.enabled && !state.customProfileReady ? "auto" : "none";
+      UI.drawModeBtn.textContent = state.draw.enabled ? "Zeichnen an" : "Zeichnen";
+      UI.drawModeBtn.classList.toggle("primary", state.draw.enabled);
+
+      UI.fitDrawBtn.style.display = state.shape === "custom" ? "inline-block" : "none";
+      UI.compareBtn.style.display = state.shape === "reconstruct" ? "inline-block" : "none";
+      UI.showSolutionBtn.style.display = state.shape === "reconstruct" ? "inline-block" : "none";
+      UI.newChallengeBtn.style.display = state.shape === "reconstruct" ? "inline-block" : "none";
+
+      UI.controls.classList.toggle("hidden", false);
+
+      if (show) resizeDrawCanvas();
+      else redrawCanvas();
+    }
+
+    function enableDrawMode(){
+      if (!isUserDrawMode()) return;
+      if (state.customProfileReady) {
+        state.customProfileReady = false;
+        state.customRadiiBaseCm = [];
+        state.customRadiiCm = [];
+        state.customWidthCm = null;
+        state.customBaseMaxRadiusCm = null;
+        state.customVisualMaxRadiusCm = null;
+      }
+      state.draw.enabled = !state.draw.enabled;
+      updateDrawUI();
+    }
+
+    function clearDrawing(){
+      state.draw.points = [];
+      state.customProfileReady = false;
+      state.customRadiiBaseCm = [];
+      state.customRadiiCm = [];
+      state.customWidthCm = null;
+      state.customBaseMaxRadiusCm = null;
+      state.customVisualMaxRadiusCm = null;
+      if (state.shape === "reconstruct") state.challenge.score = null;
+      redrawCanvas();
+      refreshAll();
+    }
+
+    function fitProfileFromDrawing(){
+      if (state.draw.points.length < 12) {
+        alert("Zeichne zuerst die rechte Hälfte des Gefäßes.");
+        return false;
+      }
+
+      const rect = UI.drawCanvas.getBoundingClientRect();
+      const drawLeft = 40;
+      const drawTop = 50;
+      const drawWidth = 250;
+      const drawHeight = rect.height - 110;
+      const axisX = drawLeft + drawWidth / 2;
+      const baseY = drawTop + drawHeight;
+
+      let pts = state.draw.points.filter(p =>
+        p.x >= axisX &&
+        p.x <= drawLeft + drawWidth + 20 &&
+        p.y >= drawTop &&
+        p.y <= baseY
+      );
+
+      if (pts.length < 10) {
+        alert("Bitte zeichne im gestrichelten Bereich.");
+        return false;
+      }
+
+      let minY = Infinity;
+      let maxY = -Infinity;
+      let maxHalfWidthPx = 0;
+
+      for (const p of pts) {
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+        maxHalfWidthPx = Math.max(maxHalfWidthPx, p.x - axisX);
+      }
+
+      if (maxY - minY < 60) {
+        alert("Deine Zeichnung ist zu klein.");
+        return false;
+      }
+
+      const bands = 180;
+      const halfWidthsPx = [];
+
+      for (let i = 0; i < bands; i++) {
+        const y0 = minY + (i / bands) * (maxY - minY);
+        const y1 = minY + ((i + 1) / bands) * (maxY - minY);
+        const bandPts = pts.filter(p => p.y >= y0 && p.y < y1);
+
+        if (bandPts.length === 0) {
+          halfWidthsPx.push(null);
+          continue;
+        }
+
+        let maxX = -Infinity;
+        for (const p of bandPts) if (p.x > maxX) maxX = p.x;
+        halfWidthsPx.push(Math.max(6, maxX - axisX));
+      }
+
+      for (let i = 0; i < halfWidthsPx.length; i++) {
+        if (halfWidthsPx[i] == null) {
+          let l = i - 1;
+          let r = i + 1;
+          while (l >= 0 && halfWidthsPx[l] == null) l--;
+          while (r < halfWidthsPx.length && halfWidthsPx[r] == null) r++;
+          if (l >= 0 && r < halfWidthsPx.length) halfWidthsPx[i] = (halfWidthsPx[l] + halfWidthsPx[r]) / 2;
+          else if (l >= 0) halfWidthsPx[i] = halfWidthsPx[l];
+          else if (r < halfWidthsPx.length) halfWidthsPx[i] = halfWidthsPx[r];
+          else halfWidthsPx[i] = 12;
+        }
+      }
+
+      let smooth = smoothArray(halfWidthsPx, 6).reverse();
+
+      const pxPerCmHeight = (maxY - minY) / Math.max(state.H, 0.1);
+      let radiiCm = smooth.map(v => Math.max(0.12, v / pxPerCmHeight));
+
+      const estimatedHalfWidthCm = Math.max(0.2, maxHalfWidthPx / pxPerCmHeight);
+      let desiredMaxRadius = Math.min(5.5, Math.max(1.1, estimatedHalfWidthCm));
+      let currentMaxRadius = Math.max(...radiiCm);
+
+      if (currentMaxRadius > 0) {
+        const widthBoost = desiredMaxRadius / currentMaxRadius;
+        radiiCm = radiiCm.map(v => v * widthBoost);
+      }
+
+      currentMaxRadius = Math.max(...radiiCm);
+      if (currentMaxRadius > 5.5) {
+        const f = 5.5 / currentMaxRadius;
+        radiiCm = radiiCm.map(v => v * f);
+      }
+
+      state.customRadiiBaseCm = radiiCm.slice();
+      state.customBaseMaxRadiusCm = Math.max(...radiiCm);
+      state.customVisualMaxRadiusCm = state.customBaseMaxRadiusCm * 1.1;
+
+      state.width = clamp(state.customBaseMaxRadiusCm, 2.2, 5.5);
+      UI.widthSlider.value = state.width.toFixed(1);
+
+      state.customProfileReady = true;
+      rebuildCustomProfileFromWidth();
+
+      state.draw.points = [];
+      state.draw.enabled = false;
+
+      UI.initialHeight.value = "0";
+      state.h0 = 0;
+      state.h = 0;
+      state.t = 0;
+      state.history = [{ t: 0, h: 0 }];
+      state.pointAccum = 0;
+      state.running = false;
+      state.lastTs = null;
+      if (state.rafId) cancelAnimationFrame(state.rafId);
+
+      updateDrawUI();
+      return true;
+    }
+
+    function fitCustomVessel(){
+      if (fitProfileFromDrawing()) {
+        refreshAll();
+      }
+    }
+
+    function compareChallenge(){
+      if (state.shape !== "reconstruct") return;
+      if (!fitProfileFromDrawing()) return;
+
+      const samples = 160;
+      let relErr = 0;
+
+      for (let i = 0; i <= samples; i++) {
+        const h = state.H * (i / samples);
+        const rUser = sampleShapeRadiusCm(h);
+        const rTrue = targetRadiusCm(h);
+        relErr += Math.abs(rUser - rTrue) / Math.max(rTrue, 0.25);
+      }
+
+      relErr /= (samples + 1);
+      state.challenge.score = Math.max(0, Math.round(100 - 65 * relErr));
+      refreshAll();
+    }
+
+    function toggleShowSolution(){
+      if (state.shape !== "reconstruct") return;
+      state.challenge.showSolution = !state.challenge.showSolution;
+      UI.showSolutionBtn.textContent = state.challenge.showSolution ? "Richtiges Gefäß ausblenden" : "Richtiges Gefäß zeigen";
+      refreshAll();
+    }
+
+function loadChallenge(idx = null){
+  if (idx == null) idx = Math.floor(Math.random() * CHALLENGES.length);
+  const ch = CHALLENGES[idx];
+
+  state.challenge.index = idx;
+  state.challenge.profile = ch.profile;
+  state.challenge.score = null;
+  state.challenge.showSolution = false;
+
+  state.H = ch.H;
+  state.width = ch.width;
+  UI.heightSlider.value = String(ch.H);
+  UI.widthSlider.value = String(ch.width);
+  UI.showSolutionBtn.textContent = "Richtiges Gefäß zeigen";
+
+  state.h0 = 0;
+  state.h = 0;
+  state.t = 0;
+  state.history = [{ t: 0, h: 0 }];
+  state.customProfileReady = false;
+  state.customRadiiBaseCm = [];
+  state.customRadiiCm = [];
+  state.customWidthCm = null;
+  state.customBaseMaxRadiusCm = null;
+  state.customVisualMaxRadiusCm = null;
+  state.draw.points = [];
+  state.draw.enabled = true;
+
+  pauseSimulation();
+  refreshAll();
+}
+
+function refreshTexts(){
+  UI.widthValue.textContent = state.width.toFixed(1) + " cm";
+  UI.heightMaxValue.textContent = state.H.toFixed(1) + " cm";
+  UI.flowValue.textContent = state.Q.toFixed(0) + " mL/s";
+  UI.speedValue.textContent = state.animSpeed.toFixed(2) + "×";
+  UI.timeInfo.textContent = state.showNumbers ? "Zeit = " + state.t.toFixed(2) + " s" : "";
+  UI.heightInfo.textContent = state.showNumbers ? "Wasserhöhe = " + state.h.toFixed(2) + " cm" : "";
+
+  toggleValueVisibility(UI.widthValue, state.showNumbers);
+  toggleValueVisibility(UI.heightMaxValue, state.showNumbers);
+  toggleValueVisibility(UI.flowValue, state.showNumbers);
+  toggleValueVisibility(UI.speedValue, state.showNumbers);
+  toggleValueVisibility(UI.initialHeightUnit, state.showNumbers);
+
+  const showChallenge = state.shape === "reconstruct";
+  UI.challengeBox.classList.toggle("show", showChallenge);
+
+  if (showChallenge) {
+    UI.challengeText.textContent = "";
+    UI.scoreText.textContent = state.showNumbers && state.challenge.score != null
+      ? `Punkte: ${state.challenge.score}/100`
+      : "";
+  } else {
+    UI.challengeText.textContent = "";
+    UI.scoreText.textContent = "";
+  }
+}
+
+function refreshAll(){
+  refreshTexts();
+  drawLeft();
+  drawRight();
+  drawOverlayGuide();
+  updateDrawUI();
+}
+
+function applyInputs(){
+  state.width = parseFloat(UI.widthSlider.value);
+  state.H = parseFloat(UI.heightSlider.value);
+  state.h0 = Math.min(parseFloat(UI.initialHeight.value) || 0, state.H);
+  state.Q = parseFloat(UI.flowSlider.value);
+  state.animSpeed = parseFloat(UI.speedSlider.value);
+  state.graphMode = UI.graphMode.value;
+  state.showNumbers = UI.showNumbers.checked;
+
+  if ((state.shape === "custom" || state.shape === "reconstruct") && state.customProfileReady) {
+    rebuildCustomProfileFromWidth();
+  }
+
+  UI.initialHeight.max = String(state.H);
+
+  if (!state.running && state.t === 0 && state.shape !== "reconstruct") {
+    state.h = state.h0;
+    state.history = [{ t: 0, h: state.h0 }];
+  } else if (state.shape !== "reconstruct") {
+    state.h = Math.min(state.H, state.h);
+    state.history = state.history.map(p => ({
+      t: p.t,
+      h: Math.min(state.H, p.h)
+    }));
+  }
+
+  refreshAll();
+}
+
+function integrateHeightStep(dtTotal){
+  const substeps = 12;
+  const dt = dtTotal / substeps;
+
+  for (let i = 0; i < substeps; i++) {
+    const A = areaAtH(state.h);
+    const dh = (state.Q / Math.max(A, 0.0001)) * dt;
+    state.h = Math.min(state.H, state.h + dh);
+    state.t += dt;
+  }
+}
+
+function animationLoop(ts){
+  if (!state.running) return;
+
+  if (state.lastTs == null) state.lastTs = ts;
+  const realDt = Math.min(0.035, (ts - state.lastTs) / 1000);
+  state.lastTs = ts;
+
+  const dt = realDt * state.animSpeed;
+
+  integrateHeightStep(dt);
+  state.pointAccum += dt;
+
+  if (state.history.length === 0) state.history.push({ t: 0, h: state.h0 });
+
+  if (state.pointAccum >= 0.05) {
+    state.history.push({ t: state.t, h: state.h });
+    state.pointAccum = 0;
+  } else {
+    state.history[state.history.length - 1] = { t: state.t, h: state.h };
+  }
+
+  if (state.h >= state.H - 1e-8) {
+    state.h = state.H;
+    state.running = false;
+    state.lastTs = null;
+    refreshAll();
+    return;
+  }
+
+  refreshAll();
+  state.rafId = requestAnimationFrame(animationLoop);
+}
+
+function startSimulation(){
+  if (state.shape === "reconstruct") return;
+  if (state.shape === "custom" && !state.customProfileReady) {
+    alert("Zeichne zuerst die Hälfte des Gefäßes und übernimm dann das Profil.");
+    return;
+  }
+
+  if (state.running) return;
+  state.running = true;
+  state.lastTs = null;
+  state.rafId = requestAnimationFrame(animationLoop);
+}
+
+function pauseSimulation(){
+  state.running = false;
+  state.lastTs = null;
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  refreshAll();
+}
+
+function resetSimulation(){
+  pauseSimulation();
+  state.t = 0;
+  state.h0 = Math.min(parseFloat(UI.initialHeight.value) || 0, state.H);
+  state.h = state.h0;
+  state.history = [{ t: 0, h: state.h0 }];
+  state.pointAccum = 0;
+
+  if (state.shape === "reconstruct") {
+    loadChallenge(state.challenge.index);
+  } else {
+    refreshAll();
+  }
+}
+
+function setShape(shape){
+  state.shape = shape;
+  UI.activityBtns.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.shape === shape);
+  });
+
+  if (shape === "reconstruct") {
+    loadChallenge();
+    return;
+  }
+
+  state.challenge.score = null;
+  state.challenge.profile = null;
+  state.challenge.showSolution = false;
+  UI.showSolutionBtn.textContent = "Richtiges Gefäß zeigen";
+
+  if (shape !== "custom") {
+    state.draw.enabled = false;
+    state.customProfileReady = false;
+    state.customRadiiBaseCm = [];
+    state.customRadiiCm = [];
+    state.customWidthCm = null;
+    state.customBaseMaxRadiusCm = null;
+    state.customVisualMaxRadiusCm = null;
+  }
+
+  resetSimulation();
+}
+
+function startDraw(evt){
+  if (!isUserDrawMode() || !state.draw.enabled || state.customProfileReady) return;
+  evt.preventDefault();
+  state.draw.isDrawing = true;
+  const p = canvasPointerPos(evt);
+  state.draw.points.push(p);
+  redrawCanvas();
+}
+
+function moveDraw(evt){
+  if (!state.draw.isDrawing || !isUserDrawMode() || !state.draw.enabled || state.customProfileReady) return;
+  evt.preventDefault();
+
+  const p = canvasPointerPos(evt);
+  const last = state.draw.points[state.draw.points.length - 1];
+  if (!last || Math.hypot(p.x - last.x, p.y - last.y) > 2) {
+    state.draw.points.push(p);
+    redrawCanvas();
+  }
+}
+
+function stopDraw(evt){
+  if (evt) evt.preventDefault();
+  state.draw.isDrawing = false;
+}
+
+UI.drawCanvas.addEventListener("pointerdown", startDraw, { passive:false });
+UI.drawCanvas.addEventListener("pointermove", moveDraw, { passive:false });
+UI.drawCanvas.addEventListener("pointerup", stopDraw, { passive:false });
+UI.drawCanvas.addEventListener("pointercancel", stopDraw, { passive:false });
+UI.drawCanvas.addEventListener("pointerleave", stopDraw, { passive:false });
+
+UI.widthSlider.addEventListener("input", applyInputs);
+UI.heightSlider.addEventListener("input", applyInputs);
+UI.initialHeight.addEventListener("input", applyInputs);
+UI.flowSlider.addEventListener("input", applyInputs);
+UI.speedSlider.addEventListener("input", applyInputs);
+UI.graphMode.addEventListener("change", applyInputs);
+
+UI.showPoints.addEventListener("change", refreshAll);
+UI.showLine.addEventListener("change", refreshAll);
+UI.showGuides.addEventListener("change", refreshAll);
+UI.showNumbers.addEventListener("change", applyInputs);
+
+UI.startBtn.addEventListener("click", startSimulation);
+UI.pauseBtn.addEventListener("click", pauseSimulation);
+UI.resetBtn.addEventListener("click", resetSimulation);
+
+UI.activityBtns.forEach(btn => {
+  btn.addEventListener("click", () => setShape(btn.dataset.shape));
+});
+
+UI.drawModeBtn.addEventListener("click", enableDrawMode);
+UI.clearDrawBtn.addEventListener("click", clearDrawing);
+UI.fitDrawBtn.addEventListener("click", fitCustomVessel);
+UI.compareBtn.addEventListener("click", compareChallenge);
+UI.showSolutionBtn.addEventListener("click", toggleShowSolution);
+UI.newChallengeBtn.addEventListener("click", () => loadChallenge());
+
+window.addEventListener("resize", () => {
+  resizeDrawCanvas();
+  refreshAll();
+});
+
+applyInputs();
+resetSimulation();
+  </script>
+</body>
+</html>
