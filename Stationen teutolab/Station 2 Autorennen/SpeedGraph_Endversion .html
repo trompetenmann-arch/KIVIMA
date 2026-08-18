@@ -1,0 +1,2452 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpeedGraph</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #64748b;
+      --track-dark: #171717;
+      --track-mid: #27272a;
+      --blue: #2563eb;
+      --cyan: #06b6d4;
+      --orange: #f97316;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #f59e0b;
+      --card: rgba(255,255,255,0.96);
+      --stroke: rgba(255,255,255,0.75);
+      --shadow: 0 22px 48px rgba(15,23,42,0.22);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(59,130,246,0.40), transparent 24%),
+        radial-gradient(circle at 88% 18%, rgba(249,115,22,0.30), transparent 22%),
+        radial-gradient(circle at 50% 100%, rgba(34,197,94,0.24), transparent 36%),
+        linear-gradient(135deg, #0f172a 0%, #172554 48%, #111827 100%);
+      overflow-x: hidden;
+    }
+
+    .page { min-height: 100vh; padding: 22px; position: relative; }
+
+    .page::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(45deg, #fff 25%, transparent 25%),
+        linear-gradient(-45deg, #fff 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #fff 75%),
+        linear-gradient(-45deg, transparent 75%, #fff 75%);
+      background-size: 32px 32px;
+      background-position: 0 0, 0 16px, 16px -16px, -16px 0;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent 48%);
+    }
+
+    .page::after {
+      content: "";
+      position: fixed;
+      left: -12vw;
+      right: -12vw;
+      bottom: -90px;
+      height: 170px;
+      pointer-events: none;
+      opacity: 0.55;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 48px, rgba(255,255,255,0.9) 48px 92px, transparent 92px 140px),
+        linear-gradient(180deg, #18181b, #09090b);
+      transform: rotate(-2deg);
+      border-top: 8px solid rgba(255,255,255,0.18);
+    }
+
+    .shell { max-width: 1260px; margin: 0 auto; position: relative; z-index: 1; }
+
+    .hero {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .titleCard {
+      width: 100%;
+      min-height: 112px;
+      border-radius: 34px;
+      padding: 22px 26px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(224,242,254,0.94)),
+        linear-gradient(90deg, #2563eb, #f97316);
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .titleCard::before {
+      content: "SPEED";
+      position: absolute;
+      right: 24px;
+      top: 10px;
+      font-size: 78px;
+      font-weight: 1000;
+      letter-spacing: -0.08em;
+      color: rgba(37,99,235,0.07);
+      transform: skewX(-10deg);
+    }
+
+    .titleCard::after {
+      content: "🏎️  🏁";
+      position: absolute;
+      right: 26px;
+      bottom: 14px;
+      font-size: 38px;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(46px, 7vw, 78px);
+      letter-spacing: -0.075em;
+      line-height: 0.9;
+      color: #0f172a;
+      position: relative;
+      z-index: 1;
+    }
+
+    .subtitle { display: none; }
+
+    .setupGrid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.35fr 1.35fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .controlPanel {
+      border-radius: 26px;
+      padding: 12px;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.25);
+      box-shadow: 0 16px 38px rgba(0,0,0,0.20);
+      backdrop-filter: blur(14px);
+    }
+
+    .controlTitle {
+      margin: 0 0 9px;
+      padding-left: 4px;
+      color: rgba(255,255,255,0.90);
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .toolbar { display: contents; }
+    .buttonRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.38);
+      background: rgba(255,255,255,0.92);
+      color: #0f172a;
+      border-radius: 999px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 950;
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      user-select: none;
+    }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,0.18); filter: brightness(1.03); }
+    .btnActive { background: linear-gradient(135deg, #fef08a, #f97316); border-color: #fed7aa; color: #431407; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.12); }
+    .btnPlay { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-color: rgba(255,255,255,0.35); }
+    .btnCheck { background: linear-gradient(135deg, #38bdf8, #2563eb); color: white; border-color: rgba(255,255,255,0.35); }
+    .btnGhost { background: rgba(255,255,255,0.78); }
+
+    .modePicker { position: relative; }
+    .modeMenu {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 9px);
+      z-index: 50;
+      width: 254px;
+      padding: 8px;
+      border-radius: 22px;
+      background: white;
+      border: 1px solid #bfdbfe;
+      box-shadow: 0 22px 46px rgba(0,0,0,0.24);
+    }
+    .modeMenu[hidden] { display: none; }
+    .modeOption { width: 100%; border: 0; background: transparent; border-radius: 15px; padding: 11px 12px; text-align: left; cursor: pointer; color: #334155; }
+    .modeOption:hover, .modeOptionActive { background: #dbeafe; color: #1e3a8a; }
+    .modeOption strong { display: block; font-size: 14px; font-weight: 1000; }
+    .modeOption span { display: block; margin-top: 3px; font-size: 12px; font-weight: 800; color: #64748b; }
+
+    .mainGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .mainGrid.buildOnly { grid-template-columns: 1fr; }
+    .mainGrid.buildOnly #trackCard { max-width: 860px; width: 100%; margin: 0 auto; }
+    .mainGrid.buildOnly #graphCard { display: none; }
+    .activityAreaGlobal { max-width: 860px; margin: 14px auto 0; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.92);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 7px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #22c55e, #f97316);
+    }
+
+    .cardHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; position: relative; z-index: 1; }
+    .cardHeader h2 { margin: 0; font-size: 22px; letter-spacing: -0.035em; }
+
+    .trackHeaderRight { display: flex; align-items: center; gap: 10px; }
+
+    .tag {
+      border-radius: 999px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .speedCard {
+      width: 170px;
+      min-width: 170px;
+      height: 138px;
+      border-radius: 24px;
+      padding: 8px 12px 12px;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255,255,255,0.08), transparent 40%),
+        linear-gradient(180deg, #1f2937, #020617);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 26px rgba(2,6,23,0.28);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .speedCard::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 124px;
+      height: 124px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background:
+        conic-gradient(
+          from 240deg,
+          #22c55e 0deg 70deg,
+          #facc15 70deg 130deg,
+          #fb923c 130deg 185deg,
+          #ef4444 185deg 240deg,
+          transparent 240deg 360deg
+        );
+      -webkit-mask: radial-gradient(circle, transparent 0 56%, #000 57% 69%, transparent 70% 100%);
+              mask: radial-gradient(circle, transparent 0 56%, #000 57% 69%, transparent 70% 100%);
+      opacity: 1;
+    }
+
+    .speedCard::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 124px;
+      height: 124px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background:
+        repeating-conic-gradient(
+          from 240deg,
+          rgba(255,255,255,0.55) 0deg 2deg,
+          transparent 2deg 14deg
+        );
+      -webkit-mask: radial-gradient(circle, transparent 0 64%, #000 65% 67%, transparent 68% 100%);
+              mask: radial-gradient(circle, transparent 0 64%, #000 65% 67%, transparent 68% 100%);
+      opacity: 0.35;
+    }
+
+    .speedNeedle {
+      position: absolute;
+      left: 50%;
+      top: 34px;
+      width: 4px;
+      height: 42px;
+      background: linear-gradient(180deg, #fee2e2, #ef4444);
+      border-radius: 999px;
+      transform: translateX(-50%) rotate(-120deg);
+      transform-origin: 50% 88%;
+      box-shadow: 0 0 8px rgba(239,68,68,0.35);
+      z-index: 2;
+      pointer-events: none;
+      transition: transform 120ms ease-out;
+    }
+
+    .speedNeedle::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -4px;
+      width: 9px;
+      height: 9px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid rgba(15,23,42,0.22);
+      box-shadow: 0 0 8px rgba(255,255,255,0.22);
+    }
+
+    .speedHub {
+      position: absolute;
+      left: 50%;
+      top: 70px;
+      width: 14px;
+      height: 14px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #f97316;
+      border: 2px solid #fff7ed;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.28);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .speedValue, .speedUnit {
+      display: none;
+    }
+
+    .speedCardInline {
+      flex: 0 0 170px;
+    }
+
+    .panelSvg {
+      display: block;
+      width: 100%;
+      height: 420px;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid #dbeafe;
+      background: white;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,0.5);
+    }
+
+    #graphSvg {
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .clickable { cursor: pointer; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: #334155; font-size: 13px; font-weight: 900; }
+    .legendItem { display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 9px; border-radius: 999px; }
+    .dot { width: 11px; height: 11px; border-radius: 999px; display: inline-block; }
+
+    .feedback {
+      margin-top: 12px;
+      padding: 13px 14px;
+      border-radius: 18px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+    .feedback.good { background: #dcfce7; border-color: #86efac; color: #14532d; }
+    .feedback.mid { background: #fef3c7; border-color: #fcd34d; color: #78350f; }
+    .feedback.bad { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; }
+    .feedback[hidden] { display: none; }
+    .smallHint { display: none; }
+
+    @media (max-width: 1060px) {
+      .setupGrid { grid-template-columns: 1fr; }
+      .mainGrid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .page { padding: 14px; }
+      .titleCard { min-height: 96px; border-radius: 26px; }
+      .titleCard::after { font-size: 30px; right: 18px; }
+      .panelSvg { height: 360px; }
+      .card { border-radius: 22px; padding: 13px; }
+      .btn { font-size: 13px; padding: 9px 11px; }
+      .trackHeaderRight { flex-wrap: wrap; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="shell">
+      <header class="hero">
+        <div class="titleCard">
+          <h1>SpeedGraph</h1>
+        </div>
+      </header>
+
+      <div class="setupGrid">
+        <section class="controlPanel">
+          <p class="controlTitle">Aktuelle Station</p>
+          <div id="trackButtons" class="buttonRow"></div>
+        </section>
+
+        <section class="controlPanel">
+          <p class="controlTitle">Fortschritt</p>
+          <div id="modeButtons" class="buttonRow stationProgress"></div>
+        </section>
+
+        <section class="controlPanel">
+          <p class="controlTitle">Station steuern</p>
+          <div class="buttonRow">
+            <button id="playButton" class="btn btnPlay">▶ Start</button>
+            <button id="resetButton" class="btn btnGhost">Zurücksetzen</button>
+            <button id="prevButton" class="btn btnGhost">← Zurück</button>
+            <button id="nextButton" class="btn btnCheck">Weiter →</button>
+            <button id="checkButton" class="btn btnCheck" hidden>Prüfen</button>
+            <button id="clearButton" class="btn btnGhost" hidden>Neu zeichnen</button>
+            <button id="solutionButton" class="btn btnGhost" hidden>Lösung zeigen</button>
+          </div>
+        </section>
+      </div>
+
+      <main id="mainGrid" class="mainGrid">
+        <section id="trackCard" class="card">
+          <div class="cardHeader trackHeader">
+            <h2>Rennstrecke</h2>
+            <div class="trackHeaderRight">
+              <div class="speedCard speedCardInline" aria-label="Geschwindigkeitsanzeige">
+                <div id="speedNeedle" class="speedNeedle" aria-hidden="true"></div>
+                <div class="speedHub" aria-hidden="true"></div>
+                <div id="speedValue" class="speedValue">0</div>
+                <div class="speedUnit">km/h</div>
+              </div>
+              <span id="modeTag" class="tag">Zuordnen</span>
+            </div>
+          </div>
+                    <svg id="trackSvg" viewBox="0 0 620 420" class="panelSvg" role="img" aria-label="Rennstrecke"></svg>
+        </section>
+
+        <section id="graphCard" class="card">
+          <div class="cardHeader">
+            <h2>Tempo-Graph</h2>
+
+          </div>
+          <svg id="graphSvg" viewBox="0 0 620 420" class="panelSvg" role="img" aria-label="Tempo-Graph"></svg>
+          <div id="feedback" class="feedback" hidden></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+
+    const WIDTH = 620;
+    const HEIGHT = 420;
+    const GRAPH_W = 620;
+    const GRAPH_H = 420;
+    const SAMPLE_COUNT = 360;
+    const LOOP_DURATION = 16;
+    const BUILD_SEGMENT_DURATION = 3.2;
+    const PAD = { left: 68, right: 30, top: 36, bottom: 58 };
+    const INNER_W = GRAPH_W - PAD.left - PAD.right;
+    const INNER_H = GRAPH_H - PAD.top - PAD.bottom;
+
+    const stationStyle = document.createElement("style");
+    stationStyle.textContent = `
+      .activityArea { margin-top: 12px; border-radius: 18px; border: 1px solid #bfdbfe; background: #eff6ff; padding: 14px; }
+      .activityArea[hidden] { display: none; }
+      .activityTitle { margin: 0 0 10px; color: #1e3a8a; font-size: 15px; font-weight: 1000; }
+      .activityText { margin: 0; color: #334155; font-size: 14px; font-weight: 850; line-height: 1.4; }
+      .activityStack { display: grid; gap: 12px; }
+      .stepPills { display: flex; flex-wrap: wrap; gap: 8px; }
+      .stepPill {
+        border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 1000;
+        border: 1px solid #bfdbfe; background: #ffffff; color: #1e3a8a;
+      }
+      .stepPill.current { background: linear-gradient(135deg, #fef08a, #f97316); color: #431407; border-color: #fdba74; }
+      .stepPill.done { background: #dcfce7; color: #14532d; border-color: #86efac; }
+      .infoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .miniCard {
+        background: white; border: 1px solid #dbeafe; border-radius: 16px; padding: 11px;
+        color: #0f172a; font-size: 13px; font-weight: 900;
+      }
+      .miniCard strong { display: block; margin-bottom: 5px; color: #1d4ed8; }
+      .answerGrid, .questionButtons, .pieceBank, .slotRow { display: flex; flex-wrap: wrap; gap: 8px; }
+      .answerBtn, .miniBtn, .piece {
+        border: 1px solid #93c5fd; background: #fff; color: #1e3a8a; border-radius: 999px;
+        padding: 10px 14px; cursor: pointer; font-weight: 950;
+      }
+      .answerBtn:hover, .miniBtn:hover, .piece:hover { background: #dbeafe; }
+      .answerBtn[disabled], .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+      .axisInput {
+        width: 150px;
+        border: 2px solid #93c5fd;
+        border-radius: 12px;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-weight: 900;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+      }
+      .axisInput:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
+      }
+      .stationInfo {
+        width: 100%; border-radius: 18px; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.45);
+        padding: 12px 14px; color: #0f172a; font-size: 14px; font-weight: 950; line-height: 1.35;
+      }
+      .stationInfo small { display: block; margin-top: 4px; color: #64748b; font-weight: 850; }
+      .stationProgress .btn { cursor: pointer; pointer-events: auto; opacity: 0.72; }
+      .stationProgress .btnDone { background: rgba(255,255,255,0.92); color: #334155; }
+      .stationProgress .btnCurrent { opacity: 1; background: linear-gradient(135deg, #fef08a, #f97316); color: #431407; }
+      .stationProgress .btnTodo { background: rgba(255,255,255,0.55); color: #64748b; }
+      .pieceBank {
+        max-height: 330px;
+        overflow-y: auto;
+        padding: 6px 2px 10px;
+        align-items: stretch;
+      }
+      .piece.selected { outline: 4px solid #facc15; background: #fef9c3; transform: translateY(-2px); }
+      .snippetPiece {
+        border-radius: 16px;
+        padding: 7px;
+        min-width: 86px;
+        height: 154px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ffffff, #eff6ff);
+        box-shadow: 0 10px 20px rgba(15,23,42,0.12);
+      }
+      .snippetPiece:disabled { opacity: 0.32; }
+      .snippetSvg {
+        width: 72px;
+        height: 138px;
+        display: block;
+        pointer-events: none;
+      }
+      .snippetSlot {
+        padding: 0;
+        border-radius: 0;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .snippetSlot.empty {
+        color: #1e3a8a;
+        font-size: 22px;
+        background: rgba(219,234,254,0.52);
+      }
+      .snippetSlot .snippetSvg { width: 100%; height: 100%; }
+      .slot {
+        border: 2px dashed #93c5fd;
+        background: rgba(255,255,255,0.78);
+        color: #1e3a8a;
+        font-weight: 1000;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .slot.filled { border-style: solid; background: white; color: #0f172a; }
+      .slot.active { border-style: solid; border-color: #f59e0b; background: #fff7ed; box-shadow: inset 0 0 0 4px rgba(249,115,22,0.18); }
+      .slot.done { border-color: #16a34a; }
+      .softNote { color: #64748b; font-size: 12px; font-weight: 850; }
+      @media (max-width: 860px) { .infoGrid { grid-template-columns: 1fr; } }
+    `;
+    document.head.appendChild(stationStyle);
+
+    const unlockStyle = document.createElement("style");
+    unlockStyle.textContent = `
+      .unlockOverlay {
+        position: fixed; inset: 0; z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(15,23,42,0.48); backdrop-filter: blur(5px);
+        padding: 18px;
+      }
+      .unlockOverlay[hidden] { display: none; }
+      .unlockBox {
+        width: min(420px, 100%); border-radius: 26px; padding: 22px;
+        background: rgba(255,255,255,0.98); border: 1px solid rgba(255,255,255,0.9);
+        box-shadow: 0 24px 60px rgba(15,23,42,0.34);
+      }
+      .unlockBox h3 { margin: 0 0 8px; font-size: 24px; color: #0f172a; letter-spacing: -0.04em; }
+      .unlockBox p { margin: 0 0 14px; color: #475569; font-size: 14px; font-weight: 850; line-height: 1.4; }
+      .unlockInput {
+        width: 100%; border: 2px solid #93c5fd; border-radius: 16px;
+        padding: 13px 14px; font-size: 18px; font-weight: 950; outline: none;
+      }
+      .unlockInput:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.14); }
+      .unlockActions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+      .unlockError { margin-top: 10px; color: #b91c1c; font-size: 13px; font-weight: 950; }
+      .unlockError[hidden] { display: none; }
+    `;
+    document.head.appendChild(unlockStyle);
+
+    const TRACKS = [
+      {
+        name: "Strecke c",
+        points: [
+          // Rechteckform wie in der Vorlage: lange Geraden, vier klar erkennbare abgerundete Kurven.
+          { x: 145, y: 275 }, { x: 145, y: 205 }, { x: 160, y: 150 }, { x: 210, y: 115 },
+          { x: 300, y: 112 }, { x: 430, y: 112 }, { x: 505, y: 118 }, { x: 555, y: 150 },
+          { x: 572, y: 205 }, { x: 572, y: 285 }, { x: 555, y: 340 }, { x: 505, y: 372 },
+          { x: 430, y: 378 }, { x: 300, y: 378 }, { x: 210, y: 375 }, { x: 160, y: 340 },
+          { x: 145, y: 285 }
+        ],
+        speedProfile: [
+          // Station 1: Auf Geraden gleich schnell, vor jeder Kurve abbremsen,
+          // in der Kurve langsam bleiben und erst danach wieder beschleunigen.
+          { index: 0, speed: 84 }, { index: 22, speed: 84 },
+          { index: 31, speed: 42 }, { index: 54, speed: 42 },
+          { index: 67, speed: 84 }, { index: 121, speed: 84 },
+          { index: 135, speed: 42 }, { index: 157, speed: 42 },
+          { index: 171, speed: 84 }, { index: 197, speed: 84 },
+          { index: 206, speed: 42 }, { index: 229, speed: 42 },
+          { index: 242, speed: 84 }, { index: 301, speed: 84 },
+          { index: 310, speed: 42 }, { index: 332, speed: 42 },
+          { index: 345, speed: 84 }, { index: 359, speed: 84 }
+        ],
+        errorIndex: 144,
+        pieces: ["Start", "Kurve links oben", "Gerade oben", "Kurve rechts oben", "Gerade rechts", "Kurve rechts unten", "Gerade unten", "Kurve links unten"]
+      },
+      {
+        name: "Strecke b",
+        points: [
+          // Tropfenform wie in der Vorlage: links rund, oben/unten Geraden, rechts eine enge Spitze.
+          { x: 130, y: 280 }, { x: 130, y: 210 }, { x: 150, y: 155 }, { x: 200, y: 120 },
+          { x: 300, y: 118 }, { x: 430, y: 150 }, { x: 540, y: 205 }, { x: 585, y: 255 },
+          { x: 572, y: 300 }, { x: 505, y: 345 }, { x: 400, y: 378 }, { x: 280, y: 392 },
+          { x: 178, y: 375 }, { x: 135, y: 330 }
+        ],
+        speedProfile: [
+          { index: 0, speed: 82 }, { index: 14, speed: 82 },
+          { index: 24, speed: 58 }, { index: 52, speed: 58 }, { index: 66, speed: 82 },
+          { index: 132, speed: 82 }, { index: 144, speed: 26 }, { index: 198, speed: 26 }, { index: 214, speed: 82 },
+          { index: 286, speed: 82 }, { index: 300, speed: 58 }, { index: 336, speed: 58 }, { index: 350, speed: 82 }, { index: 359, speed: 82 }
+        ],
+        wrongSpeedProfile: [
+          // Station 2: Der Fehler ist fachlich plausibel, aber nicht durch eine künstliche Wölbung sichtbar.
+          // An der engen Spitze bremst das Auto im falschen Graphen nur mittelstark statt stark ab.
+          { index: 0, speed: 82 }, { index: 14, speed: 82 },
+          { index: 24, speed: 58 }, { index: 52, speed: 58 }, { index: 66, speed: 82 },
+          { index: 132, speed: 82 }, { index: 144, speed: 58 }, { index: 198, speed: 58 }, { index: 214, speed: 82 },
+          { index: 286, speed: 82 }, { index: 300, speed: 58 }, { index: 336, speed: 58 }, { index: 350, speed: 82 }, { index: 359, speed: 82 }
+        ],
+        errorIndex: 165,
+        pieces: ["Start", "linke Kurve", "obere Gerade", "enge Spitze", "untere Gerade", "letzte Kurve"]
+      },
+      {
+        name: "Strecke d",
+        points: [
+          { x: 82.6, y: 138.4 },
+          { x: 27.8, y: 143.4 },
+          { x: -20.9, y: 160.0 },
+          { x: -54.4, y: 187.0 },
+          { x: -66.4, y: 220.0 },
+          { x: -54.4, y: 253.0 },
+          { x: -20.9, y: 280.0 },
+          { x: 27.8, y: 296.6 },
+          { x: 82.6, y: 301.6 },
+          { x: 134.4, y: 296.8 },
+          { x: 176.0, y: 286.9 },
+          { x: 203.7, y: 278.5 },
+          { x: 218.4, y: 277.4 },
+          { x: 224.6, y: 288.1 },
+          { x: 229.2, y: 311.5 },
+          { x: 239.3, y: 345.0 },
+          { x: 260.0, y: 383.2 },
+          { x: 292.8, y: 418.6 },
+          { x: 335.3, y: 443.8 },
+          { x: 381.4, y: 453.5 },
+          { x: 423.2, y: 445.3 },
+          { x: 453.1, y: 420.5 },
+          { x: 465.6, y: 383.8 },
+          { x: 459.4, y: 341.9 },
+          { x: 437.4, y: 301.6 },
+          { x: 406.2, y: 268.3 },
+          { x: 374.8, y: 244.5 },
+          { x: 351.7, y: 229.6 },
+          { x: 343.2, y: 220.0 },
+          { x: 351.7, y: 210.4 },
+          { x: 374.8, y: 195.5 },
+          { x: 406.2, y: 171.7 },
+          { x: 437.4, y: 138.4 },
+          { x: 459.4, y: 98.1 },
+          { x: 465.6, y: 56.2 },
+          { x: 453.1, y: 19.5 },
+          { x: 423.2, y: -5.3 },
+          { x: 381.4, y: -13.5 },
+          { x: 335.3, y: -3.8 },
+          { x: 292.8, y: 21.4 },
+          { x: 260.0, y: 56.8 },
+          { x: 239.3, y: 95.0 },
+          { x: 229.2, y: 128.5 },
+          { x: 224.6, y: 151.9 },
+          { x: 218.4, y: 162.6 },
+          { x: 203.7, y: 161.5 },
+          { x: 176.0, y: 153.1 },
+          { x: 134.4, y: 143.2 }
+        ],
+        speedProfile: [
+          { index: 0, speed: 84 },   { index: 14, speed: 84 },
+          { index: 24, speed: 60 },  { index: 40, speed: 60 },
+          { index: 50, speed: 84 },  { index: 76, speed: 84 },
+
+          { index: 86, speed: 52 },  { index: 96, speed: 28 },
+          { index: 110, speed: 28 }, { index: 122, speed: 84 },
+          { index: 148, speed: 84 },
+
+          { index: 156, speed: 60 }, { index: 172, speed: 60 },
+          { index: 182, speed: 84 }, { index: 198, speed: 84 },
+
+          { index: 206, speed: 52 }, { index: 214, speed: 28 },
+          { index: 226, speed: 28 }, { index: 238, speed: 84 },
+          { index: 248, speed: 84 },
+
+          { index: 256, speed: 60 }, { index: 272, speed: 60 },
+          { index: 282, speed: 84 }, { index: 314, speed: 84 },
+
+          { index: 322, speed: 52 }, { index: 330, speed: 28 },
+          { index: 340, speed: 28 }, { index: 352, speed: 84 },
+          { index: 359, speed: 84 }
+        ],
+        errorIndex: 230,
+        pieces: ["kleiner Dip", "hoch", "tiefer Dip", "hoch", "kleiner Dip", "hoch", "tiefer Dip", "hoch", "kleiner Dip", "hoch", "tiefer Dip", "hoch"]
+      },
+      {
+        name: "Einstiegsstrecke",
+        points: [
+          // Rund-ovale Einstiegsstrecke: wie ein langgezogener Kreis, ohne eckige Kanten.
+          { x: 130.0, y: 210.0 },
+          { x: 131.9, y: 222.4 },
+          { x: 137.7, y: 234.6 },
+          { x: 147.1, y: 246.4 },
+          { x: 160.1, y: 257.5 },
+          { x: 176.5, y: 267.8 },
+          { x: 195.9, y: 277.2 },
+          { x: 218.0, y: 285.4 },
+          { x: 242.5, y: 292.3 },
+          { x: 268.9, y: 297.8 },
+          { x: 296.8, y: 301.8 },
+          { x: 325.6, y: 304.2 },
+          { x: 355.0, y: 305.0 },
+          { x: 384.4, y: 304.2 },
+          { x: 413.2, y: 301.8 },
+          { x: 441.1, y: 297.8 },
+          { x: 467.5, y: 292.3 },
+          { x: 492.0, y: 285.4 },
+          { x: 514.1, y: 277.2 },
+          { x: 533.5, y: 267.8 },
+          { x: 549.9, y: 257.5 },
+          { x: 562.9, y: 246.4 },
+          { x: 572.3, y: 234.6 },
+          { x: 578.1, y: 222.4 },
+          { x: 580.0, y: 210.0 },
+          { x: 578.1, y: 197.6 },
+          { x: 572.3, y: 185.4 },
+          { x: 562.9, y: 173.6 },
+          { x: 549.9, y: 162.5 },
+          { x: 533.5, y: 152.2 },
+          { x: 514.1, y: 142.8 },
+          { x: 492.0, y: 134.6 },
+          { x: 467.5, y: 127.7 },
+          { x: 441.1, y: 122.2 },
+          { x: 413.2, y: 118.2 },
+          { x: 384.4, y: 115.8 },
+          { x: 355.0, y: 115.0 },
+          { x: 325.6, y: 115.8 },
+          { x: 296.8, y: 118.2 },
+          { x: 268.9, y: 122.2 },
+          { x: 242.5, y: 127.7 },
+          { x: 218.0, y: 134.6 },
+          { x: 195.9, y: 142.8 },
+          { x: 176.5, y: 152.2 },
+          { x: 160.1, y: 162.5 },
+          { x: 147.1, y: 173.6 },
+          { x: 137.7, y: 185.4 },
+          { x: 131.9, y: 197.6 }
+        ],
+        speedProfile: [
+          // Start in der linken Kurve langsam.
+          // Danach beschleunigt das Auto auf der Geraden,
+          // bremst vor der rechten Kurve ab,
+          // beschleunigt nach der rechten Kurve wieder
+          // und bremst vor dem Ziel erneut ab.
+          { index: 0, speed: 38 },
+          { index: 28, speed: 38 },
+          { index: 55, speed: 82 },
+          { index: 138, speed: 82 },
+          { index: 158, speed: 38 },
+          { index: 205, speed: 38 },
+          { index: 232, speed: 82 },
+          { index: 315, speed: 82 },
+          { index: 342, speed: 38 },
+          { index: 359, speed: 38 }
+        ],
+        errorIndex: 150,
+        pieces: []
+      }
+    ];
+
+    const MODES = {
+      intro: { label: "Einstieg: Strecke verstehen" },
+      observe: { label: "Station 1: Verstehen" },
+      error: { label: "Station 2: Graph prüfen" },
+      build: { label: "Station 3: Graph zusammensetzen" }
+    };
+
+    const STATION_TRACK = { intro: 3, observe: 0, error: 1, build: 2 };
+    const STATION_ORDER = ["intro", "observe", "error", "build"];
+
+    const STATION_PASSWORDS = { observe: "TEMPO", error: "BLICK", build: "ORDNEN" };
+
+    const STATION_INFO = {
+      intro: {
+        title: "Einstieg",
+        text: "Fahrt beobachten · Graph verstehen"
+      },
+      observe: {
+        title: "Station 1",
+        text: "Beobachten · Achsen wählen · Punkte setzen"
+      },
+      error: {
+        title: "Station 2",
+        text: "Graph prüfen"
+      },
+      build: {
+        title: "Station 3",
+        text: "Graph zusammensetzen"
+      }
+    };
+
+    const OBSERVE_CONFIG = {
+      stops: [
+        { label: "Stelle 1", index: 0, correct: "schnell" },
+        { label: "Stelle 2", index: 22, correct: "schnell" },
+        { label: "Stelle 3", index: 42, correct: "langsam" },
+        { label: "Stelle 4", index: 54, correct: "langsam" },
+        { label: "Stelle 5", index: 90, correct: "schnell" },
+        { label: "Stelle 6", index: 121, correct: "schnell" },
+        { label: "Stelle 7", index: 146, correct: "langsam" },
+        { label: "Stelle 8", index: 157, correct: "langsam" },
+        { label: "Stelle 9", index: 184, correct: "schnell" },
+        { label: "Stelle 10", index: 206, correct: "langsam" },
+        { label: "Stelle 11", index: 229, correct: "langsam" },
+        { label: "Stelle 12", index: 270, correct: "schnell" },
+        { label: "Stelle 13", index: 301, correct: "schnell" },
+        { label: "Stelle 14", index: 320, correct: "langsam" },
+        { label: "Stelle 15", index: 332, correct: "langsam" },
+        { label: "Stelle 16", index: 359, correct: "schnell" }
+      ],
+      levelSpeed: { "langsam": 28, "mittel": 55, "schnell": 84 }
+    };
+
+
+    const GRAPH_SNIPPETS = [
+      { id: "hoch_mittel_1", label: "kleiner Dip", values: [82, 62, 62], correct: true },
+      { id: "mittel_hoch_1", label: "wieder hoch", values: [62, 82, 82], correct: true },
+      { id: "hoch_tief_1", label: "tiefer Dip", values: [82, 28, 28], correct: true },
+      { id: "tief_hoch_1", label: "nach dem tiefen Dip", values: [28, 82, 82], correct: true },
+      { id: "hoch_mittel_2", label: "zweiter kleiner Dip", values: [82, 62, 62], correct: true },
+      { id: "mittel_hoch_2", label: "wieder hoch", values: [62, 82, 82], correct: true },
+      { id: "hoch_tief_2", label: "zweiter tiefer Dip", values: [82, 28, 28], correct: true },
+      { id: "tief_hoch_2", label: "danach wieder hoch", values: [28, 82, 82], correct: true },
+      { id: "hoch_mittel_3", label: "dritter kleiner Dip", values: [82, 62, 62], correct: true },
+      { id: "mittel_hoch_3", label: "wieder hoch", values: [62, 82, 82], correct: true },
+      { id: "hoch_tief_3", label: "dritter tiefer Dip", values: [82, 28, 28], correct: true },
+      { id: "tief_hoch_3", label: "Schlussanstieg", values: [28, 82, 82], correct: true },
+
+      { id: "konstant_hoch", label: "gleich schnell", values: [82, 82, 82] },
+      { id: "konstant_mittel", label: "gleich mittel", values: [62, 62, 62] },
+      { id: "konstant_langsam", label: "gleich langsam", values: [28, 28, 28] },
+      { id: "sanfter_fall", label: "sanfter Abstieg", values: [82, 72, 62] },
+      { id: "sanfter_anstieg", label: "sanfter Anstieg", values: [28, 46, 62] },
+      { id: "hochpunkt", label: "Hochpunkt", values: [62, 82, 62] },
+      { id: "tiefpunkt", label: "Tiefpunkt", values: [82, 28, 82] },
+      { id: "mittlerer_dip_falsch", label: "mittlerer Dip falsch", values: [62, 48, 62] },
+      { id: "tiefer_dip_falsch", label: "tiefer Dip falsch", values: [62, 28, 62] },
+      { id: "welle", label: "Welle", values: [62, 82, 62] }
+    ];
+
+    const GRAPH_SNIPPET_ORDER = [
+      "hoch_mittel_1", "mittel_hoch_1", "hoch_tief_1", "tief_hoch_1",
+      "hoch_mittel_2", "mittel_hoch_2", "hoch_tief_2", "tief_hoch_2",
+      "hoch_mittel_3", "mittel_hoch_3", "hoch_tief_3", "tief_hoch_3"
+    ];
+
+    let state = {
+      mode: "observe",
+      trackIndex: STATION_TRACK.observe,
+      running: false,
+      progress: 0,
+      raf: null,
+      startTime: null,
+      animationFrom: 0,
+      animationTo: 1,
+      animationDuration: LOOP_DURATION,
+      cacheKey: "",
+      cache: null,
+      selectedGraphIndex: null,
+      hoverGraphIndex: null,
+      selectedPiece: null,
+      slots: [],
+      axisLabels: { x: "x", y: "y" },
+      completed: { observe: false, error: false, build: false },
+      unlocked: { intro: true, observe: false, error: false, build: false },
+      stationProgress: { intro: 0, observe: 0, error: 0, build: 0 },
+      unlockMode: null,
+      observe: {
+        phase: "watch",
+        xAxisLabel: "",
+        yAxisLabel: "",
+        axisChoice: null,
+        stopIndex: 0,
+        builtPoints: [],
+        drawnPoints: [],
+        isDrawing: false,
+        hoverSpeed: null
+      },
+      error: { solved: false, replayed: false, readyToReplay: false, watchedOnce: false },
+      build: { solved: false, readyToPlay: false, step: 0, checkpointReached: 0, awaitingPlacement: false }
+    };
+
+    const el = {
+      speedValue: document.getElementById("speedValue"),
+      speedNeedle: document.getElementById("speedNeedle"),
+      trackButtons: document.getElementById("trackButtons"),
+      modeButtons: document.getElementById("modeButtons"),
+      playButton: document.getElementById("playButton"),
+      resetButton: document.getElementById("resetButton"),
+      prevButton: document.getElementById("prevButton"),
+      nextButton: document.getElementById("nextButton"),
+      checkButton: document.getElementById("checkButton"),
+      clearButton: document.getElementById("clearButton"),
+      solutionButton: document.getElementById("solutionButton"),
+      modeTag: document.getElementById("modeTag"),
+      trackSvg: document.getElementById("trackSvg"),
+      graphSvg: document.getElementById("graphSvg"),
+      feedback: document.getElementById("feedback"),
+      mainGrid: document.getElementById("mainGrid"),
+      trackCard: document.getElementById("trackCard"),
+      graphCard: document.getElementById("graphCard")
+    };
+
+    const activityArea = document.createElement("div");
+    activityArea.id = "activityArea";
+    activityArea.className = "activityArea activityAreaGlobal";
+    el.mainGrid.insertAdjacentElement("afterend", activityArea);
+
+    const unlockOverlay = document.createElement("div");
+    unlockOverlay.id = "unlockOverlay";
+    unlockOverlay.className = "unlockOverlay";
+    unlockOverlay.hidden = true;
+    unlockOverlay.innerHTML = `
+      <div class="unlockBox" role="dialog" aria-modal="true" aria-labelledby="unlockTitle">
+        <h3 id="unlockTitle">Station freischalten</h3>
+        <p id="unlockText">Gib das Passwort ein, um diese Station zu starten.</p>
+        <input id="unlockInput" class="unlockInput" type="password" inputmode="text" placeholder="Passwort" autocomplete="off">
+        <div id="unlockError" class="unlockError" hidden>Passwort stimmt nicht.</div>
+        <div class="unlockActions">
+          <button id="unlockCancel" class="btn btnGhost" type="button">Abbrechen</button>
+          <button id="unlockSubmit" class="btn btnCheck" type="button">Freischalten</button>
+        </div>
+      </div>`;
+    document.body.appendChild(unlockOverlay);
+
+    const unlockEls = {
+      title: unlockOverlay.querySelector("#unlockTitle"),
+      text: unlockOverlay.querySelector("#unlockText"),
+      input: unlockOverlay.querySelector("#unlockInput"),
+      error: unlockOverlay.querySelector("#unlockError"),
+      cancel: unlockOverlay.querySelector("#unlockCancel"),
+      submit: unlockOverlay.querySelector("#unlockSubmit")
+    };
+
+    function getBuildSegmentCount() { return GRAPH_SNIPPET_ORDER.length; }
+    function buildCheckpointProgress(segmentNumber) { return clamp(segmentNumber / getBuildSegmentCount(), 0, 1); }
+    function isBuildComplete() { return state.build.step >= getBuildSegmentCount(); }
+    function canBuildDrive() {
+      return state.mode === "build" && !state.build.readyToPlay && !state.build.awaitingPlacement && state.build.checkpointReached < getBuildSegmentCount();
+    }
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+    function updateSpeedNeedle(speed) {
+      if (!el.speedNeedle) return;
+      const clamped = clamp(speed, 0, 100);
+      const angle = -120 + (clamped / 100) * 240;
+      el.speedNeedle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+    }
+
+
+    function fitTrackPointsToCanvas(points, margin = 50) {
+      if (!points || !points.length) return points;
+      const minX = Math.min(...points.map(p => p.x));
+      const maxX = Math.max(...points.map(p => p.x));
+      const minY = Math.min(...points.map(p => p.y));
+      const maxY = Math.max(...points.map(p => p.y));
+      const w = Math.max(1, maxX - minX);
+      const h = Math.max(1, maxY - minY);
+      const scale = Math.min((WIDTH - margin * 2) / w, (HEIGHT - margin * 2) / h);
+      const offsetX = (WIDTH - w * scale) / 2 - minX * scale;
+      const offsetY = (HEIGHT - h * scale) / 2 - minY * scale;
+      return points.map(p => ({ x: p.x * scale + offsetX, y: p.y * scale + offsetY }));
+    }
+
+    function fitTrackImageToCanvas(track, margin = 50) {
+      if (!track || !track.imageW || !track.imageH) return null;
+      const scale = Math.min((WIDTH - margin * 2) / track.imageW, (HEIGHT - margin * 2) / track.imageH);
+      const w = track.imageW * scale;
+      const h = track.imageH * scale;
+      return { x: (WIDTH - w) / 2, y: (HEIGHT - h) / 2, width: w, height: h, scale };
+    }
+
+    function catmullRom(points, samplesPerSegment = 34) {
+      const result = [];
+      for (let i = 0; i < points.length; i++) {
+        const p0 = points[(i - 1 + points.length) % points.length];
+        const p1 = points[i], p2 = points[(i + 1) % points.length], p3 = points[(i + 2) % points.length];
+        for (let j = 0; j < samplesPerSegment; j++) {
+          const t = j / samplesPerSegment, t2 = t * t, t3 = t2 * t;
+          result.push({
+            x: 0.5 * (2 * p1.x + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+            y: 0.5 * (2 * p1.y + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3)
+          });
+        }
+      }
+      return result;
+    }
+
+    function resampleByDistance(points, targetCount = SAMPLE_COUNT) {
+      const closed = [...points, points[0]];
+      const cumulative = [0];
+      for (let i = 1; i < closed.length; i++) cumulative.push(cumulative[i - 1] + distance(closed[i - 1], closed[i]));
+      const total = cumulative[cumulative.length - 1];
+      const result = [];
+      for (let s = 0; s < targetCount; s++) {
+        const wanted = (s / (targetCount - 1)) * total;
+        let idx = 1;
+        while (idx < cumulative.length - 1 && cumulative[idx] < wanted) idx++;
+        const prevD = cumulative[idx - 1], nextD = cumulative[idx];
+        const t = (wanted - prevD) / Math.max(0.0001, nextD - prevD);
+        const a = closed[idx - 1], b = closed[idx];
+        result.push({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), index: s });
+      }
+      return result;
+    }
+
+    function pathFromPoints(points, closed = true) {
+      if (!points.length) return "";
+      const d = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+      return closed ? `${d} Z` : d;
+    }
+
+    function smoothLinear(values, passes = 3) {
+      let arr = [...values];
+      for (let pass = 0; pass < passes; pass++) {
+        const src = [...arr];
+        arr = src.map((v, i) => {
+          const p2 = src[Math.max(0, i - 2)], p1 = src[Math.max(0, i - 1)];
+          const n1 = src[Math.min(src.length - 1, i + 1)], n2 = src[Math.min(src.length - 1, i + 2)];
+          return 0.08 * p2 + 0.2 * p1 + 0.44 * v + 0.2 * n1 + 0.08 * n2;
+        });
+      }
+      return arr;
+    }
+
+    function buildManualSpeedProfile(profilePoints = []) {
+      const sorted = [...profilePoints].sort((a, b) => a.index - b.index);
+      const values = Array.from({ length: SAMPLE_COUNT }, () => 0);
+      function smoothStep(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const left = sorted[i], right = sorted[i + 1];
+        const span = Math.max(1, right.index - left.index);
+        for (let x = left.index; x <= right.index; x++) values[x] = lerp(left.speed, right.speed, smoothStep((x - left.index) / span));
+      }
+      const smoothed = smoothLinear(values, 1).map(v => clamp(v, 0, 96));
+      smoothed[0] = sorted[0].speed;
+      smoothed[SAMPLE_COUNT - 1] = sorted[sorted.length - 1].speed;
+      return smoothed;
+    }
+
+    function buildWrongSpeed(selectedTrack, correctSpeed) {
+      if (selectedTrack.wrongSpeedProfile && selectedTrack.wrongSpeedProfile.length) {
+        return buildManualSpeedProfile(selectedTrack.wrongSpeedProfile);
+      }
+
+      // Fallback ohne künstliche Wölbung: ein lokaler Kurvenabschnitt wird als zu schnell dargestellt.
+      const wrong = [...correctSpeed];
+      const center = selectedTrack.errorIndex || Math.floor(SAMPLE_COUNT / 2);
+      const start = Math.max(0, center - 24);
+      const end = Math.min(SAMPLE_COUNT - 1, center + 24);
+      for (let i = start; i <= end; i++) wrong[i] = clamp(Math.max(wrong[i], 58), 0, 96);
+      return smoothLinear(wrong, 1).map(v => clamp(v, 0, 96));
+    }
+
+    function buildMotion(speed) {
+      const timeCumulative = [0];
+      for (let i = 1; i < speed.length; i++) {
+        const localSpeed = Math.max(0, (speed[i] + speed[i - 1]) / 2);
+        const visualSpeed = 6 + localSpeed;
+        timeCumulative.push(timeCumulative[i - 1] + 1 / Math.max(3, visualSpeed));
+      }
+      const totalTime = timeCumulative[timeCumulative.length - 1];
+      return {
+        indexAtProgress(progress) {
+          const wanted = progress * totalTime;
+          let i = 1;
+          while (i < timeCumulative.length - 1 && timeCumulative[i] < wanted) i++;
+          const prev = timeCumulative[i - 1], next = timeCumulative[i];
+          const t = (wanted - prev) / Math.max(0.00001, next - prev);
+          return clamp(i - 1 + t, 0, speed.length - 1);
+        },
+        progressAtIndex(index) {
+          const i = clamp(Math.round(index), 0, speed.length - 1);
+          return timeCumulative[i] / totalTime;
+        }
+      };
+    }
+
+    function graphX(index) { return PAD.left + (index / (SAMPLE_COUNT - 1)) * INNER_W; }
+    function graphY(speed) { return PAD.top + INNER_H - (speed / 100) * INNER_H; }
+    function graphIndexFromX(x) { return clamp(Math.round(((x - PAD.left) / INNER_W) * (SAMPLE_COUNT - 1)), 0, SAMPLE_COUNT - 1); }
+
+    function speedFromGraphY(y) { return clamp(((PAD.top + INNER_H - y) / INNER_H) * 100, 0, 100); }
+
+    function buildGraphPath(speed) {
+      return speed.map((v, i) => `${i === 0 ? "M" : "L"} ${graphX(i).toFixed(1)} ${graphY(v).toFixed(1)}`).join(" ");
+    }
+
+    function buildGraphPathUntil(speed, floatIndex) {
+      const last = clamp(floatIndex, 0, speed.length - 1);
+      const whole = Math.floor(last);
+      const parts = [];
+      for (let i = 0; i <= whole; i++) parts.push({ x: graphX(i), y: graphY(speed[i]) });
+      if (whole < speed.length - 1 && last > whole) {
+        parts.push({ x: graphX(last), y: graphY(interpolateArray(speed, last)) });
+      }
+      return parts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    }
+
+    function interpolatePoint(points, floatIndex) {
+      const wrapped = clamp(floatIndex, 0, points.length - 1);
+      const i = Math.floor(wrapped), j = Math.min(i + 1, points.length - 1), t = wrapped - i;
+      return { x: lerp(points[i].x, points[j].x, t), y: lerp(points[i].y, points[j].y, t) };
+    }
+
+    function tangentAngle(points, floatIndex) {
+      const a = interpolatePoint(points, floatIndex);
+      let b;
+
+      // Am Ende der Runde liegt der letzte Punkt wieder am Start.
+      // Früher wurde dann mit demselben Punkt verglichen; dadurch stand das Auto waagerecht.
+      // Jetzt wird die Fahrtrichtung am Start/Ende weitergeführt.
+      if (floatIndex + 2 >= points.length - 1) {
+        b = interpolatePoint(points, Math.min(2, points.length - 1));
+      } else {
+        b = interpolatePoint(points, floatIndex + 2);
+      }
+
+      if (Math.hypot(b.x - a.x, b.y - a.y) < 0.001) {
+        const prev = interpolatePoint(points, Math.max(0, floatIndex - 2));
+        return Math.atan2(a.y - prev.y, a.x - prev.x);
+      }
+
+      return Math.atan2(b.y - a.y, b.x - a.x);
+    }
+
+    function interpolateArray(values, floatIndex) {
+      const i = Math.floor(clamp(floatIndex, 0, values.length - 1));
+      const j = Math.min(i + 1, values.length - 1);
+      return lerp(values[i], values[j], floatIndex - i);
+    }
+
+    function getCache() {
+      const selectedTrack = TRACKS[state.trackIndex];
+      const key = `${state.trackIndex}`;
+      if (state.cache && state.cacheKey === key) return state.cache;
+      const fittedPoints = fitTrackPointsToCanvas(selectedTrack.points, 52);
+      const track = resampleByDistance(catmullRom(fittedPoints), SAMPLE_COUNT);
+      const speed = buildManualSpeedProfile(selectedTrack.speedProfile);
+      const wrongSpeed = buildWrongSpeed(selectedTrack, speed);
+      const motion = buildMotion(speed);
+      state.cacheKey = key;
+      state.cache = { selectedTrack, track, speed, wrongSpeed, motion, trackPath: pathFromPoints(track, true) };
+      return state.cache;
+    }
+
+    function getCurrentData() {
+      const data = getCache();
+      const currentIndex = data.motion.indexAtProgress(state.progress);
+      const currentPoint = interpolatePoint(data.track, currentIndex);
+      const currentSpeed = interpolateArray(data.speed, currentIndex);
+      const carAngle = tangentAngle(data.track, currentIndex) * 180 / Math.PI;
+      return { ...data, currentIndex, currentPoint, currentSpeed, carAngle };
+    }
+
+    function getDisplayData() {
+      const d = getCurrentData();
+
+      if (state.mode === "error") {
+        const idx = state.selectedGraphIndex !== null ? state.selectedGraphIndex : state.hoverGraphIndex;
+        if (idx !== null && idx !== undefined) {
+          return { ...d, currentIndex: idx, currentPoint: d.track[idx], currentSpeed: interpolateArray(d.speed, idx), carAngle: tangentAngle(d.track, idx) * 180 / Math.PI };
+        }
+      }
+
+      if (state.mode === "build" && state.build.readyToPlay) {
+        const puzzleSpeed = buildPuzzleSpeedArray();
+        if (puzzleSpeed) {
+          const currentSpeed = interpolateArray(puzzleSpeed, d.currentIndex);
+          return { ...d, currentSpeed };
+        }
+      }
+
+      return d;
+    }
+
+    function svgEl(name, attrs = {}, children = []) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+      children.forEach(child => node.appendChild(child));
+      return node;
+    }
+
+    function textEl(text, attrs = {}) {
+      const node = svgEl("text", attrs);
+      node.textContent = text;
+      return node;
+    }
+
+    function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+    function showFeedback(kind, html) {
+      el.feedback.hidden = false;
+      el.feedback.className = `feedback ${kind}`;
+      el.feedback.innerHTML = html;
+    }
+
+    function hideFeedback() {
+      el.feedback.hidden = true;
+      el.feedback.className = "feedback";
+      el.feedback.innerHTML = "";
+    }
+
+    function markStationComplete(mode) {
+      state.completed[mode] = true;
+      if (mode === "error") state.error.solved = true;
+      if (mode === "build") state.build.solved = true;
+    }
+
+    function isStationComplete(mode = state.mode) {
+      return !!state.completed[mode];
+    }
+
+    function resetObserve() {
+      state.observe = {
+        phase: "watch",
+        xAxisLabel: "",
+        yAxisLabel: "",
+        axisChoice: null,
+        stopIndex: 0,
+        builtPoints: [],
+        drawnPoints: [],
+        isDrawing: false,
+        hoverSpeed: null
+      };
+      state.progress = 0;
+      state.stationProgress.observe = 0;
+      state.completed.observe = false;
+    }
+
+    function resetError() {
+      state.error = { solved: false, replayed: false, readyToReplay: false, watchedOnce: false };
+      state.selectedGraphIndex = null;
+      state.hoverGraphIndex = null;
+      state.progress = 0;
+      state.stationProgress.error = 0;
+      state.completed.error = false;
+    }
+
+    function resetBuild() {
+      state.build = { solved: false, readyToPlay: false, step: 0, checkpointReached: 0, awaitingPlacement: false };
+      state.selectedPiece = null;
+      state.slots = Array.from({ length: GRAPH_SNIPPET_ORDER.length }, () => null);
+      state.progress = 0;
+      state.stationProgress.build = 0;
+      state.completed.build = false;
+    }
+
+
+    function isStationUnlocked(mode = state.mode) {
+      if (mode === "intro") return true;
+      return !!state.unlocked[mode];
+    }
+
+    function stationShortLabel(mode) {
+      if (mode === "intro") return "Einstieg";
+      const index = STATION_ORDER.indexOf(mode);
+      return `Station ${index}`;
+    }
+
+    function showUnlockModal(mode) {
+      state.unlockMode = mode;
+      render();
+      requestAnimationFrame(() => {
+        if (unlockEls.input) {
+          unlockEls.input.value = "";
+          unlockEls.input.focus();
+        }
+      });
+    }
+
+    function hideUnlockModal() {
+      state.unlockMode = null;
+      if (unlockEls.error) unlockEls.error.hidden = true;
+      if (unlockEls.input) unlockEls.input.value = "";
+      render();
+    }
+
+    function submitUnlockPassword() {
+      const mode = state.unlockMode;
+      if (!mode) return;
+      const input = (unlockEls.input ? unlockEls.input.value : "").trim();
+      if (input === STATION_PASSWORDS[mode]) {
+        state.unlocked[mode] = true;
+        state.unlockMode = null;
+        if (unlockEls.error) unlockEls.error.hidden = true;
+        chooseMode(mode);
+        showFeedback("good", `${stationShortLabel(mode)} freigeschaltet.`);
+      } else {
+        if (unlockEls.error) unlockEls.error.hidden = false;
+        if (unlockEls.input) unlockEls.input.select();
+      }
+    }
+
+    function renderUnlockModal() {
+      if (!unlockOverlay || !unlockEls.title || !unlockEls.text) return;
+      const mode = state.unlockMode;
+      unlockOverlay.hidden = !mode;
+      if (!mode) return;
+      unlockEls.title.textContent = `${stationShortLabel(mode)} freischalten`;
+      unlockEls.text.textContent = `Gib das Passwort ein, um ${stationShortLabel(mode)} zu starten.`;
+      if (unlockEls.error) unlockEls.error.hidden = true;
+    }
+
+    function openStation(mode) {
+      stopAnimation();
+      if (!isStationUnlocked(mode)) {
+        showUnlockModal(mode);
+        return;
+      }
+      chooseMode(mode);
+    }
+
+    function chooseMode(mode) {
+      stopAnimation();
+      if (state.mode) state.stationProgress[state.mode] = state.progress;
+      state.mode = mode;
+      state.trackIndex = STATION_TRACK[mode];
+      state.cache = null;
+      state.cacheKey = "";
+      state.progress = state.stationProgress[mode] || 0;
+      state.startTime = null;
+      state.selectedGraphIndex = null;
+      state.hoverGraphIndex = null;
+
+      if (mode === "intro") {
+        state.axisLabels.x = "x";
+        state.axisLabels.y = "y";
+      } else if (mode === "observe") {
+        if (state.observe.axisChoice === "correct") {
+          state.axisLabels.x = state.observe.xAxisLabel.trim();
+          state.axisLabels.y = state.observe.yAxisLabel.trim();
+        } else {
+          state.axisLabels.x = "x";
+          state.axisLabels.y = "y";
+        }
+      }
+
+      if (!isStationUnlocked(mode)) {
+        showFeedback("mid", `${stationShortLabel(mode)} ist gesperrt. Klicke oben auf die Station und gib das Passwort ein.`);
+      } else if (mode === "intro") {
+        hideFeedback();
+      } else if (mode === "build") {
+        showFeedback("mid", "Spiele die Fahrt ab und bearbeite dazu das Arbeitsblatt.");
+      } else {
+        hideFeedback();
+      }
+      render();
+    }
+
+    function goNextStation() {
+      if (!isStationComplete()) return;
+      const current = STATION_ORDER.indexOf(state.mode);
+      if (current < STATION_ORDER.length - 1) {
+        openStation(STATION_ORDER[current + 1]);
+      } else {
+        stopAnimation();
+        showFeedback("good", "Geschafft!");
+        render();
+      }
+    }
+
+    function goPreviousStation() {
+      const current = STATION_ORDER.indexOf(state.mode);
+      if (current > 0) openStation(STATION_ORDER[current - 1]);
+    }
+
+    function renderLayout() {
+      const buildMode = state.mode === "build" && isStationUnlocked();
+      if (el.mainGrid) el.mainGrid.classList.toggle("buildOnly", buildMode);
+      if (el.graphCard) el.graphCard.hidden = buildMode;
+    }
+
+    function renderControls() {
+      el.trackButtons.innerHTML = "";
+      const info = STATION_INFO[state.mode];
+      const box = document.createElement("div");
+      box.className = "stationInfo";
+      box.innerHTML = state.mode === "intro"
+        ? `${info.title}<small>Starte die Fahrt und beobachte.</small>`
+        : `${info.title}`;
+      el.trackButtons.appendChild(box);
+
+      el.modeButtons.innerHTML = "";
+      const currentStep = STATION_ORDER.indexOf(state.mode);
+      STATION_ORDER.forEach((key, index) => {
+        const pill = document.createElement("button");
+        const passed = index < currentStep || state.completed[key];
+        const statusClass = key === state.mode ? "btnCurrent" : (passed ? "btnDone" : "btnTodo");
+        pill.className = `btn ${statusClass}`;
+        const label = key === "intro" ? "Einstieg" : `${index}. ${MODES[key].label.replace(`Station ${index}: `, "")}`;
+        const lockText = isStationUnlocked(key) ? "" : " 🔒";
+        pill.textContent = `${label}${lockText}`;
+        pill.addEventListener("click", () => openStation(key));
+        el.modeButtons.appendChild(pill);
+      });
+
+      el.modeTag.textContent = state.mode === "intro" ? "Einstieg" : `Station ${currentStep}/3`;
+      const unlocked = isStationUnlocked();
+
+      el.playButton.hidden = !((state.mode === "intro") || (state.mode === "observe" && (state.observe.phase === "watch" || state.observe.phase === "compare")) || state.mode === "error" || state.mode === "build");
+      el.playButton.disabled = !unlocked;
+
+      el.resetButton.hidden = false;
+      el.resetButton.disabled = !unlocked;
+
+      el.prevButton.hidden = true;
+      el.prevButton.disabled = true;
+
+      el.nextButton.hidden = true;
+      el.nextButton.disabled = true;
+      el.nextButton.textContent = "Weiter →";
+
+      el.checkButton.hidden = true;
+      el.clearButton.hidden = true;
+      el.clearButton.disabled = true;
+      el.solutionButton.hidden = true;
+
+      if (state.mode === "build") {
+        el.playButton.textContent = state.running ? "⏸ Pause" : "▶ Start";
+      } else if (state.mode === "intro") {
+        el.playButton.textContent = state.running ? "⏸ Pause" : "▶ Start";
+      } else if (state.mode === "error") {
+        el.playButton.textContent = state.running ? "⏸ Pause" : "▶ Start";
+      } else {
+        el.playButton.textContent = state.running ? "⏸ Pause" : (state.mode === "observe" && state.observe.phase === "compare" ? "▶ Vergleich abspielen" : "▶ Start");
+      }
+      el.checkButton.textContent = "Prüfen";
+      el.clearButton.textContent = "Kacheln löschen";
+    }
+
+    function renderTrack() {
+      const d = getDisplayData();
+      clear(el.trackSvg);
+      const defs = svgEl("defs");
+      defs.innerHTML = `
+        <linearGradient id="grass" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#86efac"/><stop offset="55%" stop-color="#22c55e"/><stop offset="100%" stop-color="#15803d"/></linearGradient>
+        <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.24"/></filter>
+        <pattern id="tinyFlags" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#ffffff" opacity="0.08"/><rect x="14" y="14" width="14" height="14" fill="#ffffff" opacity="0.08"/></pattern>
+        <pattern id="curbPattern" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="24" fill="#ef4444"/><rect x="12" width="12" height="24" fill="#ffffff"/></pattern>`;
+      el.trackSvg.appendChild(defs);
+      el.trackSvg.appendChild(svgEl("rect", { width: WIDTH, height: HEIGHT, fill: "url(#grass)" }));
+      el.trackSvg.appendChild(svgEl("rect", { width: WIDTH, height: HEIGHT, fill: "url(#tinyFlags)" }));
+      el.trackSvg.appendChild(svgEl("path", { d: d.trackPath, fill: "none", stroke: "url(#curbPattern)", "stroke-width": 72, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.95 }));
+      el.trackSvg.appendChild(svgEl("path", { d: d.trackPath, fill: "none", stroke: "#d1d5db", "stroke-width": 64, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.95 }));
+      el.trackSvg.appendChild(svgEl("path", { d: d.trackPath, fill: "none", stroke: "#1f2937", "stroke-width": 52, "stroke-linecap": "round", "stroke-linejoin": "round", filter: "url(#shadow)" }));
+      el.trackSvg.appendChild(svgEl("path", { d: d.trackPath, fill: "none", stroke: "#f8fafc", "stroke-width": 3.5, "stroke-dasharray": "18 14", "stroke-linecap": "round", opacity: 0.92 }));
+
+      const start = d.track[0];
+      const startTheta = tangentAngle(d.track, 0);
+      const nx = -Math.sin(startTheta);
+      const ny = Math.cos(startTheta);
+      el.trackSvg.appendChild(svgEl("line", {
+        x1: start.x - nx * 30,
+        y1: start.y - ny * 30,
+        x2: start.x + nx * 30,
+        y2: start.y + ny * 30,
+        stroke: "#ffffff",
+        "stroke-width": 12
+      }));
+      el.trackSvg.appendChild(svgEl("line", {
+        x1: start.x - nx * 30,
+        y1: start.y - ny * 30,
+        x2: start.x + nx * 30,
+        y2: start.y + ny * 30,
+        stroke: "#111827",
+        "stroke-width": 5,
+        "stroke-dasharray": "8 6"
+      }));
+      const labelCx = start.x + nx * 56;
+      const labelCy = start.y + ny * 56;
+      el.trackSvg.appendChild(svgEl("rect", {
+        x: labelCx - 48,
+        y: labelCy - 14,
+        width: 96,
+        height: 28,
+        rx: 8,
+        fill: "#ffffff",
+        stroke: "#111827",
+        "stroke-width": 2
+      }));
+      el.trackSvg.appendChild(textEl("START/ZIEL", {
+        x: labelCx,
+        y: labelCy + 1,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-size": 12,
+        "font-weight": 1000,
+        fill: "#111827"
+      }));
+
+
+      if (state.mode === "error" && (state.hoverGraphIndex !== null || state.selectedGraphIndex !== null)) {
+        const idx = state.selectedGraphIndex !== null ? state.selectedGraphIndex : state.hoverGraphIndex;
+        const p = d.track[idx];
+        el.trackSvg.appendChild(svgEl("circle", { cx: p.x, cy: p.y, r: 24, fill: "rgba(249,115,22,0.18)", stroke: "#f97316", "stroke-width": 4, "stroke-dasharray": "7 6" }));
+      }
+
+
+      const car = svgEl("g", { transform: `translate(${d.currentPoint.x}, ${d.currentPoint.y}) rotate(${d.carAngle})`, filter: "url(#shadow)" });
+      car.appendChild(svgEl("rect", { x: -31, y: -12.5, width: 62, height: 25, rx: 11, fill: "#dc2626" }));
+      car.appendChild(svgEl("ellipse", { cx: 2, cy: 0, rx: 24, ry: 10.5, fill: "#ef4444", opacity: 0.95 }));
+      car.appendChild(svgEl("rect", { x: 22, y: -8.5, width: 9, height: 17, rx: 6, fill: "#b91c1c" }));
+      car.appendChild(svgEl("rect", { x: -41, y: -10.5, width: 8, height: 21, rx: 2, fill: "#334155" }));
+      car.appendChild(svgEl("rect", { x: -45, y: -15, width: 4, height: 30, rx: 1.5, fill: "#0f172a" }));
+      car.appendChild(svgEl("rect", { x: -10, y: -8, width: 20, height: 16, rx: 6, fill: "#111827", stroke: "#dbeafe", "stroke-width": 1.7 }));
+      car.appendChild(svgEl("path", { d: "M -23 0 L 22 0", stroke: "#ffffff", "stroke-width": 3.3, "stroke-linecap": "round" }));
+      car.appendChild(svgEl("path", { d: "M -18 -5 L 18 -5", stroke: "#facc15", "stroke-width": 2.5, "stroke-linecap": "round", opacity: 0.95 }));
+      car.appendChild(svgEl("path", { d: "M -18 5 L 18 5", stroke: "#facc15", "stroke-width": 2.5, "stroke-linecap": "round", opacity: 0.95 }));
+      car.appendChild(svgEl("circle", { cx: -18, cy: -16, r: 5.7, fill: "#111827" }));
+      car.appendChild(svgEl("circle", { cx: -18, cy: 16, r: 5.7, fill: "#111827" }));
+      car.appendChild(svgEl("circle", { cx: 14, cy: -16, r: 5.7, fill: "#111827" }));
+      car.appendChild(svgEl("circle", { cx: 14, cy: 16, r: 5.7, fill: "#111827" }));
+      car.appendChild(svgEl("circle", { cx: -18, cy: -16, r: 2.1, fill: "#9ca3af" }));
+      car.appendChild(svgEl("circle", { cx: -18, cy: 16, r: 2.1, fill: "#9ca3af" }));
+      car.appendChild(svgEl("circle", { cx: 14, cy: -16, r: 2.1, fill: "#9ca3af" }));
+      car.appendChild(svgEl("circle", { cx: 14, cy: 16, r: 2.1, fill: "#9ca3af" }));
+      car.appendChild(svgEl("circle", { cx: 27, cy: -4, r: 2.1, fill: "#fef08a" }));
+      car.appendChild(svgEl("circle", { cx: 27, cy: 4, r: 2.1, fill: "#fef08a" }));
+      el.trackSvg.appendChild(car);
+    }
+
+    function pointToPath(points) {
+      if (!points.length) return "";
+      return points.map((p, i) => `${i === 0 ? "M" : "L"} ${graphX(p.index).toFixed(1)} ${graphY(p.speed).toFixed(1)}`).join(" ");
+    }
+
+    function drawPathFromPoints(points) {
+      if (!points || points.length < 2) return "";
+      const clean = points.filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+      if (clean.length < 2) return "";
+      return clean.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    }
+
+    function graphPointerToPoint(evt) {
+      const svg = el.graphSvg;
+      let x;
+      let y;
+
+      // Exakte Umrechnung von Finger/Mausposition in die SVG-Koordinaten.
+      // Dadurch wird nichts sortiert, geglättet oder gedehnt: Die Linie folgt genau der Bewegung.
+      if (svg.createSVGPoint && svg.getScreenCTM) {
+        const pt = svg.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+        const ctm = svg.getScreenCTM();
+        if (ctm) {
+          const svgPt = pt.matrixTransform(ctm.inverse());
+          x = svgPt.x;
+          y = svgPt.y;
+        }
+      }
+
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const rect = svg.getBoundingClientRect();
+        x = ((evt.clientX - rect.left) / rect.width) * GRAPH_W;
+        y = ((evt.clientY - rect.top) / rect.height) * GRAPH_H;
+      }
+
+      if (x < PAD.left || x > PAD.left + INNER_W || y < PAD.top || y > PAD.top + INNER_H) return null;
+      return { x, y };
+    }
+
+    function addObserveDrawPoint(evt) {
+      const events = typeof evt.getCoalescedEvents === "function" ? evt.getCoalescedEvents() : [evt];
+      const list = state.observe.drawnPoints;
+
+      events.forEach(e => {
+        const p = graphPointerToPoint(e);
+        if (!p) return;
+        const last = list[list.length - 1];
+        if (!last || Math.hypot(last.x - p.x, last.y - p.y) >= 1.5) {
+          list.push(p);
+        }
+      });
+    }
+
+    function startObserveDrawing(evt) {
+      if (state.mode !== "observe" || state.observe.phase !== "build") return;
+      evt.preventDefault();
+      state.observe.isDrawing = true;
+      state.observe.drawnPoints = [];
+      addObserveDrawPoint(evt);
+      if (evt.pointerId !== undefined && el.graphSvg.setPointerCapture) {
+        try { el.graphSvg.setPointerCapture(evt.pointerId); } catch (e) {}
+      }
+      hideFeedback();
+      render();
+    }
+
+    function moveObserveDrawing(evt) {
+      if (state.mode !== "observe" || state.observe.phase !== "build" || !state.observe.isDrawing) return;
+      evt.preventDefault();
+      addObserveDrawPoint(evt);
+      render();
+    }
+
+    function endObserveDrawing(evt) {
+      if (state.mode !== "observe" || state.observe.phase !== "build" || !state.observe.isDrawing) return;
+      evt.preventDefault();
+      addObserveDrawPoint(evt);
+      state.observe.isDrawing = false;
+      render();
+    }
+
+    function clearObserveDrawing() {
+      state.observe.drawnPoints = [];
+      state.observe.isDrawing = false;
+      hideFeedback();
+      render();
+    }
+
+    function compareObserveDrawing() {
+      if (!state.observe.drawnPoints || state.observe.drawnPoints.length < 4) {
+        showFeedback("mid", "Zeichne zuerst deinen Graphen in das Koordinatensystem.");
+        render();
+        return;
+      }
+      state.observe.isDrawing = false;
+      state.observe.phase = "compare";
+      state.progress = 0;
+      state.stationProgress.observe = 0;
+      state.completed.observe = false;
+      hideFeedback();
+      render();
+    }
+
+    function getSnippet(id) {
+      return GRAPH_SNIPPETS.find(s => s.id === id);
+    }
+
+    function snippetPoints(values, width = 72, height = 138, padLeft = 8, padRight = 8, padTop = 8, padBottom = 8) {
+      if (!values || !values.length) return [];
+      return values.map((v, i) => ({
+        x: padLeft + (i / Math.max(1, values.length - 1)) * (width - padLeft - padRight),
+        y: padTop + (1 - v / 100) * (height - padTop - padBottom),
+        value: v
+      }));
+    }
+
+    function smoothPathFromPoints(points) {
+      if (!points.length) return "";
+      return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    }
+
+    function correctSlotIndexForSnippet(id) {
+      const index = GRAPH_SNIPPET_ORDER.indexOf(id);
+      return index >= 0 ? index : null;
+    }
+
+    function valuesForDisplaySnippet(id, slotIndex = null) {
+      const resolvedSlotIndex = Number.isInteger(slotIndex) ? slotIndex : correctSlotIndexForSnippet(id);
+      if (Number.isInteger(resolvedSlotIndex) && id === GRAPH_SNIPPET_ORDER[resolvedSlotIndex]) {
+        const fullSpeed = buildPuzzleSpeedArray(GRAPH_SNIPPET_ORDER);
+        const slotCount = GRAPH_SNIPPET_ORDER.length;
+        const startIndex = (resolvedSlotIndex / slotCount) * (SAMPLE_COUNT - 1);
+        const endIndex = ((resolvedSlotIndex + 1) / slotCount) * (SAMPLE_COUNT - 1);
+        const samples = 18;
+        return Array.from({ length: samples }, (_, i) => {
+          const idx = startIndex + (i / (samples - 1)) * (endIndex - startIndex);
+          return interpolateArray(fullSpeed, idx);
+        });
+      }
+
+      const snip = getSnippet(id);
+      if (!snip) return [];
+      if (snip.values.length >= 8) return snip.values;
+      const samples = 12;
+      const values = snip.values;
+      return Array.from({ length: samples }, (_, i) => {
+        const pos = (i / (samples - 1)) * (values.length - 1);
+        const left = Math.floor(pos);
+        const right = Math.min(values.length - 1, left + 1);
+        const t = pos - left;
+        return lerp(values[left], values[right], t);
+      });
+    }
+
+    function pointsForDisplayValues(values, width, height) {
+      if (!values || !values.length) return [];
+      return values.map((v, i) => ({
+        x: (i / Math.max(1, values.length - 1)) * width,
+        y: (1 - v / 100) * height,
+        value: v
+      }));
+    }
+
+    function snippetSvgHtml(id, width = 72, height = 138, label = "", slotIndex = null, withCard = true) {
+      const values = valuesForDisplaySnippet(id, slotIndex);
+      const points = pointsForDisplayValues(values, width, height);
+      const path = smoothPathFromPoints(points);
+      const gridTop = 10;
+      const gridMid = height / 2;
+      const gridBottom = height - 10;
+      const cardLayer = withCard
+        ? `<rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
+           <rect x="4" y="4" width="${width - 8}" height="${height - 8}" rx="9" fill="#eff6ff" opacity="0.82"/>
+           <line x1="8" y1="${gridTop}" x2="${width - 8}" y2="${gridTop}" stroke="#dbeafe" stroke-width="1.1"/>
+           <line x1="8" y1="${gridMid}" x2="${width - 8}" y2="${gridMid}" stroke="#dbeafe" stroke-width="1.1" stroke-dasharray="4 4"/>
+           <line x1="8" y1="${gridBottom}" x2="${width - 8}" y2="${gridBottom}" stroke="#dbeafe" stroke-width="1.1"/>`
+        : `<rect x="0" y="0" width="${width}" height="${height}" fill="rgba(255,255,255,0.10)"/>`;
+      return `<svg class="snippetSvg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+        ${cardLayer}
+        <path d="${path}" fill="none" stroke="#0f172a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${path}" fill="none" stroke="#2563eb" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${label ? (withCard
+          ? `<g opacity="0.94"><rect x="${width - 30}" y="8" width="22" height="22" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/><text x="${width - 19}" y="23" text-anchor="middle" font-size="13" font-weight="1000" fill="#1e3a8a">${label}</text></g>`
+          : `<g opacity="0.94"><rect x="${width - 34}" y="8" width="26" height="22" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/><text x="${width - 21}" y="23" text-anchor="middle" font-size="13" font-weight="1000" fill="#1e3a8a">${label}</text></g>`)
+          : ""}
+      </svg>`;
+    }
+
+    function snippetTileHtml(id, width = 72, height = 138, label = "") {
+      return snippetSvgHtml(id, width, height, label, null, true);
+    }
+
+    function snippetPlacedHtml(id, width = 72, height = 138, label = "", slotIndex = null) {
+      return snippetSvgHtml(id, width, height, label, slotIndex, false);
+    }
+
+    function snippetButtonHtml(id) {
+      return snippetTileHtml(id, 72, 138);
+    }
+
+    function buildPuzzleValues(ids = state.slots) {
+      const values = [];
+      ids.filter(Boolean).forEach((id, slotIndex) => {
+        const snip = getSnippet(id);
+        if (!snip) return;
+        snip.values.forEach((v, i) => {
+          if (slotIndex > 0 && i === 0) return;
+          values.push(v);
+        });
+      });
+      return values;
+    }
+
+    function buildSpeedArrayFromValues(values) {
+      if (!values || values.length < 2) return null;
+      const result = Array.from({ length: SAMPLE_COUNT }, () => 0);
+      const lastSegment = values.length - 1;
+      function smoothStep(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+      for (let i = 0; i < SAMPLE_COUNT; i++) {
+        const pos = (i / (SAMPLE_COUNT - 1)) * lastSegment;
+        const left = Math.min(Math.floor(pos), values.length - 2);
+        const right = left + 1;
+        const t = smoothStep(pos - left);
+        result[i] = clamp(lerp(values[left], values[right], t), 0, 100);
+      }
+      result[0] = values[0];
+      result[SAMPLE_COUNT - 1] = values[values.length - 1];
+      return result;
+    }
+
+    function buildPuzzleSpeedArray(ids = state.slots) {
+      const values = buildPuzzleValues(ids);
+      return buildSpeedArrayFromValues(values);
+    }
+
+    function buildPuzzlePath() {
+      const speed = buildPuzzleSpeedArray();
+      if (!speed) return "";
+      return buildGraphPath(speed);
+    }
+
+    function isPuzzleCorrect() {
+      return state.slots.length === GRAPH_SNIPPET_ORDER.length &&
+        state.slots.every((id, i) => id === GRAPH_SNIPPET_ORDER[i]);
+    }
+
+    function updateBuildUnlock(options = {}) {
+      const silent = !!options.silent;
+      const complete = state.slots.length === GRAPH_SNIPPET_ORDER.length && state.slots.every(Boolean);
+
+      if (!complete) {
+        state.build.readyToPlay = false;
+        state.completed.build = false;
+        if (!silent) hideFeedback();
+        return;
+      }
+
+      if (isPuzzleCorrect()) {
+        state.build.readyToPlay = true;
+        markStationComplete("build");
+        if (!silent) showFeedback("good", "Richtig.");
+      } else {
+        state.build.readyToPlay = false;
+        state.completed.build = false;
+        if (!silent) showFeedback("bad", "Der zusammengesetzte Graph passt noch nicht zur Strecke. Tausche die Kacheln so, dass ein durchgehender richtiger Graph entsteht.");
+      }
+    }
+
+    function renderGraph() {
+      const d = getDisplayData();
+      clear(el.graphSvg);
+      if (state.mode === "build") return;
+      const defs = svgEl("defs");
+      defs.innerHTML = `<linearGradient id="graphBackground" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#eff6ff"/></linearGradient>`;
+      el.graphSvg.appendChild(defs);
+      el.graphSvg.appendChild(svgEl("rect", { width: GRAPH_W, height: GRAPH_H, fill: "url(#graphBackground)" }));
+
+      [0.25, 0.5, 0.75].forEach(part => el.graphSvg.appendChild(svgEl("line", { x1: PAD.left, x2: PAD.left + INNER_W, y1: PAD.top + INNER_H * part, y2: PAD.top + INNER_H * part, stroke: "#dbeafe", "stroke-width": 1.5 })));
+      el.graphSvg.appendChild(svgEl("line", { x1: PAD.left, y1: PAD.top + INNER_H, x2: PAD.left + INNER_W, y2: PAD.top + INNER_H, stroke: "#0f172a", "stroke-width": 2.4 }));
+      el.graphSvg.appendChild(svgEl("line", { x1: PAD.left, y1: PAD.top, x2: PAD.left, y2: PAD.top + INNER_H, stroke: "#0f172a", "stroke-width": 2.4 }));
+      if (state.axisLabels.x && state.axisLabels.y && !(state.mode === "observe" && state.observe.phase === "axes")) {
+        el.graphSvg.appendChild(textEl(state.axisLabels.x, { x: PAD.left + INNER_W - 4, y: PAD.top + INNER_H + 40, "text-anchor": "end", "font-size": 15, "font-weight": 1000, fill: "#334155" }));
+        el.graphSvg.appendChild(textEl(state.axisLabels.y, { x: 18, y: PAD.top + 14, "font-size": 15, "font-weight": 1000, fill: "#334155" }));
+      }
+
+      if (state.mode === "observe" && ["axes", "build", "compare", "done"].includes(state.observe.phase)) {
+        const startX = graphX(0);
+        const startY = graphY(d.speed[0]);
+        el.graphSvg.appendChild(svgEl("circle", { cx: startX, cy: startY, r: 7, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+        el.graphSvg.appendChild(textEl("Start", { x: startX + 12, y: startY - 12, "font-size": 14, "font-weight": 1000, fill: "#1d4ed8" }));
+      }
+
+      if (state.mode === "intro") {
+        const partial = buildGraphPathUntil(d.speed, d.currentIndex);
+        if (partial) {
+          el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#93c5fd", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.55 }));
+          el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+          el.graphSvg.appendChild(svgEl("circle", { cx: graphX(d.currentIndex), cy: graphY(interpolateArray(d.speed, d.currentIndex)), r: 8, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+        }
+        return;
+      }
+
+      if (state.mode === "observe" && state.observe.phase === "watch") {
+        return;
+      }
+
+      if (state.mode === "observe" && state.observe.phase === "axes") {
+        const yBox = svgEl("foreignObject", { x: 22, y: PAD.top + 8, width: 170, height: 54 });
+        const yDiv = document.createElement("div");
+        yDiv.innerHTML = `<input id="yAxisInput" class="axisInput" placeholder="y-Achse" autocomplete="off">`;
+        yBox.appendChild(yDiv);
+        el.graphSvg.appendChild(yBox);
+
+        const xBox = svgEl("foreignObject", { x: PAD.left + INNER_W - 142, y: PAD.top + INNER_H + 12, width: 170, height: 54 });
+        const xDiv = document.createElement("div");
+        xDiv.innerHTML = `<input id="xAxisInput" class="axisInput" placeholder="x-Achse" autocomplete="off">`;
+        xBox.appendChild(xDiv);
+        el.graphSvg.appendChild(xBox);
+
+        setTimeout(() => {
+          const xInput = document.getElementById("xAxisInput");
+          const yInput = document.getElementById("yAxisInput");
+          if (xInput) xInput.value = state.observe.xAxisLabel || "";
+          if (yInput) yInput.value = state.observe.yAxisLabel || "";
+          [xInput, yInput].forEach(input => {
+            if (!input) return;
+            input.addEventListener("input", () => {
+              state.observe.xAxisLabel = xInput ? xInput.value : "";
+              state.observe.yAxisLabel = yInput ? yInput.value : "";
+            });
+          });
+        }, 0);
+        return;
+      }
+
+      if (state.mode === "observe" && state.observe.phase === "build") {
+        const own = drawPathFromPoints(state.observe.drawnPoints);
+        if (own) {
+          el.graphSvg.appendChild(svgEl("path", { d: own, fill: "none", stroke: "#fed7aa", "stroke-width": 10, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.8 }));
+          el.graphSvg.appendChild(svgEl("path", { d: own, fill: "none", stroke: "#f97316", "stroke-width": 6, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+        }
+        return;
+      }
+
+      if (state.mode === "build") {
+        const slotCount = GRAPH_SNIPPET_ORDER.length;
+        const slotW = INNER_W / slotCount;
+
+        for (let i = 1; i < slotCount; i++) {
+          const x = PAD.left + i * slotW;
+          el.graphSvg.appendChild(svgEl("line", { x1: x, x2: x, y1: PAD.top, y2: PAD.top + INNER_H, stroke: "#93c5fd", "stroke-width": 2.5, "stroke-dasharray": "7 7", opacity: 0.8 }));
+        }
+
+        state.slots.forEach((id, i) => {
+          const x = PAD.left + i * slotW;
+          const y = PAD.top;
+          const fo = svgEl("foreignObject", { x: x + 1, y: y + 1, width: slotW - 2, height: INNER_H - 2 });
+          const div = document.createElement("div");
+          const isActive = !state.build.readyToPlay && state.build.awaitingPlacement && i === state.build.step;
+          div.className = `slot snippetSlot ${id ? "filled done" : "empty"} ${isActive ? "active" : ""}`;
+          div.style.width = `${slotW - 2}px`;
+          div.style.height = `${INNER_H - 2}px`;
+          div.style.boxSizing = "border-box";
+          div.innerHTML = id
+            ? snippetPlacedHtml(id, Math.max(50, slotW - 2), INNER_H - 2, String(i + 1), i)
+            : `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:34px;font-weight:1000;">${i + 1}</div>`;
+          div.addEventListener("dragover", e => { if (isActive) e.preventDefault(); });
+          div.addEventListener("drop", e => {
+            e.preventDefault();
+            placeSnippetInSlot(e.dataTransfer.getData("text/plain"), i);
+          });
+          div.addEventListener("click", () => {
+            if (state.selectedPiece) placeSnippetInSlot(state.selectedPiece, i);
+          });
+          fo.appendChild(div);
+          el.graphSvg.appendChild(fo);
+        });
+
+        if (state.build.readyToPlay && state.running) {
+          const visibleBuildSpeed = buildPuzzleSpeedArray();
+          if (visibleBuildSpeed) {
+            const cy = graphY(interpolateArray(visibleBuildSpeed, d.currentIndex));
+            const cx = graphX(d.currentIndex);
+            el.graphSvg.appendChild(svgEl("circle", { cx, cy, r: 12, fill: "rgba(37,99,235,0.15)" }));
+            el.graphSvg.appendChild(svgEl("circle", { cx, cy, r: 7, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+          }
+        }
+
+        if (!state.build.readyToPlay && state.build.checkpointReached > 0) {
+          const checkpointX = PAD.left + (state.build.checkpointReached / slotCount) * INNER_W;
+          el.graphSvg.appendChild(svgEl("line", { x1: checkpointX, x2: checkpointX, y1: PAD.top, y2: PAD.top + INNER_H, stroke: "#f59e0b", "stroke-width": 3, "stroke-dasharray": "6 7", opacity: 0.9 }));
+        }
+        return;
+      }
+
+      if (state.mode === "error" && state.error.solved) {
+        const wrongPath = buildGraphPath(d.wrongSpeed);
+        const correctPath = buildGraphPath(d.speed);
+        el.graphSvg.appendChild(svgEl("path", { d: wrongPath, fill: "none", stroke: "#f97316", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.62 }));
+        if (state.running) {
+          const partial = buildGraphPathUntil(d.speed, d.currentIndex);
+          if (partial) {
+            el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#93c5fd", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.55 }));
+            el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+            el.graphSvg.appendChild(svgEl("circle", { cx: graphX(d.currentIndex), cy: graphY(interpolateArray(d.speed, d.currentIndex)), r: 8, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+          }
+        } else if (state.error.replayed) {
+          el.graphSvg.appendChild(svgEl("path", { d: correctPath, fill: "none", stroke: "#93c5fd", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.55 }));
+          el.graphSvg.appendChild(svgEl("path", { d: correctPath, fill: "none", stroke: "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+        }
+        return;
+      }
+
+      const visibleSpeed = state.mode === "error" ? d.wrongSpeed : d.speed;
+
+      if (state.mode === "observe" && state.observe.phase === "compare") {
+        const own = drawPathFromPoints(state.observe.drawnPoints);
+        if (own) {
+          el.graphSvg.appendChild(svgEl("path", { d: own, fill: "none", stroke: "#f97316", "stroke-width": 6, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.45 }));
+        }
+        const partial = buildGraphPathUntil(visibleSpeed, d.currentIndex);
+        if (partial) {
+          el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#93c5fd", "stroke-width": 8, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.55 }));
+          el.graphSvg.appendChild(svgEl("path", { d: partial, fill: "none", stroke: "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+          el.graphSvg.appendChild(svgEl("circle", { cx: graphX(d.currentIndex), cy: graphY(interpolateArray(visibleSpeed, d.currentIndex)), r: 8, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+        }
+        return;
+      }
+
+      if (state.mode === "observe" && state.observe.phase === "done") {
+        const own = drawPathFromPoints(state.observe.drawnPoints);
+        const correct = buildGraphPath(d.speed);
+        if (own) el.graphSvg.appendChild(svgEl("path", { d: own, fill: "none", stroke: "#f97316", "stroke-width": 6, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.45 }));
+        el.graphSvg.appendChild(svgEl("path", { d: correct, fill: "none", stroke: "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+        return;
+      }
+
+      const graphPath = buildGraphPath(visibleSpeed);
+      el.graphSvg.appendChild(svgEl("path", { d: graphPath, fill: "none", stroke: "#bfdbfe", "stroke-width": 8, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.65 }));
+      el.graphSvg.appendChild(svgEl("path", { d: graphPath, fill: "none", stroke: state.mode === "error" ? "#f97316" : "#2563eb", "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+
+      // Station 2: Der falsche Graph ist nur Prüfobjekt.
+      // Beim normalen Abspielen läuft kein Punkt auf diesem falschen Graphen mit.
+      // Ein Punkt erscheint nur beim Hover oder nach Klick.
+      const showGraphMarker = state.mode !== "error" || state.selectedGraphIndex !== null || state.hoverGraphIndex !== null;
+      if (showGraphMarker) {
+        const indexForDot = state.selectedGraphIndex !== null ? state.selectedGraphIndex : (state.mode === "error" && state.hoverGraphIndex !== null ? state.hoverGraphIndex : d.currentIndex);
+        el.graphSvg.appendChild(svgEl("line", { x1: graphX(indexForDot), x2: graphX(indexForDot), y1: PAD.top, y2: PAD.top + INNER_H, stroke: "#2563eb", "stroke-width": 2, "stroke-dasharray": "5 7", opacity: 0.45 }));
+        el.graphSvg.appendChild(svgEl("circle", { cx: graphX(indexForDot), cy: graphY(interpolateArray(visibleSpeed, indexForDot)), r: 8, fill: "#2563eb", stroke: "#ffffff", "stroke-width": 3 }));
+      }
+    }
+
+    function renderIntroActivity() {
+      activityArea.hidden = true;
+      activityArea.innerHTML = "";
+    }
+
+    function renderObserveActivity() {
+      activityArea.hidden = false;
+      activityArea.innerHTML = `<div id="observeContent"></div>`;
+      const content = activityArea.querySelector("#observeContent");
+
+      if (state.observe.phase === "watch") {
+        content.innerHTML = `<p class="activityText">Starte die Fahrt.</p>`;
+        return;
+      }
+
+      if (state.observe.phase === "axes") {
+        content.innerHTML = `
+          <p class="activityText">Trage die Achsen ein.</p>
+          <div class="answerGrid" style="margin-top:10px;">
+            <button class="answerBtn" id="checkAxisLabels">Prüfen</button>
+          </div>`;
+        content.querySelector("#checkAxisLabels").addEventListener("click", checkAxisLabels);
+        return;
+      }
+
+      if (state.observe.phase === "build") {
+        content.innerHTML = `
+          <div class="activityStack">
+            <p class="activityText">Zeichne den Geschwindigkeitsgraphen direkt in das Koordinatensystem.</p>
+            <div class="answerGrid">
+              <button class="answerBtn" id="compareObserveDrawing">Abgleichen</button>
+              <button class="answerBtn" id="clearObserveDrawing">Neu zeichnen</button>
+            </div>
+          </div>`;
+        content.querySelector("#compareObserveDrawing").addEventListener("click", compareObserveDrawing);
+        content.querySelector("#clearObserveDrawing").addEventListener("click", clearObserveDrawing);
+        return;
+      }
+
+      if (state.observe.phase === "compare") {
+        content.innerHTML = `<p class="activityText">Starte den Vergleich.</p>`;
+        return;
+      }
+
+      if (state.observe.phase === "done") {
+        content.innerHTML = `<p class="activityText">Weiter zu Station 2.</p>`;
+      }
+    }
+
+    function renderErrorActivity() {
+      activityArea.hidden = false;
+      let text = "Vergleiche Fahrt und Graph. Wo passt der Graph nicht zur Fahrt?";
+      if (state.error.solved && !state.error.replayed) {
+        text = "Richtig.";
+      } else if (state.error.replayed) {
+        text = "Weiter zu Station 3.";
+      }
+      activityArea.innerHTML = `
+        <div class="activityStack">
+          <p class="activityTitle">Passt der Graph zur Fahrt?</p>
+          <p class="activityText">${text}</p>
+        </div>`;
+    }
+
+    function renderBuildActivity() {
+      activityArea.hidden = false;
+      activityArea.innerHTML = `
+        <div class="activityStack">
+          <p class="activityText">Spiele die Fahrt ab und bearbeite dazu das Arbeitsblatt.</p>
+        </div>`;
+    }
+
+    function renderActivityArea() {
+      if (!isStationUnlocked()) {
+        activityArea.hidden = false;
+        activityArea.innerHTML = `<div class="activityStack"><p class="activityTitle">${stationShortLabel(state.mode)} gesperrt</p><p class="activityText">Klicke oben auf die Station und gib das Passwort ein.</p></div>`;
+        return;
+      }
+      if (state.mode === "intro") renderIntroActivity();
+      else if (state.mode === "observe") renderObserveActivity();
+      else if (state.mode === "error") renderErrorActivity();
+      else renderBuildActivity();
+    }
+
+    function render() {
+      const d = getDisplayData();
+      el.speedValue.textContent = "";
+      updateSpeedNeedle(d.currentSpeed);
+      renderLayout();
+      renderControls();
+      renderTrack();
+      renderGraph();
+      renderActivityArea();
+      renderUnlockModal();
+    }
+
+    function stopAnimation() {
+      state.running = false;
+      state.startTime = null;
+      if (state.raf) cancelAnimationFrame(state.raf);
+      state.raf = null;
+    }
+
+    function animate(now) {
+      if (!state.running) return;
+      if (!state.startTime) state.startTime = now;
+      const durationMs = Math.max(60, state.animationDuration * 1000);
+      const t = clamp((now - state.startTime) / durationMs, 0, 1);
+      state.progress = lerp(state.animationFrom, state.animationTo, t);
+      render();
+      if (t < 1) {
+        state.raf = requestAnimationFrame(animate);
+      } else {
+        stopAnimation();
+        state.progress = state.animationTo;
+        if (state.mode === "intro") {
+          markStationComplete("intro");
+          hideFeedback();
+        } else if (state.mode === "observe" && state.observe.phase === "watch") {
+          state.observe.phase = "axes";
+          hideFeedback();
+        } else if (state.mode === "observe" && state.observe.phase === "compare") {
+          state.observe.phase = "done";
+          markStationComplete("observe");
+          hideFeedback();
+        } else if (state.mode === "error") {
+          if (state.error.solved) {
+            state.error.replayed = true;
+            state.error.readyToReplay = false;
+            markStationComplete("error");
+            showFeedback("good", "Fertig.");
+          } else {
+            state.error.watchedOnce = true;
+            showFeedback("mid", "Jetzt kannst du die fehlerhafte Stelle im Graphen anklicken.");
+          }
+        } else if (state.mode === "build") {
+          showFeedback("mid", "Du kannst die Fahrt erneut starten.");
+        }
+        render();
+      }
+    }
+
+    function playPause() {
+      if (!isStationUnlocked() && !requestStationUnlock(state.mode)) return;
+      if (state.running) {
+        stopAnimation();
+        render();
+        return;
+      }
+
+      if (state.mode === "build") {
+        if (state.progress >= 1) state.progress = 0;
+        state.animationFrom = state.progress;
+        state.animationTo = 1;
+        state.animationDuration = Math.max(0.2, LOOP_DURATION * (1 - state.progress));
+        state.running = true;
+        state.startTime = null;
+        hideFeedback();
+        state.raf = requestAnimationFrame(animate);
+        render();
+        return;
+      }
+
+      if (!(state.mode === "intro" || state.mode === "error" || (state.mode === "observe" && (state.observe.phase === "watch" || state.observe.phase === "compare")))) return;
+      if (state.mode === "error" && state.error.solved && !state.error.replayed) {
+        state.progress = 0;
+        state.selectedGraphIndex = null;
+        state.hoverGraphIndex = null;
+        hideFeedback();
+      } else if (state.progress >= 1) {
+        state.progress = 0;
+      }
+      state.animationFrom = state.progress;
+      state.animationTo = 1;
+      state.animationDuration = Math.max(0.2, LOOP_DURATION * (1 - state.progress));
+      state.running = true;
+      state.startTime = null;
+      if (state.mode === "observe") hideFeedback();
+      if (state.mode === "error" && state.selectedGraphIndex === null) state.hoverGraphIndex = null;
+      state.raf = requestAnimationFrame(animate);
+      render();
+    }
+
+    function reset() {
+      if (!isStationUnlocked() && !requestStationUnlock(state.mode)) return;
+      stopAnimation();
+      if (state.mode === "intro") {
+        state.progress = 0;
+        state.stationProgress.intro = 0;
+        state.completed.intro = false;
+        hideFeedback();
+      } else if (state.mode === "observe") {
+        resetObserve();
+        hideFeedback();
+      } else if (state.mode === "error") {
+        resetError();
+        showFeedback("mid", "Zurückgesetzt.");
+      } else {
+        state.progress = 0;
+        state.stationProgress.build = 0;
+        showFeedback("mid", "Zurückgesetzt.");
+      }
+      render();
+    }
+
+    function checkAxisLabels() {
+      const xInput = document.getElementById("xAxisInput");
+      const yInput = document.getElementById("yAxisInput");
+      const x = (xInput ? xInput.value : state.observe.xAxisLabel || "").trim().toLowerCase();
+      const y = (yInput ? yInput.value : state.observe.yAxisLabel || "").trim().toLowerCase();
+
+      state.observe.xAxisLabel = xInput ? xInput.value : state.observe.xAxisLabel || "";
+      state.observe.yAxisLabel = yInput ? yInput.value : state.observe.yAxisLabel || "";
+
+      const xOk = x.includes("strecke") || x.includes("weg") || x.includes("fahrt") || x.includes("position");
+      const yOk = y.includes("geschwindigkeit") || y.includes("tempo") || y.includes("schnell");
+
+      if (xOk && yOk) {
+        state.observe.axisChoice = "correct";
+        state.axisLabels.x = (xInput ? xInput.value : state.observe.xAxisLabel || "").trim();
+        state.axisLabels.y = (yInput ? yInput.value : state.observe.yAxisLabel || "").trim();
+        state.observe.phase = "build";
+        state.observe.stopIndex = 0;
+        state.observe.builtPoints = [];
+        state.observe.drawnPoints = [];
+        state.observe.isDrawing = false;
+        showFeedback("good", "Richtig. Zeichne jetzt den Graphen.");
+      } else {
+        showFeedback("mid", "Noch nicht ganz: Waagerecht steht die Stelle auf der Strecke, senkrecht die Geschwindigkeit.");
+      }
+      render();
+    }
+
+    function answerObserveGraphPoint(clickedSpeed) {
+      const stop = OBSERVE_CONFIG.stops[state.observe.stopIndex];
+      const d = getCache();
+      const correctSpeed = interpolateArray(d.speed, stop.index);
+      const tolerance = 13;
+
+      if (Math.abs(clickedSpeed - correctSpeed) > tolerance) {
+        const hint = clickedSpeed > correctSpeed
+          ? "Zu hoch. Schau auf die Stelle: Gerade oder Kurve?"
+          : "Zu tief. Schau auf die Stelle: Gerade oder Kurve?";
+        showFeedback("mid", hint);
+        render();
+        return;
+      }
+
+      state.observe.builtPoints.push({ index: stop.index, speed: clickedSpeed });
+      state.observe.hoverSpeed = null;
+
+      if (state.observe.stopIndex < OBSERVE_CONFIG.stops.length - 1) {
+        state.observe.stopIndex += 1;
+        showFeedback("good", "Richtig.");
+      } else {
+        state.observe.phase = "compare";
+        state.progress = 0;
+        showFeedback("good", "Fertig. Starte den Vergleich.");
+      }
+      render();
+    }
+
+    function handleGraphClick(evt) {
+      if (!isStationUnlocked()) return;
+      const rect = el.graphSvg.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / rect.width) * GRAPH_W;
+      const y = ((evt.clientY - rect.top) / rect.height) * GRAPH_H;
+
+      if (state.mode === "observe" && state.observe.phase === "build") {
+        return;
+      }
+
+      if (state.mode !== "error" || state.error.solved) return;
+      if (!state.error.watchedOnce) {
+        showFeedback("mid", "Starte zuerst einmal die Fahrt.");
+        render();
+        return;
+      }
+      const idx = graphIndexFromX(x);
+      const d = getCache();
+      const err = d.selectedTrack.errorIndex;
+
+      state.selectedGraphIndex = idx;
+      state.hoverGraphIndex = idx;
+      state.progress = d.motion.progressAtIndex(idx);
+
+      if (Math.abs(idx - err) <= 26) {
+        state.error.solved = true;
+        state.error.readyToReplay = true;
+        state.error.replayed = false;
+        state.progress = 0;
+        state.selectedGraphIndex = null;
+        state.hoverGraphIndex = null;
+        showFeedback("good", "Richtig.");
+      } else {
+        showFeedback("bad", "Noch nicht.");
+      }
+      render();
+    }
+
+    function handleGraphMove(evt) {
+      if (!isStationUnlocked()) return;
+      const rect = el.graphSvg.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / rect.width) * GRAPH_W;
+      const y = ((evt.clientY - rect.top) / rect.height) * GRAPH_H;
+
+      if (state.mode === "observe" && state.observe.phase === "build") {
+        return;
+      }
+
+      if (state.mode !== "error" || state.error.solved || !state.error.watchedOnce) return;
+      state.hoverGraphIndex = graphIndexFromX(x);
+      render();
+    }
+
+    function handleGraphLeave() {
+      if (!isStationUnlocked()) return;
+      if (state.mode === "observe" && state.observe.phase === "build") {
+        state.observe.isDrawing = false;
+        return;
+      }
+
+      if (state.mode !== "error" || state.error.solved) return;
+      if (state.selectedGraphIndex === null) {
+        state.hoverGraphIndex = null;
+        render();
+      }
+    }
+
+    function placeSnippetInSlot(id, slotIndex) {
+      if (!isStationUnlocked()) return;
+      if (!id || state.mode !== "build") return;
+      if (state.build.readyToPlay) return;
+
+      const expectedIndex = state.build.step;
+      const expectedId = GRAPH_SNIPPET_ORDER[expectedIndex];
+
+      if (!state.build.awaitingPlacement) {
+        showFeedback("mid", `Fahre zuerst bis Abschnitt ${state.build.checkpointReached + 1}. Erst danach setzt du Kachel ${expectedIndex + 1} ein.`);
+        return;
+      }
+      if (slotIndex !== expectedIndex) {
+        showFeedback("mid", `Setze jetzt zuerst Kachel ${expectedIndex + 1} in die markierte Spalte ${expectedIndex + 1}.`);
+        return;
+      }
+      if (id !== expectedId) {
+        showFeedback("bad", `Diese Kachel passt noch nicht zu Abschnitt ${expectedIndex + 1}. Vergleiche den Verlauf noch einmal genau.`);
+        return;
+      }
+
+      state.slots[slotIndex] = id;
+      state.selectedPiece = null;
+      state.build.step += 1;
+      state.build.awaitingPlacement = false;
+      state.progress = buildCheckpointProgress(state.build.checkpointReached);
+
+      if (isBuildComplete() && state.build.checkpointReached >= getBuildSegmentCount()) {
+        state.build.readyToPlay = true;
+        markStationComplete("build");
+        showFeedback("good", "Richtig zusammengesetzt.");
+      } else {
+        showFeedback("good", `Kachel ${slotIndex + 1} passt.`);
+      }
+      render();
+    }
+
+    function evaluatePuzzle() {
+      if (state.mode === "build") {
+        if (state.build.readyToPlay) {
+          showFeedback("good", "Richtig zusammengesetzt.");
+        } else if (state.build.awaitingPlacement) {
+          showFeedback("mid", `Ziehe jetzt die passende Kachel ${state.build.step + 1} in die markierte Spalte.`);
+        } else {
+          showFeedback("mid", `Fahre jetzt bis Abschnitt ${state.build.checkpointReached + 1}.`);
+        }
+        render();
+      }
+    }
+
+    el.playButton.addEventListener("click", playPause);
+    el.resetButton.addEventListener("click", reset);
+    el.prevButton.addEventListener("click", goPreviousStation);
+    el.nextButton.addEventListener("click", goNextStation);
+    el.checkButton.addEventListener("click", evaluatePuzzle);
+    el.clearButton.addEventListener("click", () => {
+      resetBuild();
+      showFeedback("mid", "Kacheln gelöscht. Fahre wieder bis Abschnitt 1 und setze danach Kachel 1 ein.");
+      render();
+    });
+    el.graphSvg.addEventListener("pointerdown", startObserveDrawing);
+    el.graphSvg.addEventListener("pointermove", moveObserveDrawing);
+    el.graphSvg.addEventListener("pointerup", endObserveDrawing);
+    el.graphSvg.addEventListener("pointerleave", endObserveDrawing);
+    el.graphSvg.addEventListener("click", handleGraphClick);
+    el.graphSvg.addEventListener("mousemove", handleGraphMove);
+    el.graphSvg.addEventListener("mouseleave", handleGraphLeave);
+    unlockEls.submit.addEventListener("click", submitUnlockPassword);
+    unlockEls.cancel.addEventListener("click", hideUnlockModal);
+    unlockEls.input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") submitUnlockPassword();
+      if (event.key === "Escape") hideUnlockModal();
+    });
+
+    chooseMode("intro");
+
+  </script>
+</body>
+</html>
