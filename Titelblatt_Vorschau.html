@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Titelblatt – Materialien zu den teutolab-Stationen</title>
+  <style>
+    :root {
+      --kivima-green: #2c8d4f;
+      --kivima-green-dark: #1f6b3b;
+      --kivima-lime: #b7df4a;
+      --kivima-ink: #203126;
+      --kivima-muted: #617067;
+      --paper: #ffffff;
+      --surrounding: #e9eeea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      background: var(--surrounding);
+      color: var(--kivima-ink);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    .page {
+      position: relative;
+      display: flex;
+      width: 210mm;
+      height: 297mm;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 22mm 21mm 18mm;
+      background: var(--paper);
+      box-shadow: 0 14px 44px rgb(32 49 38 / 16%);
+    }
+
+    .page::before {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4mm;
+      background: linear-gradient(90deg, var(--kivima-green-dark) 0 72%, var(--kivima-lime) 72% 100%);
+      content: "";
+    }
+
+    .logos {
+      display: flex;
+      min-height: 25mm;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18mm;
+    }
+
+    .university-logo {
+      display: block;
+      width: 62mm;
+      height: auto;
+    }
+
+    .kivima-logo {
+      display: block;
+      width: 24mm;
+      height: auto;
+    }
+
+    .title-block {
+      margin-top: 30mm;
+    }
+
+    .eyebrow {
+      margin: 0 0 8mm;
+      color: var(--kivima-green-dark);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 150mm;
+      margin: 0;
+      font-size: 31pt;
+      font-weight: 750;
+      letter-spacing: -0.025em;
+      line-height: 1.12;
+    }
+
+    .accent-rule {
+      width: 31mm;
+      height: 1.4mm;
+      margin: 10mm 0 9mm;
+      border: 0;
+      background: var(--kivima-lime);
+    }
+
+    .subtitle {
+      max-width: 137mm;
+      margin: 0;
+      color: var(--kivima-green-dark);
+      font-size: 16.5pt;
+      font-weight: 500;
+      line-height: 1.42;
+    }
+
+    .description {
+      max-width: 145mm;
+      margin: auto 0 0;
+      padding-top: 12mm;
+      border-top: 0.4mm solid #d9e4dc;
+      font-size: 11pt;
+      line-height: 1.65;
+    }
+
+    .description p {
+      margin: 0;
+    }
+
+    .license {
+      display: flex;
+      align-items: center;
+      gap: 4mm;
+      margin-top: 12mm;
+      color: var(--kivima-muted);
+      font-size: 9pt;
+      line-height: 1.4;
+    }
+
+    .license::before {
+      width: 10mm;
+      height: 1mm;
+      flex: 0 0 auto;
+      background: var(--kivima-green);
+      content: "";
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      html,
+      body {
+        width: 210mm;
+        height: 297mm;
+      }
+
+      body {
+        display: block;
+        padding: 0;
+        background: transparent;
+      }
+
+      .page {
+        box-shadow: none;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+
+    @media screen and (max-width: 860px) {
+      body {
+        display: block;
+        padding: 16px;
+      }
+
+      .page {
+        width: 100%;
+        height: auto;
+        min-height: calc((100vw - 32px) * 1.4143);
+        padding: 10.5vw 10vw 8.5vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" aria-labelledby="document-title">
+    <header class="logos" aria-label="Herausgebende Institution und Projekt">
+      <img class="university-logo" src="Unilogo.png" alt="Universität Bielefeld" />
+      <img
+        class="kivima-logo"
+        src="KIVIMA_ICON-transparenter Hintergrund.png"
+        alt="KIVIMA"
+      />
+    </header>
+
+    <section class="title-block">
+      <p class="eyebrow">Materialien zu den teutolab-Stationen</p>
+      <h1 id="document-title">KIVIMA – KI-gestützte Visualisierungen im Mathematikunterricht</h1>
+      <hr class="accent-rule" />
+      <p class="subtitle">Von Studierenden entwickelte und erprobte Unterrichtsmaterialien</p>
+    </section>
+
+    <footer class="description">
+      <p>
+        Die Materialien wurden von Studierenden im Rahmen des Seminars<br />
+        „KIVIMA – KI-gestützte Visualisierungen im Mathematikunterricht“<br />
+        entwickelt und im teutolab mathematik erprobt.
+      </p>
+      <p class="license">CC BY 4.0 – soweit nicht anders gekennzeichnet.</p>
+    </footer>
+  </main>
+</body>
+</html>
