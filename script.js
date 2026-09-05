@@ -582,7 +582,7 @@ const initializeVariantPreview = ({
       }
 
       const currentLanguage = document.documentElement.lang in translations ? document.documentElement.lang : "de";
-      loadVariantIntoFrame(source);
+      const isRemoteSource = /^https?:\/\//i.test(source);
       externalLink.href = source;
       const externalLinkLabel = externalLink.querySelector("span");
       if (externalLinkLabel) {
@@ -598,16 +598,25 @@ const initializeVariantPreview = ({
       });
 
       if (hint) {
-        hint.hidden = true;
+        if (isRemoteSource) {
+          hint.hidden = false;
+          hint.textContent = "Diese externe Canva-Variante blockiert die Darstellung im iframe. Bitte über 'In neuem Tab öffnen' ansehen.";
+        } else {
+          hint.hidden = true;
+        }
       }
       externalLink.hidden = false;
-      resetButton.hidden = false;
-      frame.hidden = false;
-      updatePreviewFrameHeight();
-      fitVariantInFrame();
+      resetButton.hidden = isRemoteSource;
+      frame.hidden = isRemoteSource;
+
+      if (!isRemoteSource) {
+        loadVariantIntoFrame(source);
+        updatePreviewFrameHeight();
+        fitVariantInFrame();
+      }
 
       if (scrollPreview) {
-        frame.scrollIntoView({ behavior: "smooth", block: "start" });
+        (isRemoteSource ? externalLink : frame).scrollIntoView({ behavior: "smooth", block: "start" });
       }
     };
 
