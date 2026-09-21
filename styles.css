@@ -700,7 +700,7 @@ footer .inner {
 /* Material cards: scoped to the teutolab section. */
 .teutolab-stations { margin-top: 3.5rem; }
 .teutolab-stations > .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.65rem; }
-.teutolab-stations .station-intro { max-width: 78ch; margin-top: 0; margin-bottom: 3rem; }
+.teutolab-stations .station-intro { width: 100%; margin-top: 0; margin-bottom: 3rem; }
 .teutolab-stations .station-groups { display: grid; gap: 3rem; }
 .teutolab-stations .station-group {
   --station-tint: #f3f7eb;
