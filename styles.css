@@ -707,19 +707,21 @@ footer .inner {
 .teutolab-stations .station-group { min-width: 0; }
 .teutolab-stations .station-group > h3 {
   color: var(--primary-dark);
-  font-size: clamp(1.5rem, 2.5vw, 1.8rem);
+  font-size: clamp(2rem, 3.6vw, 2.5rem);
+  font-weight: 800;
+  overflow-wrap: break-word;
   line-height: 1.3;
   min-height: 3.9em;
   margin: 0 0 1.25rem;
 }
-.teutolab-stations .station-list { display: grid; gap: 1.5rem; }
+.teutolab-stations .station-list { display: grid; gap: 0.85rem; }
 .teutolab-stations .station-card {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr);
   align-items: start;
-  column-gap: 1rem;
-  row-gap: 0.35rem;
-  padding: 1.35rem;
+  column-gap: 0.75rem;
+  row-gap: 0.15rem;
+  padding: 1rem;
   background: var(--card);
   border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--card));
   border-radius: 1rem;
@@ -729,15 +731,15 @@ footer .inner {
   display: grid;
   place-items: center;
   grid-row: 1 / span 2;
-  width: 72px;
-  height: 72px;
-  border-radius: 1.35rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 0.9rem;
   background: var(--station-mint);
 }
 .teutolab-stations .station-icon img {
   display: block;
-  width: 64px;
-  height: 64px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
 }
 .teutolab-stations .station-content { display: contents; }
@@ -745,9 +747,9 @@ footer .inner {
   grid-column: 2;
   margin: 0;
   color: var(--primary-dark);
-  font-size: 0.875rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 .teutolab-stations h4 {
@@ -755,36 +757,36 @@ footer .inner {
   min-width: 0;
   margin: 0;
   color: var(--primary-dark);
-  font-size: clamp(2rem, 3.2vw, 2.5rem);
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
   font-weight: 750;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .teutolab-stations .station-description {
   color: color-mix(in srgb, var(--text) 76%, var(--card));
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 400;
-  line-height: 1.55;
+  line-height: 1.45;
 }
-.teutolab-stations .station-description { grid-column: 1 / -1; margin: 0.75rem 0 0; max-width: 72ch; }
+.teutolab-stations .station-description { grid-column: 1 / -1; margin: 0.5rem 0 0; max-width: 72ch; }
 .teutolab-stations .station-actions {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  padding-top: 1rem;
+  padding-top: 0.65rem;
 }
 .teutolab-stations .station-button {
   display: inline-flex;
-  flex: 1 1 180px;
+  flex: 1 1 140px;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.7rem 0.8rem;
-  min-height: 46px;
+  padding: 0.5rem 0.6rem;
+  min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--primary-dark) 65%, var(--card));
   border-radius: 0.85rem;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-align: center;
   line-height: 1.4;
@@ -792,9 +794,9 @@ footer .inner {
 }
 .teutolab-stations .station-button:only-child { flex: 0 1 auto; }
 .teutolab-stations .station-button-icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.6;
@@ -806,13 +808,11 @@ footer .inner {
 .teutolab-stations .station-button:hover { text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-dark) 18%, transparent); }
 .teutolab-stations .station-button-secondary:hover { background: var(--station-mint); }
 .teutolab-stations .station-button:focus-visible { outline: 3px solid var(--secondary); outline-offset: 3px; }
-@media (max-width: 900px) {
+/* Keep both topic columns on tablets and desktop; stack only on phones. */
+@media (max-width: 640px) {
   .teutolab-stations .station-groups { grid-template-columns: 1fr; gap: 2rem; }
   .teutolab-stations .station-group > h3 { min-height: 0; }
 }
-@media (max-width: 400px) {
-  .teutolab-stations .station-card { grid-template-columns: 56px minmax(0, 1fr); padding: 1rem; column-gap: 0.75rem; }
-  .teutolab-stations .station-icon { width: 56px; height: 56px; }
-  .teutolab-stations .station-icon img { width: 50px; height: 50px; }
+@media (max-width: 360px) {
   .teutolab-stations .station-button { flex-basis: 100%; }
 }
